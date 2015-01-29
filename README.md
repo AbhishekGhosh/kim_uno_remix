@@ -1,4 +1,4 @@
-kim_uno_remix
+Kim Uno Remix
 =============
 
 KIM Uno is a MOS/Commodore KIM-1 emulator for Arduino.
