@@ -1,8 +1,30 @@
-kim_uno
-=======
+kim_uno_remix
+=============
 
-KIM Uno is a KIM-1 emulator and 6502 programmable calculator for Arduino.
-This code is intended for the KIM Uno PCB, but actually runs on any Arduino even without the PCB.
+KIM Uno is a MOS/Commodore KIM-1 emulator for Arduino.
+This code is intended for the KIM Uno PCB, but actually runs on most newer Arduinos using ATMega 328p spec or newer micros.
+
+This "remix" takes the original KIM-1 emulation codebase from Oscar, which and changes some things around for expandability and reusability.  One thing removed is the calculator and floating point library.
+
+Planned differences:
+- 6502 Calculator removed
+- Floating point library removed (6kbytes)
+- Easily configured ROM layouts
+- PC version will updated use the same source files (cpu.c, kimuno.ino) directly
+- I2C expansion devices: (future)
+  - Framebuffer/TV Out
+  - PS2 Keyboard
+
+--------
+
+Module Credits:
+
+- Oscar Vermeulen - KIM-1 architecture and codebase
+- Mike Chambers - 6502 CPU Emulator
+
+--------
+
+Oscar's notes:
 
 Please check the website for documentation and news:
 http://obsolescence.wix.com/obsolescence#!kim-uno-summary/c1uuh
