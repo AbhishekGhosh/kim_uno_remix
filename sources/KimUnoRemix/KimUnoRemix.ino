@@ -39,7 +39,7 @@ byte aRows[3] = { 9,10,11 };
 byte ledSelect[8] =  { 12, 13, A0, A1, A2, A3, A7, A4 }; // note that A6 and A7 are not used at present. Can delete them.
 byte ledSelect7[8] = { 12, 13, A0, A1, A4, A2, A3, A7 }; // note that A6 and A7 are not used at present. Can delete them.
 
-byte dig[19] = {
+byte dig[25] = {
 // bits     6543210
 // digits   abcdefg
           0b01111110,//0  
@@ -60,12 +60,64 @@ byte dig[19] = {
           0b01000111,//f
           0b00000001, //g printed as -
           0b00001000, //h printed as _
-          0b00000000  //i printed as <space>
+          0b00000000, //i printed as <space>
+          
+          // some letters we need for text display
+          0b00010101, // 19 'n'  "s on"
+          0b00011101, // 20 'o'  "s on"/"s off"
+          0b01100111, // 21 'p'  "EEP"
+          0b00000101, // 22 'r'  "E ro"/"E rw"
+          0b00001111, // 23 't'  "sst"
+          0b00101010, // 24 'w'  "rw" (common version for 7 seg)
 };
+
 
 // for text display
 char textHex[3][2];         // for text indicator
 long textTimeout;
+
+// displayText
+//  pass it in one of these values, and the number of ms to display (eg 500)
+//  for text display
+
+#define kDt_blank   (0)
+#define kDt_SST_ON  (1)
+#define kDt_SST_OFF (2)
+#define kDt_EE_RW   (3)
+#define kDt_EE_RO   (4)
+
+void displayText( int which, long timeMillis )
+{
+  textHex[1][0] = 18; textHex[1][1] = 18; // "  "
+
+  if( which == kDt_SST_ON ) {
+    textHex[0][0] = 5;  // 5
+    textHex[0][1] = 5;  // 5
+    textHex[1][0] = 23; // t
+    textHex[2][0] = 20; // o
+    textHex[2][1] = 19; // n
+  } else if( which == kDt_SST_OFF ) {
+    textHex[0][0] = 5;  // 5
+    textHex[0][1] = 5;  // 5
+    textHex[1][0] = 22; // t
+    textHex[2][0] = 20; // o
+    textHex[2][1] = 15; // f
+  } else if( which ==  kDt_EE_RW ) {
+    textHex[0][0] = 14; // E
+    textHex[0][1] = 14; // E
+    textHex[1][0] = 21; // P
+    textHex[2][0] = 22; // R
+    textHex[2][1] = 24; // W
+  } else if( which ==  kDt_EE_RO ) {
+    textHex[0][0] = 14; // E
+    textHex[0][1] = 14; // E
+    textHex[1][0] = 21; // P
+    textHex[2][0] = 22; // R
+    textHex[2][1] = 20; // o
+  }
+
+  textTimeout = millis() + timeMillis; // 1/2 second
+}
 
 
 extern "C" {
@@ -193,10 +245,12 @@ void interpretkeys()
     case '[': // SST off
       SSTmode = 0; clearkey();
       Serial.print(F("                                      SST OFF         "));
+      displayText( kDt_SST_OFF, 500 );
       break;
     case ']': // SST on
       SSTmode = 1; clearkey();
       Serial.print(F("                                      SST ON          ")); 
+      displayText( kDt_SST_ON, 500 );
       break;
     case 9: // TAB pressed, toggle between serial port and onboard keyboard/display
       if (useKeyboardLed==0) 
@@ -207,10 +261,12 @@ void interpretkeys()
     case '>': // Toggle write protect on eeprom
       if (eepromProtect==0) {
         eepromProtect = 1; 
-        Serial.print(F("                                      Eeprom R/O     ")); 
+        Serial.print(F("                                      Eeprom R/O     "));
+        displayText( kDt_EE_RO, 500 );
       } else {
         eepromProtect = 0;
-        Serial.print(F("                                      Eeprom R/W     ")); 
+        Serial.print(F("                                      Eeprom R/W     "));
+        displayText( kDt_EE_RW, 500 );
         delay(20);
       }
       clearkey(); break;
