@@ -1,7 +1,21 @@
+/* Kim Uno Remix
+ *
+ *  A reworking a bit of Oscar Vermeulen's KimUno project
+ *
+ *  Scott Lawrence  yorgle@gmail.com
+ *
+ * Version History
+ *  v1.0.1  - first KUR version
+ */
+
 #include "Arduino.h"
+#include "config.h"
 #include <EEPROM.h>
 #include <stdint.h>
 #include <util/delay.h>
+#ifdef CKeyFourSix
+#include <Keypad.h>
+#endif
 #include "x.h"
 
 //#define CH2_SPEAKERPIN 9
@@ -49,6 +63,9 @@ byte dig[19] = {
           0b00000000  //i printed as <space>
 };
 
+// for text display
+char textHex[3][2];         // for text indicator
+long textTimeout;
 
 
 extern "C" {
@@ -239,6 +256,9 @@ void setupUno() {
 
 
 extern "C" {
+/* drive LEDs, this will be common anode or common cathode indexing */
+
+#ifdef CLedCommonAnode
 void driveLEDs()
 { 
   int led, col, ledNo, currentBit, bitOn;
@@ -269,6 +289,52 @@ void driveLEDs()
       digitalWrite(ledSelect[ledNo], LOW); // unLight this LED
     }
 } // end of function
+#endif
+
+#ifdef CLedCommonCathode
+// common cathode
+void driveLEDs()
+{
+  char digit = 0;
+  byte b;
+
+  for( byte i = 0 ; i<3 ; i++ )
+  {
+    for( byte j = 0 ; j<2 ; j++ )
+    {
+      // get the current byte to display (and display text if applicable)
+      if( millis() < textTimeout ) {
+        b = textHex[i][j];
+      } else {
+        b = threeHex[i][j];
+      }
+
+      // get the segment mask
+      byte s = dig[b];
+
+      // select just this digit
+      for( int d=0 ; d<8 ; d++ ) {
+        pinMode( ledSelect[d], OUTPUT ); // make sure we're output
+        digitalWrite( ledSelect[d], (d==digit)?LOW:HIGH );
+      }
+
+      // now go through and turn on/off the right segments
+      for( byte col =0 ; col <8 ; col++ )
+      { 
+        pinMode( aCols[col], OUTPUT );
+        digitalWrite( aCols[col], (s & (0x80>>col))? HIGH : LOW );
+      }
+
+      // wait a moment...
+      delay( 3 );
+
+      // go to the next display digit
+      digit++;
+    }
+  }
+}
+#endif
+
 } // end of C segment
 
 void driveCalcLEDs(uint8_t *numberStr, uint8_t decpt)
@@ -340,6 +406,8 @@ uint8_t xkeyPressed()    // just see if there's any keypress waiting
 
 
 extern "C" {  // the extern C is to make function accessible from within cpu.c
+
+#ifdef CKeyThreeEight
 void scanKeys() 
 {
   int led,row,col, noKeysScanned;
@@ -404,6 +472,100 @@ void scanKeys()
   if (noKeysScanned==24)    // no keys detected in any row, 3 rows * 8 columns = 24. used to be 28.
     prevKey=0;        // allows you to enter same key twice 
 } // end of function
+#endif
+
+#ifdef CKeyFourSix
+
+const byte ROWS = 6; // six rows
+const byte COLS = 4; // four columns
+char keys[ROWS][COLS] = {
+  {   7,  20,  18, 't' }, // go (7), step(0x12), reset (18), sst (20)
+  {   1,   4,  16, '+' } , // ad (0x10), da (0x11), PC (16), plus (0x12)
+  { 'C', 'D', 'E', 'F' }, // 0..15
+  { '8', '9', 'A', 'B' },
+  { '4', '5', '6', '7' },
+  { '0', '1', '2', '3' }
+};
+
+// set up with the same as KIM UNO
+byte rowPins[ROWS] = { 7, 6, 5, 4, 3, 2 }; //connect to the row pinouts of the keypad
+byte colPins[COLS] = { 10, 11, A5, 9 };    //connect to the column pinouts of the keypad
+
+Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
+
+
+// Four by six
+void scanKeys()
+{
+  static int keyCode = -1, prevKey = 0;
+  static unsigned long timeFirstPressed = 0;
+
+  // scan the keys and then remap them
+   int i;
+
+  // first, wipe everything
+  for( i = 0 ; i<8 ; i++ ) {
+    pinMode( aCols[i], INPUT );
+    digitalWrite( aCols[i], LOW );
+    pinMode( ledSelect[i], INPUT );
+    digitalWrite( ledSelect[i], LOW );
+  }
+
+  for( i=0 ; i<ROWS ; i++ ) {
+    pinMode( rowPins[i], INPUT );
+    digitalWrite( rowPins[i], HIGH );
+  }
+
+  for( i=0 ; i<COLS ; i++ ) {
+    pinMode( colPins[i], OUTPUT );
+    digitalWrite( colPins[i], HIGH );
+  }
+
+  char key = keypad.getKey();
+    if( key == NO_KEY && ((keypad.getState() == IDLE) || ( keypad.getState() == RELEASED ))) {
+    prevKey = 0;
+    return;
+  }
+
+  // convert key to keycode (addressing in the other matrix )
+  if( key == 't' ) {
+    // sst toggle
+    key = SSTmode==0?']':'[';
+  }
+
+  if( key != NO_KEY )
+    keyCode = key; // fill this.
+
+  if (keyCode!=prevKey)
+  {
+    prevKey = keyCode;
+    curkey = key; // we're already decoded. parseChar(keyCode);
+    timeFirstPressed=millis();  // 
+  }
+  else // if pressed for >1sec, it's a ModeShift key
+  {
+    if ((millis()-timeFirstPressed)>1000) // more than 1000 ms
+    {   
+        if (key == '[' || key == ']' ) //keyCode==17) //it was the SST button
+        { 
+          keyboardMode=(keyboardMode==0?1:0); // toggle
+//                Serial.print(F("                                      Eeprom R/O     ")); 
+          Serial.print(F("                                keyboardMode: "));  Serial.print(keyboardMode, DEC);
+          SSTmode=0;
+          curkey=0;  // don't do anything else with this keypress
+        }
+        if (keyCode==18) // it was RS button // fix
+          curkey = '>';  // toggle eeprom write protect
+        timeFirstPressed=millis(); // because otherwise you toggle right back!
+    }
+  }
+}
+
+
+
+#endif
+
+
 } // end C segment
 
 extern "C" {  // the extern C is to make function accessible from within cpu.c
