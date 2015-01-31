@@ -127,11 +127,12 @@ extern "C" {
   void scanKeys(); 
   
   // ---------- called from cpu.c ----------------------
-  void serout(uint8_t val)    { Serial.write(val);  }
-  void serouthex(uint8_t val) { Serial.print(val, HEX); }
+  uint8_t serialEnable = 0;
+  void serout(uint8_t val)    { if( serialEnable ) Serial.write(val);  }
+  void serouthex(uint8_t val) { if( serialEnable ) Serial.print(val, HEX); }
   uint8_t getAkey()            { return(curkey);  }
   void clearkey()             { curkey = 0; }
-  void printhex(uint16_t val) { Serial.print(val, HEX); Serial.println(); }
+  void printhex(uint16_t val) { if( serialEnable ) { Serial.print(val, HEX); Serial.println(); } }
 
 
   // getKIMkey() translates ASCII keypresses to codes the KIM ROM expects.
@@ -211,7 +212,9 @@ void loop () {
   exec6502(100); //do 100 6502 instructions
   
   if (Serial.available())
-  { curkey = Serial.read() & 0x7F;
+  {
+    serialEnable = 1;
+    curkey = Serial.read() & 0x7F;
     interpretkeys();
   }
     

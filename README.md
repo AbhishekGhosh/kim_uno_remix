@@ -7,8 +7,6 @@ This code is intended for the KIM Uno PCB, but actually runs on most newer Ardui
 This "remix" takes the original KIM-1 emulation codebase from Oscar, which and changes some things around for expandability and reusability.  One thing removed is the calculator and floating point library.
 
 Planned differences:
-- Remove 6502 Calculator
-- Remove Floating point library
 - Easily configur able ROM layouts
 - PC version will updated use the same source files (cpu.c, kimuno.ino) directly
 - Remove ROM hooks for display and keyboard, and simulate real hardware
@@ -25,10 +23,14 @@ New features implemented:
 		- 'l' - AD (*L*ocation)
 		- 'v' - DA (*V*alue)
 		- 'p' - PC
+	- "smart" serial - only "display" if there's serial traffic in
 	- config.h set up for setting system configuration, version
 	- Common cathode LED support
 	- 4x6 Keypad support
 	- Serial baud rate configurable
+	- Calculator Mode removed
+	- Floating Point ROM removed
+	- various cleanups
 
 --------
 

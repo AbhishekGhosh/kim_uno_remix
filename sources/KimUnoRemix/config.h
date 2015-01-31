@@ -19,7 +19,9 @@
  *           'v' - DA (*V*alue)
  *           'p' - PC
  *           '+' - +  (pre-existing)
+ *         Smart Serial added (won't stream out the display until it gets traffic)
  *         Upload warning removed with CAFE BABE
+ *         Calculator and floading point library removed
  * v23.1 - CC Led, 4x6 keypad, Text display on LEDs
  * v23.0 - initial starting code from Oscar
  */
