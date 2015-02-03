@@ -635,6 +635,12 @@ unsigned char branch[42] = {
 
 /* ************************************************* */
 
+/* notes about direction for this: 
+    - all ROM and RAM Programs will be moved into memory.c
+    - this entire function will be implemented there too
+      - retrieve the byte from RAM/ROM
+      - patch it if necessary
+      - return it
 
 uint8_t read6502(uint16_t address) {
   uint8_t tempval = 0;
