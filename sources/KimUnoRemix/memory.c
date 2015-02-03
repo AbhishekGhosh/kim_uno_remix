@@ -10,17 +10,14 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const uint8_t buf[3];
-
-////////////////////////////////////////////////////////////////////////////////
-
 ////////////////////////
 // programs to copy in.
-
+/*
 MMAP copyToRam[] = {
   { 0x0200, 0x0004, buf },
   { kEndOfSegments }
 };
+*/
 
 ////////////////////////
 // ROM
@@ -93,7 +90,6 @@ uint8_t readMemory( uint16_t address, MMAP * segments )
   uint8_t segment = findAddressSegment( address, segments );
   if( segment == 0xFF ) {
     /* error */
-    serout( 'x' );
     return 0; /* not found */
   }
   
@@ -113,7 +109,7 @@ uint8_t readMemory( uint16_t address, MMAP * segments )
 ////////////////////
 
 /* Copy the list of segments from PROGMEM into RAM at the specified locations */
-uint8_t copyRamSegments( MMAP * segments ) 
+void copyRamSegments( MMAP * segments ) 
 {
   uint8_t segment = 0;
   uint16_t offs;

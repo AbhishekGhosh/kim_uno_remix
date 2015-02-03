@@ -4,10 +4,11 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.3 Feb 3"
+#define kVersionString "v23.4 Feb 3"
 /* 
  * Version history
  *
+ * v23.4 - Additional warnings removed from Arduino build
  * v23.3 - memory.[ch] added, initial integration (phase 1)
  * v23.2 - config.h, updated version string
  *         Baud Rate (below)

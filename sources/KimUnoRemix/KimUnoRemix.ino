@@ -18,6 +18,7 @@
 #ifdef CKeyFourSix
   #include <Keypad.h>
 #endif
+#include "memory.h"
 
 extern uint8_t SSTmode;
 extern uint8_t useKeyboardLed; // 0 to use Serial port or 1 for HEX digits.
@@ -70,7 +71,7 @@ byte dig[25] = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" 
 
 // for text display
 char textHex[3][2];         // for text indicator
-long textTimeout;
+unsigned long textTimeout;
 
 // displayText
 //  pass it in one of these values, and the number of ms to display (eg 500)
@@ -181,8 +182,9 @@ uint8_t getKIMkey() {
 }
   
 uint8_t eepromread(uint16_t eepromaddress) {
-  EEPROM.read(eepromaddress);
+  return EEPROM.read(eepromaddress);
 }
+
 void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue) {
   if (eepromProtect==0) {
     EEPROM.write(eepromaddress, bytevalue);
@@ -417,7 +419,7 @@ void driveLEDs()
 
 uint8_t parseChar(uint8_t n) //  parse keycode to return its ASCII code
 {
-  uint8_t c;
+  uint8_t c = 0;
     
   // KIM-I keys
   switch (n-1) {              //KIM Uno keyscan codes to ASCII codes used by emulator

@@ -123,79 +123,6 @@ uint8_t RAM002[64];    // RAM from 6530-002  0x17C0-0x17FF, free for user except
 // Application roms (mchess, calc) are above standard 8K of KIM-1
 
 
-
-uint8_t getRegister(uint8_t reg, uint8_t *inVal);  // returns place of decimal point
-
-uint8_t getRegister(uint8_t reg, uint8_t *inVal)
-{
-	uint16_t offset;
-//	uint8_t i;
-//	uint8_t *eptr;
-
-	offset =  WREG_OFFSET + reg*8; // place in RAM for W1/2/3/4 registers
-
-/*	sprintf(inVal, "%c%c.%c%c%c%c%c%c%c%c%c%c%ce%c%c%c%c",
-		// mantissa sign
-		(RAM[0+offset]&(uint8_t)128)==0?'+':'-',
-		// mantissa
-		((RAM[2+offset]&0xF0)>>4) + (uint8_t)48, (RAM[2+offset]&0x0F) + (uint8_t)48, 
-		((RAM[3+offset]&0xF0)>>4) + (uint8_t)48, (RAM[3+offset]&0x0F) + (uint8_t)48, 
-		((RAM[4+offset]&0xF0)>>4) + (uint8_t)48, (RAM[4+offset]&0x0F) + (uint8_t)48, 
-		((RAM[5+offset]&0xF0)>>4) + (uint8_t)48, (RAM[5+offset]&0x0F) + (uint8_t)48, 
-		((RAM[6+offset]&0xF0)>>4) + (uint8_t)48, (RAM[6+offset]&0x0F) + (uint8_t)48, 
-		((RAM[7+offset]&0xF0)>>4) + (uint8_t)48, (RAM[7+offset]&0x0F) + (uint8_t)48, 
-		// exponent sign
-		(RAM[0+offset]&(uint8_t)64)==0?'+':'-',
-		// exponent
-		(RAM[0+offset]&0x0F) + (uint8_t)48,
-		((RAM[1+offset]&0xF0)>>4) + (uint8_t)48, (RAM[1+offset]&0x0F) + (uint8_t)48 );
-*/
-
-  //  print in most compact form
-  // 2. do we print a leading '-' cos mantissa negative?  
-  if ((RAM[0+offset]&(uint8_t)128)==0) // mantissa positive, skip the + to save a digit
-  {
-	sprintf(inVal, "%c%c%c%c%c%c%c",
-		// mantissa sign
-		//(RAM[0+offset]&(uint8_t)128)==0?'+':'-',
-		// mantissa
-		((RAM[2+offset]&0xF0)>>4) + (uint8_t)48, (RAM[2+offset]&0x0F) + (uint8_t)48, 
-		((RAM[3+offset]&0xF0)>>4) + (uint8_t)48, (RAM[3+offset]&0x0F) + (uint8_t)48, 
-		//((RAM[4+offset]&0xF0)>>4) + (uint8_t)48, (RAM[4+offset]&0x0F) + (uint8_t)48, 
-		//((RAM[5+offset]&0xF0)>>4) + (uint8_t)48, (RAM[5+offset]&0x0F) + (uint8_t)48, 
-		//((RAM[6+offset]&0xF0)>>4) + (uint8_t)48, (RAM[6+offset]&0x0F) + (uint8_t)48, 
-		//((RAM[7+offset]&0xF0)>>4) + (uint8_t)48, (RAM[7+offset]&0x0F) + (uint8_t)48, 
-		// exponent sign
-		(RAM[0+offset]&(uint8_t)64)==0?(uint8_t)62:(uint8_t)64, // E, or G is printed as -
-		// exponent
-/*!!!*/		//(RAM[0+offset]&0x0F) + (uint8_t)48,
-		((RAM[1+offset]&0xF0)>>4) + (uint8_t)48, (RAM[1+offset]&0x0F) + (uint8_t)48 );
-         return 0; // light dec point on first digit
-  }
-  else // mantissa negative, add a minus
-  {
-	sprintf(inVal, "%c%c%c%c%c%c%c",  //G printed as -
-		// mantissa sign
-                64, // G printed as -
-		//(RAM[0+offset]&(uint8_t)128)==0?'+':'-',
-		// mantissa
-		((RAM[2+offset]&0xF0)>>4) + (uint8_t)48, (RAM[2+offset]&0x0F) + (uint8_t)48, 
-		((RAM[3+offset]&0xF0)>>4) + (uint8_t)48, //(RAM[3+offset]&0x0F) + (uint8_t)48, 
-		//((RAM[4+offset]&0xF0)>>4) + (uint8_t)48, (RAM[4+offset]&0x0F) + (uint8_t)48, 
-		//((RAM[5+offset]&0xF0)>>4) + (uint8_t)48, (RAM[5+offset]&0x0F) + (uint8_t)48, 
-		//((RAM[6+offset]&0xF0)>>4) + (uint8_t)48, (RAM[6+offset]&0x0F) + (uint8_t)48, 
-		//((RAM[7+offset]&0xF0)>>4) + (uint8_t)48, (RAM[7+offset]&0x0F) + (uint8_t)48, 
-		// exponent sign
-		(RAM[0+offset]&(uint8_t)64)==0?(uint8_t)62:(uint8_t)64,  //E or G printed as -
-		// exponent
-/*!!!*/		//(RAM[0+offset]&0x0F) + (uint8_t)48,
-		((RAM[1+offset]&0xF0)>>4) + (uint8_t)48, (RAM[1+offset]&0x0F) + (uint8_t)48 );
-
-         return 1; // light dec point on second digit (given 1st digit is a -)
-  }
-}
-
-
 // --- ROM CODE SECTION ------------------------------------------------------------
 // ROM1: KIM-1 ROM002 (monitor main code)                                 $17C0
 // ROM2: KIM-1 ROM003 (tape and RS-232 code)                              $1780
@@ -203,6 +130,7 @@ uint8_t getRegister(uint8_t reg, uint8_t *inVal)
 //                                                 recompiled to start at $C000
 // disassembler: the famous Baum & Wozniak disassember
 //    6502.org/documents/publications/6502notes/6502_user_notes_14.pdf at $2000
+//
 // storage arrays that are copied to RAM are also here:
 // relocate (first book of kim)                                        to $0110
 // branch (first book of kim)                                          to $01A5
@@ -526,7 +454,7 @@ unsigned char mchess[1393] = {
 /* C:\temp27\KIM Uno\sw\tools\WozBaum disasm\WozBaum disasm\dis2.bin (02/09/2014 23:58:36)
    StartOffset: 00000000, EndOffset: 000001F8, Length: 000001F9 */
 #ifdef AVRX
-prog_uchar disasm[504] PROGMEM = {
+prog_uchar disasm[505] PROGMEM = {
 #else
 unsigned char disasm[505] = {
 #endif
@@ -575,7 +503,7 @@ unsigned char disasm[505] = {
 	0xC8
 };
 
-MMAP ROMSegments[5] = {
+MMAP ROMSegments[] = {
   { 0x1800, 1024, rom003 }, // 0xA9, 0xAD, 0x8D, 0xEC, 0x17, 0x20, 0x32, 0x19, 0xA9, 0x27, 0x8D, 0x42,
   { 0x1c00, 1024, rom002 }, // 0x85, 0xF3, 0x68, 0x85, 0xF1, 0x68, 0x85, 0xEF, 0x85, 0xFA, 0x68, 0x85,
   { 0x2000, 504, disasm },  // 0x20, 0x0F, 0x20, 0x20, 0x9E, 0x1E, 0x20, 0x9E, 0x1E, 0x20, 0x9E, 0x1E
@@ -641,6 +569,7 @@ unsigned char branch[42] = {
       - retrieve the byte from RAM/ROM
       - patch it if necessary
       - return it
+*/
 
 uint8_t read6502(uint16_t address) {
   uint8_t tempval = 0;
@@ -904,7 +833,8 @@ void reset6502() {
     cpustatus |= FLAG_CONSTANT;
 }
 
-void initKIM() {                  // this is what user has to enter manually when powering KIM on. Why not do it here.
+void initKIM() 
+{                  // this is what user has to enter manually when powering KIM on. Why not do it here.
 
         uint16_t i;
         
@@ -953,7 +883,8 @@ void initKIM() {                  // this is what user has to enter manually whe
 
 }
 
-void loadTestProgram() {  // Call this from main() if you want a program preloaded. It's the first program from First Book of KIM...
+void loadTestProgram() 
+{  // Call this from main() if you want a program preloaded. It's the first program from First Book of KIM...
         uint8_t i;
         
         // the first program from First Book of KIM...
