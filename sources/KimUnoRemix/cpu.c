@@ -677,71 +677,78 @@ uint8_t read6502(uint16_t address) {
   
   if (address < 0x2000)				// 0x1C00-0x2000 is ROM 002. It needs some intercepting from emulator...
   {
-	if (address == 0x1EA0) // intercept OUTCH (send char to serial)
-	{		serout(a);		// print A to serial
-			pc = 0x1ED3;   // skip subroutine
-			return (0xEA); // and return from subroutine with a fake NOP instruction
-	}
-	if (address == 0x1E65)	//intercept GETCH (get char from serial). used to be 0x1E5A, but intercept *within* routine just before get1 test
-	{		a=getAkey();		// get A from main loop's curkey
-			if (a==0) {
-				pc=0x1E60;	// cycle through GET1 loop for character start, let the 6502 runs through this loop in a fake way
-				return (0xEA);
-			}
-			clearkey();
-			x = RAM[0x00FD];	// x is saved in TMPX by getch routine, we need to get it back in x;
-			pc = 0x1E87;   // skip subroutine
-			return (0xEA); // and return from subroutine with a fake NOP instruction
-	}
-	if (address == 0x1C2A) // intercept DETCPS
-	{		RAM002[0x17F3-0x17C0] = 1;  // just store some random bps delay on TTY in CNTH30
-			RAM002[0x17F2-0x17C0] = 1;	// just store some random bps delay on TTY in CNTL30
-			pc = 0x1C4F;    // skip subroutine
-			return (0xEA); // and return from subroutine with a fake NOP instruction
-	}
-	if (address == 0x1F1F) // intercept SCANDS (display F9,FA,FB)
-	{
-		// light LEDs ---------------------------------------------------------
-		threeHex[0][0]= (RAM[0x00FB] & 0xF0) >> 4;
-		threeHex[0][1]= RAM[0x00FB] & 0xF;
-		threeHex[1][0]= (RAM[0x00FA] & 0xF0) >> 4;
-		threeHex[1][1]= RAM[0x00FA] & 0xF;
-		threeHex[2][0]= (RAM[0x00F9] & 0xF0) >> 4;
-		threeHex[2][1]= RAM[0x00F9] & 0xF;
+    if (address == 0x1EA0) // intercept OUTCH (send char to serial)
+    {
+      serout(a);		// print A to serial
+      pc = 0x1ED3;   // skip subroutine
+      return (0xEA); // and return from subroutine with a fake NOP instruction
+    }
+    if (address == 0x1E65)	//intercept GETCH (get char from serial). used to be 0x1E5A, but intercept *within* routine just before get1 test
+    {
+      a=getAkey();		// get A from main loop's curkey
+      if (a==0) {
+        pc=0x1E60;	// cycle through GET1 loop for character start, let the 6502 runs through this loop in a fake way
+        return (0xEA);
+      }
+      clearkey();
+      x = RAM[0x00FD];	// x is saved in TMPX by getch routine, we need to get it back in x;
+      pc = 0x1E87;   // skip subroutine
+      return (0xEA); // and return from subroutine with a fake NOP instruction
+    }
+    if (address == 0x1C2A) // intercept DETCPS
+    {
+      RAM002[0x17F3-0x17C0] = 1;  // just store some random bps delay on TTY in CNTH30
+      RAM002[0x17F2-0x17C0] = 1;	// just store some random bps delay on TTY in CNTL30
+      pc = 0x1C4F;    // skip subroutine
+      return (0xEA); // and return from subroutine with a fake NOP instruction
+    }
+    if (address == 0x1F1F) // intercept SCANDS (display F9,FA,FB)
+    {
+      // light LEDs ---------------------------------------------------------
+      threeHex[0][0]= (RAM[0x00FB] & 0xF0) >> 4;
+      threeHex[0][1]= RAM[0x00FB] & 0xF;
+      threeHex[1][0]= (RAM[0x00FA] & 0xF0) >> 4;
+      threeHex[1][1]= RAM[0x00FA] & 0xF;
+      threeHex[2][0]= (RAM[0x00F9] & 0xF0) >> 4;
+      threeHex[2][1]= RAM[0x00F9] & 0xF;
                         
-		//#ifndef AVRX      // remove this line to get led digits on serial for AVR too
-		serout(13); serout('>');
-		for (iii=0;iii<3;iii++)
-		{ serouthex(threeHex[iii][0]); serouthex(threeHex[iii][1]); serout(' ');
-		  if (iii==1) serout (' ');
-		}
-		serout('<'); serout(13); 
-		//#endif          // remove this line to get led digits on serial for AVR too
-		#ifdef AVRX
-			driveLEDs();
-		#endif
+      //#ifndef AVRX      // remove this line to get led digits on serial for AVR too
+      serout(13); serout('>');
+      for (iii=0;iii<3;iii++)
+      {
+        serouthex(threeHex[iii][0]); serouthex(threeHex[iii][1]); serout(' ');
+        if (iii==1) serout (' ');
+      }
 
-		pc = 0x1F45;    // skip subroutine part that deals with LEDs
-		return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now go to AK
-	}
-	if (address == 0x1EFE) // intercept AK (check for any key pressed)
-	{
-			a=getAkey();		 // 0 means no key pressed - the important bit - but if a key is pressed is curkey the right value to send back?
-			//a= getKIMkey();
-			if (a==0)	a=0xFF; // that's how AK wants to see 'no key'
-			pc = 0x1F14;    // skip subroutine 
-			return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
-	}
-	if (address == 0x1F6A) // intercept GETKEY (get key from keyboard)
-	{//		serout('-');serout('G');serout('K');serout('-');
-			a=getKIMkey();		 // curkey = the key code in the emulator's keyboard buffer
-			clearkey();
-			pc = 0x1F90;    // skip subroutine part that deals with LEDs
-			return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
-	}
+      serout('<'); serout(13); 
+      //#endif          // remove this line to get led digits on serial for AVR too
+      #ifdef AVRX
+      driveLEDs();
+      #endif
 
-	// if we're still here, it's normal reading from the highest ROM 002.
-        return readMemory( address, ROMSegments );
+      pc = 0x1F45;    // skip subroutine part that deals with LEDs
+      return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now go to AK
+    }
+    
+    if (address == 0x1EFE) // intercept AK (check for any key pressed)
+    {
+      a=getAkey();	 // 0 means no key pressed - the important bit - but if a key is pressed is curkey the right value to send back?
+      //a= getKIMkey();
+      if (a==0)	a=0xFF; // that's how AK wants to see 'no key'
+      pc = 0x1F14;    // skip subroutine 
+      return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
+    }
+
+    if (address == 0x1F6A) // intercept GETKEY (get key from keyboard)
+    {
+      a=getKIMkey();		 // curkey = the key code in the emulator's keyboard buffer
+      clearkey();
+      pc = 0x1F90;    // skip subroutine part that deals with LEDs
+      return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
+      }
+
+      // if we're still here, it's normal reading from the highest ROM 002.
+      return readMemory( address, ROMSegments );
   }
 
   if (address < 0x21F9)              	// 0x2000-0x21F8 is disasm
@@ -750,59 +757,64 @@ uint8_t read6502(uint16_t address) {
   }
   
 
-	if (address >= 0xC000 && address <=0xC571) 	// Read to Microchess ROM between $C000 and $C571
-	{ 
-    	  if (address == 0xC202) 	// intercept C202: Blitz mode should return 0 instead of 8
-			if (blitzMode==1)	// This is the Blitz mode hack from the microchess manual.
-			 	return((uint8_t) 0x00);
+  if (address >= 0xC000 && address <=0xC571) 	// Read to Microchess ROM between $C000 and $C571
+  { 
+    if (address == 0xC202) 	// intercept C202: Blitz mode should return 0 instead of 8
+    if (blitzMode==1)	// This is the Blitz mode hack from the microchess manual.
+      return((uint8_t) 0x00);
 
     return readMemory( address, ROMSegments );
-	}
+  }
+
+  
+  // I/O functions just for Microchess: ---------------------------------------------------
+  // $F003: 0 = no key pressed, 1 key pressed
+  // $F004: input from user
+  // (also, in write6502: $F001: output character to display)
+  if (address == 0xCFF4) 					//simulated keyboard input
+  {
+    tempval = getAkey();
+    clearkey();
+    // translate KIM-1 button codes into ASCII code expected by this version of Microchess
+    switch (tempval) 
+    {
+      case 16:  tempval = 'P';  break;    // PC translated to P
+      case 'F':  tempval = 13;  break;    // F translated to Return
+      case '+': tempval = 'W'; break;    // + translated to W meaning Blitz mode toggle 
+    }
+    
+    if (tempval==0x57) // 'W'. If user presses 'W', he wants to enable Blitz mode. 
+    {
+      if (blitzMode==1) (blitzMode=0);
+      else              (blitzMode=1);
+      serout('>'); serout( (blitzMode==1)?'B':'N' );	serout('<');
+    }
+    return(tempval);
+  }
+  
+  if (address == 0xCFF3) 					//simulated keyboard input 0=no key press, 1 = key press 
+  { 	
+    // light LEDs ---------------------------------------------------------
+    threeHex[0][0]= (RAM[0x00FB] & 0xF0) >> 4;
+    threeHex[0][1]= RAM[0x00FB] & 0xF;
+    threeHex[1][0]= (RAM[0x00FA] & 0xF0) >> 4;
+    threeHex[1][1]= RAM[0x00FA] & 0xF;
+    threeHex[2][0]= (RAM[0x00F9] & 0xF0) >> 4;
+    threeHex[2][1]= RAM[0x00F9] & 0xF;
+    #ifdef AVRX
+    driveLEDs();
+    #endif  
+    
+    return(getAkey()==0?(uint8_t)0:(uint8_t)1);
+  }
 
 
-	// I/O functions just for Microchess: ---------------------------------------------------
-	// $F003: 0 = no key pressed, 1 key pressed
-	// $F004: input from user
-	// (also, in write6502: $F001: output character to display)
-	if (address == 0xCFF4) 					//simulated keyboard input
-	{	tempval = getAkey();
-		clearkey();
-        // translate KIM-1 button codes into ASCII code expected by this version of Microchess
-        switch (tempval) 
-        {	case 16:  tempval = 'P';  break;    // PC translated to P
-			case 'F':  tempval = 13;  break;    // F translated to Return
-			case '+': tempval = 'W'; break;    // + translated to W meaning Blitz mode toggle 
-        }             
-		if (tempval==0x57) // 'W'. If user presses 'W', he wants to enable Blitz mode. 
-		{	if (blitzMode==1) (blitzMode=0);
-			else              (blitzMode=1);
-			serout('>'); serout( (blitzMode==1)?'B':'N' );	serout('<');
-		}
-		return(tempval);
-	}
-	if (address == 0xCFF3) 					//simulated keyboard input 0=no key press, 1 = key press 
-	{ 	
-          // light LEDs ---------------------------------------------------------
-          threeHex[0][0]= (RAM[0x00FB] & 0xF0) >> 4;
-          threeHex[0][1]= RAM[0x00FB] & 0xF;
-          threeHex[1][0]= (RAM[0x00FA] & 0xF0) >> 4;
-          threeHex[1][1]= RAM[0x00FA] & 0xF;
-          threeHex[2][0]= (RAM[0x00F9] & 0xF0) >> 4;
-          threeHex[2][1]= RAM[0x00F9] & 0xF;
-          #ifdef AVRX
-          driveLEDs();
-          #endif  
-          
-	  return(getAkey()==0?(uint8_t)0:(uint8_t)1);
-	}
+  if (address >= 0xFFFA) {				// 6502 reset and interrupt vectors. Reroute to top of ROM002.
+    return readMemory( address, ROMSegments ); 
+  }
 
-
-	if (address >= 0xFFFA) {				// 6502 reset and interrupt vectors. Reroute to top of ROM002.
-              return readMemory( address, ROMSegments ); 
-	}
-
-	serout('%'); serout('9');
-	return (0);	// This should never be reached unless some addressing bug, so return 6502 BRK
+  serout('%'); serout('9');
+  return (0);	// This should never be reached unless some addressing bug, so return 6502 BRK
 }
 
 
