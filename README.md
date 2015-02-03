@@ -7,7 +7,8 @@ This code is intended for the KIM Uno PCB, but actually runs on most newer Ardui
 This "remix" takes the original KIM-1 emulation codebase from Oscar, which and changes some things around for expandability and reusability.  One thing removed is the calculator and floating point library.
 
 Planned differences:
-- Easily configur able ROM layouts
+- Easily configur able ROM layouts (in progress)
+- Simulate RIOT functionality, rather than patching ROM via hooks
 - PC version will updated use the same source files (cpu.c, kimuno.ino) directly
 - Remove ROM hooks for display and keyboard, and simulate real hardware
 - I2C expansion devices: (future)
@@ -16,7 +17,7 @@ Planned differences:
 
 --------
 New features implemented:
-	- New keys to replace ctrl-keys over serial:
+	- New keys to replace ctrl-keys over serial: (mirror mode)
 		- 'g' - GO
 		- 's' - ST
 		- 'r' - RS

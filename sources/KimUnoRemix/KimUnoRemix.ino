@@ -26,7 +26,7 @@ uint8_t eepromProtect=1;  // default is to write-protect EEPROM
 int blitzMode=1;  // microchess status variable. 1 speeds up chess moves (and dumbs down play)
 uint8_t keyboardMode=0;  // start with keyboard in 0: KIM-1 mode. 2: luxury mode
 
-char threeHex[3][2];        // LED display
+char threeHex[3][2];        // seLED display
 
 byte aCols[8] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
 byte aRows[3] = { 9,10,11 };
@@ -194,10 +194,37 @@ void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue) {
 
 }
 
+extern "C" {
+#include "memory.h"
+}
+extern MMAP ROMSegments[];
+
 void setup () {
   Serial.begin ( kBaudRate );
   Serial.println ();
+  
+  /*
+  serialEnable=true;
+  for( int i=0x2000; i< 0x2010 ; i++ )
+  {
+    Serial.print( i, HEX );
+    Serial.print( " " );
+    Serial.println( readMemory( i, ROMSegments ), HEX );
+  }
+  
+  prog_uchar * buf = ROMSegments[2].buffer;
+  
+  for( int j=0 ; j<0x10 ; j++ )
+  {
+    Serial.print( j+0x2000, HEX );
+    Serial.print( " " );
+    
+    Serial.println( pgm_read_byte_near( buf+j ), HEX );
+  }
 
+
+while(1) { delay( 1000 ); }
+*/
   setupUno();
 
   reset6502();
