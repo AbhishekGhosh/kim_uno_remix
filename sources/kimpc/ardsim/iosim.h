@@ -56,6 +56,8 @@
 #define A3	17
 #define A4	18
 #define A5	19
+#define A6	20
+#define A7	21
 #endif
 
 #define kNPins	(19)

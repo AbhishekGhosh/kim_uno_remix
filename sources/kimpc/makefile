@@ -1,39 +1,57 @@
-# Makefile for blub (or other arduino code for desktop)
+# Makefile for ArdSim (Arduino simulatorish) for gcc/desktop
 #
-#  2013-June  Scott Lawrence  yorgle@gmail.com
+#  This entire subproject is under MIT license
+#
+#  Note: this project will let you build for desktop, using the text console as 
+#        the serial port
+#
+#  2015-Feb  Scott Lawrence  yorgle@gmail.com
 #
 
 # Main target
+#  Set this up as the arduino directory name (which is also the .ino filename)
 
-TARG := blub
+ARDMAIN := KimUnoRemix
+ARDUINOSRCDIR := $(shell pwd)/../$(ARDMAIN)
 
-SRCS := Arduino/BLuB/BLuB.cpp
+# target executable name
+TARG := KimRemix
 
-OTHER := \
-	 src/EEExplorer.cpp \
-	src/TinyBasicPlus.cpp
+# list of all sources, starting with the main.ino
+# then going through all of the additional sources 
+# in the arduino directory (if any)
+SRCS := \
+	$(ARDMAIN).cpp \
+	\
+	$(ARDUINOSRCDIR)/cpu.cpp \
+	$(ARDUINOSRCDIR)/memory.cpp 
 
-INCS += -Isrc
+# additional include directories
+INCS += -I$(ARDUINOSRCDIR)
 
 
 ########################################
-# arduino simulator for desktop
+# arduino simulator source for desktop
 
+# list of all .cpp files in the ardsim
 SRCSIM := ardsim/main.cpp \
 	  ardsim/eesim.cpp \
 	  ardsim/sersim.cpp \
 	  ardsim/miscsim.cpp \
-	  ardsim/iosim.cpp 
+	  ardsim/iosim.cpp \
+	  ardsim/Keypad.cpp
 
-INCS += -Iardsim
+INCS += -I$(shell pwd)/ardsim
 	
 
 ########################################
-# build settings and such
 
+# generate a list of .o foles
 OBJS := $(SRCS:%.cpp=%.o) $(SRCSIM:%.cpp=%.o)
 
-CFLAGS += -g -DDESKTOP -Wall -pedantic
+# build flags and such
+CFLAGS += -g -DDESKTOP -Wall -pedantic $(INCS)
+CPPFLAGS += $(CFLAGS) -std=c99
 
 LDFLAGS +=
 
@@ -41,21 +59,24 @@ LIBS +=
 
 
 ################################################################################
-# main build rules
+# main build targets
 
 all: $(TARG)
 
-
+# make object files
 %.o: %.cpp
 	@echo $(CXX) $<
 	@$(CXX) $(CFLAGS) $(DEFS) $(INCS) -c -o $@ $<
 
 
-%.cpp: %.ino
-	@echo use INO as CPP
-	@ln $< $@
+# gcc doesn't know what to do with an INO, so we'll make a 
+# symlink .cpp version of it to use.
+$(ARDMAIN).cpp: $(ARDUINOSRCDIR)/$(ARDMAIN).ino
+	@echo sym-linking INO as a CPP file....
+	@-ln -s $< $@
 
 
+# final build...
 $(TARG): $(OBJS) 
 	@echo Link $@
 	@$(CXX) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
@@ -63,17 +84,19 @@ $(TARG): $(OBJS)
 
 ################################################################################
 
+# clean up the directories
 clean:
 	@echo Remove build files
-	-rm -f $(OBJS) $(TARG) $(TARG).exe src/BLuB.cpp
+	-rm -f $(OBJS) $(TARG) $(TARG).exe $(ARDMAIN).cpp 
 .PHONY: clean
 
 
-test: $(TARG)
-	./$(TARG)
-.PHONY: testa
-
-
+# clean and rebuild
 full: clean
 	make test
 .PHONY: full
+
+# build and run!
+test: $(TARG)
+	./$(TARG)
+.PHONY: test

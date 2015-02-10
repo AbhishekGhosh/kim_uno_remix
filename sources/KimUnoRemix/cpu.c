@@ -9,16 +9,18 @@
   Additional modification by Scott
 */
 
+#include "Arduino.h"
 #include "config.h"
 #include "memory.h"
 
 #ifdef AVRX
-  #define NULL (void *) 0
+  #ifndef NULL
+    #define NULL (void *) 0
+  #endif
   #include <avr/pgmspace.h>
   extern uint8_t eepromread(uint16_t eepromaddress);
   extern void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue);
 #else
-  #include "cpu.h"
   #include <stdio.h>
   #include <stdint.h>
   #pragma warning(disable : 4996) // MS VC2008 does not like unsigned char -> signed char converts.
@@ -66,7 +68,7 @@ uint8_t SSTmode = 0; 			// SST switch in KIM-I: 1 = on.
 #define FLAG_SIGN      0x80
 #define BASE_STACK     0x100
 
-#define saveaccum(n) a = (uint8_t)((n) & 0x00FF)
+#define saveaccum(n) (a = (uint8_t)((n) & 0x00FF))
 
 //flag modifier macros
 #define setcarry() cpustatus |= FLAG_CARRY
@@ -503,7 +505,7 @@ unsigned char disasm[505] = {
 	0xC8
 };
 
-MMAP ROMSegments[] = {
+MMAP ROMSegments[6] = {
   { 0x1800, 1024, rom003 }, // 0xA9, 0xAD, 0x8D, 0xEC, 0x17, 0x20, 0x32, 0x19, 0xA9, 0x27, 0x8D, 0x42,
   { 0x1c00, 1024, rom002 }, // 0x85, 0xF3, 0x68, 0x85, 0xF1, 0x68, 0x85, 0xEF, 0x85, 0xFA, 0x68, 0x85,
   { 0x2000, 504, disasm },  // 0x20, 0x0F, 0x20, 0x20, 0x9E, 0x1E, 0x20, 0x9E, 0x1E, 0x20, 0x9E, 0x1E
@@ -1156,7 +1158,7 @@ void cld() {
     cleardecimal();
 }
 
-void cli() {
+void cli6502() {
     clearinterrupt();
 }
 
@@ -1415,7 +1417,7 @@ void sed() {
     setdecimal();
 }
 
-void sei() {
+void sei6502() {
     setinterrupt();
 }
 
@@ -1790,7 +1792,7 @@ void exec6502(int32_t tickcount) {
 			break;
 		case 0x58:
 			imp();
-			cli();
+			cli6502();
 			break;
 		case 0x59:
 			absy();
@@ -1862,7 +1864,7 @@ void exec6502(int32_t tickcount) {
 			break;
 		case 0x78:
 			imp();
-			sei();
+			sei6502();
 			break;
 		case 0x79:
 			absy();

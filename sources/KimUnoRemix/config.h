@@ -4,10 +4,12 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.4 Feb 3"
+#define kVersionString "v23.6 Feb 9" // be sure to change kDt_Uno also
 /* 
  * Version history
  *
+ v v23.6 - popping +, popping fix
+ * v23.5 - Better LED and Keypad support
  * v23.4 - Additional warnings removed from Arduino build
  * v23.3 - memory.[ch] added, initial integration (phase 1)
  * v23.2 - config.h, updated version string
@@ -34,16 +36,20 @@
 
 /* are we using the stock Common Anode LED or the 11 digit Common Cathode display? */
 /* NOTE: not updated for calculator mode */
-//#define CLedCommonAnode  /* original to KIM-UNO hardware */
-#define CLedCommonCathode
+#undef CLedCommonAnode  /* original to KIM-UNO hardware */
+#undef CLedCommonCathode
+#define CLedNovus        /* novus 750 6.5 digit driver */
 
 /* are we using the stock scanning (3x8) or the keypad library (4x6) */
-//#define CKeyThreeEight  /* original to KIM-UNO hardware */
-#define CKeyFourSix
+#undef CKeyThreeEight  /* original to KIM-UNO hardware */
+
+#undef CUseKeypadLibrary /* all of the below require this */
+#undef CKeyFourSix
+#define CKeyNovus /* Novus calculator */
 
 /* Serial interface baud rate */
 #define kBaudRate (9600)
 
 /* additional debug config */
-//#define DEBUGUNO
+#undef DEBUGUNO
 

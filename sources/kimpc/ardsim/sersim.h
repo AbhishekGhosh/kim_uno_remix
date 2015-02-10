@@ -32,9 +32,23 @@ public:
 	void print( double v, int prec=2); // bits of precision after decimal point
 	void print( std::string v );
 
+	void print( uint8_t v, int fmt=DEC ) // BIN, OCT, DEC, HEX
+	{ this->print( (long)v, fmt ); }
+	void print( uint16_t v, int fmt=DEC ) // BIN, OCT, DEC, HEX
+	{ this->print( (long)v, fmt ); }
+	void print( int v, int fmt=DEC ) // BIN, OCT, DEC, HEX
+	{ this->print( (long)v, fmt ); }
+
 	void println( long v, int fmt=DEC ); // BIN, OCT, DEC, HEX
 	void println( double v, int prec=2 ); // bits of precision after decimal point
 	void println( std::string v );
+	void println( void ) { this->println( "" ); }
+	void println( uint8_t v, int fmt=DEC ) // BIN, OCT, DEC, HEX
+	{ this->println( (long)v, fmt ); }
+	void println( uint16_t v, int fmt=DEC ) // BIN, OCT, DEC, HEX
+	{ this->println( (long)v, fmt ); }
+	void println( int v, int fmt=DEC ) // BIN, OCT, DEC, HEX
+	{ this->println( (long)v, fmt ); }
 
 	void write( long v );
 	void write( std::string v );

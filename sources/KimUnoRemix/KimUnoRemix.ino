@@ -3,9 +3,6 @@
  *  A reworking a bit of Oscar Vermeulen's KimUno project
  *
  *  Scott Lawrence  yorgle@gmail.com
- *
- * Version History
- *  v1.0.1  - first KUR version
  */
 
 #include "Arduino.h"
@@ -15,10 +12,13 @@
   #include <stdint.h>
 #endif
 #include <util/delay.h>
-#ifdef CKeyFourSix
+#ifdef CUseKeypadLibrary
   #include <Keypad.h>
 #endif
+
+extern "C" {
 #include "memory.h"
+}
 
 extern uint8_t SSTmode;
 extern uint8_t useKeyboardLed; // 0 to use Serial port or 1 for HEX digits.
@@ -26,52 +26,59 @@ uint8_t curkey = 0;
 uint8_t eepromProtect=1;  // default is to write-protect EEPROM
 int blitzMode=1;  // microchess status variable. 1 speeds up chess moves (and dumbs down play)
 uint8_t keyboardMode=0;  // start with keyboard in 0: KIM-1 mode. 2: luxury mode
+char shiftKey = 0;  // is the keypad shift key in effect?
 
 char threeHex[3][2];        // seLED display
 
 byte aCols[8] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
-byte aRows[3] = { 9,10,11 };
-byte ledSelect[8] =  { 12, 13, A0, A1,  A2, A3, A7, A4 }; // note that A6 and A7 are not used at present. Can delete them.
+// aCols corrolates with the bits in "dig" below ( dp, a, b, c, d, e, f, g)
 
-byte dig[25] = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" */ 
+byte aRows[3] = { 9,10,11 };
+byte ledSelect[8] =  { 12, 13, A0, A1,  A2, A3, A4, A7 }; // note that A6 and A7 are not used at present. Can delete them.
+
+byte dig[26] = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" */ 
 // bits     _6543210
-// digits   _abcdefg
-          0b01111110,//0  
-          0b00110000,//1
-          0b01101101,//2
-          0b01111001,//3
-          0b00110011,//4
-          0b01011011,//5
-          0b01011111,//6
-          0b01110000,//7
-          0b01111111,//8
-          0b01111011,//9
-          0b01110111,//a
-          0b00011111,//b
-          0b01001110,//c
-          0b00111101,//d
-          0b01001111,//e
-          0b01000111,//f
+// digits   abcdefg
+          B01111110,//0  
+          B00110000,//1
+          B01101101,//2
+          B01111001,//3
+          B00110011,//4
+          B01011011,//5
+          B01011111,//6
+          B01110000,//7
+          B01111111,//8
+          B01111011,//9
+          B01110111,//a
+          B00011111,//b
+          B01001110,//c
+          B00111101,//d
+          B01001111,//e
+          B01000111,//f
           /* all of the above are confirmed identical to the ROM  */
           
           /* additional characters */
-          0b00000001, //g printed as -
-          0b00001000, //h printed as _
-          0b00000000, //i printed as <space>
+          B00000001, //g printed as -
+          B00001000, //h printed as _
+          B00000000, //i printed as <space>
           
           /* some letters we need for text display */
-          0b00010101, // 19 'n'  "s on"
-          0b00011101, // 20 'o'  "s on"/"s off"
-          0b01100111, // 21 'p'  "EEP"
-          0b00000101, // 22 'r'  "E ro"/"E rw"
-          0b00001111, // 23 't'  "sst"
-          0b00101010, // 24 'w'  "rw" (common version for 7 seg)
+          B00010101, // 19 'n'  "s on"
+          B00011101, // 20 'o'  "s on"/"s off"
+          B01100111, // 21 'p'  "EEP"
+          B00000101, // 22 'r'  "E ro"/"E rw"
+          B00001111, // 23 't'  "sst"
+          B00101010, // 24 'w'  "rw" (common version for 7 seg)
+          B00111110, // 25 'U'  "Uno"  
 };
 
+void setupUno();
 
+
+////////////////////////////////////////
 // for text display
 char textHex[3][2];         // for text indicator
-unsigned long textTimeout;
+unsigned long textTimeout; 
 
 // displayText
 //  pass it in one of these values, and the number of ms to display (eg 500)
@@ -82,6 +89,7 @@ unsigned long textTimeout;
 #define kDt_SST_OFF (2)
 #define kDt_EE_RW   (3)
 #define kDt_EE_RO   (4)
+#define kDt_Uno     (5)
 
 void displayText( int which, long timeMillis )
 {
@@ -111,11 +119,21 @@ void displayText( int which, long timeMillis )
     textHex[1][0] = 21; // P
     textHex[2][0] = 22; // R
     textHex[2][1] = 20; // o
+  } else if( which == kDt_Uno ) {
+    textHex[0][0] = 25; // U
+    textHex[0][1] = 19; // n
+    textHex[1][0] = 20; // o
+    textHex[2][0] = 0;  // v 0
+    textHex[2][1] = 6;  //    6
   }
 
   textTimeout = millis() + timeMillis; // 1/2 second
 }
 
+
+////////////////////////////////////////
+// just see if there's any keypress waiting
+uint8_t xkeyPressed();
 
 extern "C" {
   // ---------- in cpu.c ------------------------------
@@ -134,7 +152,6 @@ extern "C" {
   uint8_t getAkey()            { return(curkey);  }
   void clearkey()             { curkey = 0; }
   void printhex(uint16_t val) { if( serialEnable ) { Serial.print(val, HEX); Serial.println(); } }
-
 
   // getKIMkey() translates ASCII keypresses to codes the KIM ROM expects.
   // note that, inefficiently, the KIM Uno board's key codes are first translated to ASCII, then routed through
@@ -180,78 +197,6 @@ uint8_t getKIMkey() {
   
   return(curkey); // any other key, should not be hit but ignored by KIM
 }
-  
-uint8_t eepromread(uint16_t eepromaddress) {
-  return EEPROM.read(eepromaddress);
-}
-
-void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue) {
-  if (eepromProtect==0) {
-    EEPROM.write(eepromaddress, bytevalue);
-  } else {
-    Serial.println(F("ERROR: EEPROM STATE IS WRITE-PROTECTED. HIT '>' TO TOGGLE WRITE PROTECT"));
-    Serial.println(freeRam());
-  }
-}
-
-}
-
-extern "C" {
-#include "memory.h"
-}
-extern MMAP ROMSegments[];
-
-void setup () {
-  Serial.begin ( kBaudRate );
-  Serial.println ();
-  
-  /*
-  serialEnable=true;
-  for( int i=0x2000; i< 0x2010 ; i++ )
-  {
-    Serial.print( i, HEX );
-    Serial.print( " " );
-    Serial.println( readMemory( i, ROMSegments ), HEX );
-  }
-  
-  prog_uchar * buf = ROMSegments[2].buffer;
-  
-  for( int j=0 ; j<0x10 ; j++ )
-  {
-    Serial.print( j+0x2000, HEX );
-    Serial.print( " " );
-    
-    Serial.println( pgm_read_byte_near( buf+j ), HEX );
-  }
-
-
-while(1) { delay( 1000 ); }
-*/
-  setupUno();
-
-  reset6502();
-  initKIM(); // Enters 1c00 in KIM vectors 17FA and 17FE. Might consider doing 17FC as well????????
-  loadTestProgram();
-  
-  Serial.print(F(kVersionString " Free:")); // just a little check, to avoid running out of RAM!
-  Serial.println(freeRam());
-}
-
-void loop () {
-  exec6502(100); //do 100 6502 instructions
-  
-  if (Serial.available())
-  {
-    serialEnable = 1;
-    curkey = Serial.read() & 0x7F;
-    interpretkeys();
-  }
-    
-  scanKeys();  
-  if (xkeyPressed()!=0) //KIM Uno board input?
-    interpretkeys();
-
-  //driveLEDs(); // doing that here would cause a massive slowdown but keeps display on at all times
 }
 
 // check for out of RAM
@@ -309,6 +254,84 @@ void interpretkeys()
   }
 }
 
+  
+extern "C" {
+uint8_t eepromread(uint16_t eepromaddress) {
+  return EEPROM.read(eepromaddress);
+}
+
+void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue) {
+  if (eepromProtect==0) {
+    EEPROM.write(eepromaddress, bytevalue);
+  } else {
+    Serial.println(F("ERROR: EEPROM STATE IS WRITE-PROTECTED. HIT '>' TO TOGGLE WRITE PROTECT"));
+    Serial.println(freeRam());
+  }
+}
+
+}
+
+extern "C" {
+#include "memory.h"
+}
+extern MMAP ROMSegments[];
+
+void setup () {
+  Serial.begin ( kBaudRate );
+  Serial.println ();
+  
+  /*
+  serialEnable=true;
+  for( int i=0x2000; i< 0x2010 ; i++ )
+  {
+    Serial.print( i, HEX );
+    Serial.print( " " );
+    Serial.println( readMemory( i, ROMSegments ), HEX );
+  }
+  
+  prog_uchar * buf = ROMSegments[2].buffer;
+  
+  for( int j=0 ; j<0x10 ; j++ )
+  {
+    Serial.print( j+0x2000, HEX );
+    Serial.print( " " );
+    
+    Serial.println( pgm_read_byte_near( buf+j ), HEX );
+  }
+
+
+while(1) { delay( 1000 ); }
+*/
+  setupUno();
+
+  reset6502();
+  initKIM(); // Enters 1c00 in KIM vectors 17FA and 17FE. Might consider doing 17FC as well????????
+  loadTestProgram();
+  
+  displayText( kDt_Uno, 1000 ); // display version
+
+  Serial.print(F(kVersionString " Free:")); // just a little check, to avoid running out of RAM!
+  Serial.println(freeRam());
+}
+
+void loop () {
+  exec6502(100); //do 100 6502 instructions
+  
+  if (Serial.available())
+  {
+    serialEnable = 1;
+    curkey = Serial.read() & 0x7F;
+    interpretkeys();
+  }
+    
+  scanKeys();  
+  if (xkeyPressed()!=0) //KIM Uno board input?
+    interpretkeys();
+
+  //driveLEDs(); // doing that here would cause a massive slowdown but keeps display on at all times
+}
+
+
 
 // =================================================================================================
 // KIM Uno Board functions are bolted on from here
@@ -347,27 +370,86 @@ void driveLEDs()
   // 1. initialse for driving the 6 (now 8) 7segment LEDs
   // ledSelect pins drive common anode for [all segments] in [one of 6 LEDs]
   for (led=0;led<7;led++)
-  { pinMode(ledSelect[led], OUTPUT);  // set led pins to output
+  { 
+    pinMode(ledSelect[led], OUTPUT);  // set led pins to output
     digitalWrite(ledSelect[led], LOW); // LOW = not lit
   }
+  
+  for(col=0 ; col<8 ; i++ )
+  {
+    pinMode( aCols[col], OUTPUT );
+    digitalWrite( aCols[col], LOW );
+  }
+  
   // 2. switch column pins to output mode
   // column pins are the cathode for the LED segments
   // lame code to cycle through the 3 bytes of 2 digits each = 6 leds
+  
   for (byt=0;byt<3;byt++)
+  {
     for (i=0;i<2;i++)
     {
       ledNo=byt*2+i;
       for (col=0;col<8;col++)  
-      {  pinMode(aCols[col], OUTPUT);           // set pin to output
-         //currentBit = (1<<(6-col));             // isolate the current bit in loop
-         currentBit = (1<<(7-col));             // isolate the current bit in loop
-         bitOn = (currentBit&dig[threeHex[byt][i]])==0;  
-         digitalWrite(aCols[col], bitOn);       // set the bit
+      {
+        pinMode(aCols[col], OUTPUT);           // set pin to output
+        //currentBit = (1<<(6-col));             // isolate the current bit in loop
+        currentBit = (1<<(7-col));             // isolate the current bit in loop
+        bitOn = (currentBit&dig[threeHex[byt][i]])==0;  
+        digitalWrite(aCols[col], bitOn);       // set the bit
       }
       digitalWrite(ledSelect[ledNo], HIGH); // Light this LED 
+      
+      digitalWrite( ledSelect[1], HIGH );
+      digitalWrite( ledSelect[2], LOW );
+      digitalWrite( aCols[2], LOW );
+      digitalWrite( aCols[3], HIGH );
+
+
       delay(2);
       digitalWrite(ledSelect[ledNo], LOW); // unLight this LED
     }
+  }
+#ifdef NEVER
+  
+  byte b;
+  byte digit=0;
+  for( byte i = 0 ; i<3 ; i++ )
+  {
+    for( byte j = 0 ; j<2 ; j++ )
+    {
+      // get the current byte to display (and display text if applicable)
+      if( millis() < (long)textTimeout ) {
+        b = textHex[i][j];
+      } else {
+        b = threeHex[i][j];
+      }
+
+      // get the segment mask
+      byte s = dig[b];
+
+      // select just this digit
+      for( int d=0 ; d<8 ; d++ ) {
+        pinMode( ledSelect[d], OUTPUT ); // make sure we're output
+        digitalWrite( ledSelect[d], (d==digit)?HIGH:LOW ); /* difference here for cathode/anode */
+      }
+
+      // now go through and turn on/off the right segments
+      for( byte col =0 ; col <8 ; col++ )
+      { 
+        pinMode( aCols[col], OUTPUT );
+        digitalWrite( aCols[col], (s & (0x80>>col))? LOW : HIGH ); /* difference here for cathode/anode */
+      }
+      
+      // wait a moment...
+      delay( 3 );
+
+      // go to the next display digit
+      digit++;
+    }
+  }
+  #endif
+
 } // end of function
 #endif
 
@@ -383,7 +465,7 @@ void driveLEDs()
     for( byte j = 0 ; j<2 ; j++ )
     {
       // get the current byte to display (and display text if applicable)
-      if( millis() < textTimeout ) {
+      if( millis() < (long)textTimeout ) {
         b = textHex[i][j];
       } else {
         b = threeHex[i][j];
@@ -395,7 +477,7 @@ void driveLEDs()
       // select just this digit
       for( int d=0 ; d<8 ; d++ ) {
         pinMode( ledSelect[d], OUTPUT ); // make sure we're output
-        digitalWrite( ledSelect[d], (d==digit)?LOW:HIGH );
+        digitalWrite( ledSelect[d], ((d)==digit)?LOW:HIGH );
       }
 
       // now go through and turn on/off the right segments
@@ -406,7 +488,7 @@ void driveLEDs()
       }
 
       // wait a moment...
-      delay( 3 );
+      delay( 2 );
 
       // go to the next display digit
       digit++;
@@ -414,6 +496,81 @@ void driveLEDs()
   }
 }
 #endif
+
+#ifdef CLedNovus
+
+// display a bitpattern, map it to segments
+void displayPattern( int digit, int pattern )
+{
+  // clear all segments
+  for( int i=0 ; i<=8 ; i++ ) /* segment a .. segment f, dp */
+    digitalWrite( aCols[i], LOW );
+
+  // clear all digits
+  for( int j=0 ; j <=7 ; j++ ) /* digit 0 .. digit 6 */
+    digitalWrite( ledSelect[j], HIGH );
+
+  // enable the right segments
+  if( pattern & 0x80 ) digitalWrite( aCols[0], HIGH ); // dp
+  if( pattern & 0x40 ) digitalWrite( aCols[1], HIGH ); // a
+  if( pattern & 0x20 ) digitalWrite( aCols[2], HIGH ); // b
+  if( pattern & 0x10 ) digitalWrite( aCols[3], HIGH ); // c
+  if( pattern & 0x08 ) digitalWrite( aCols[4], HIGH ); // d
+  if( pattern & 0x04 ) digitalWrite( aCols[5], HIGH ); // e
+  if( pattern & 0x02 ) digitalWrite( aCols[6], HIGH ); // f
+  if( pattern & 0x01 ) digitalWrite( aCols[7], HIGH ); // g
+
+  // enable this digit
+  digitalWrite( ledSelect[digit], LOW );
+  delay( 2 );
+  digitalWrite( ledSelect[digit], HIGH );
+}
+
+void driveLEDs()
+{
+  for( int i=0 ; i<=8 ; i++ ) /* segment a .. segment f, dp */
+  {
+    pinMode( aCols[i], OUTPUT );
+    digitalWrite( aCols[i], LOW );
+  }
+
+  for( int j=0 ; j <=7 ; j++ ) /* digit 0 .. digit 6 */
+  {
+    pinMode( ledSelect[j], OUTPUT );
+    digitalWrite( ledSelect[j], LOW );
+  }
+
+  byte displayText = 0;
+  byte pattern = 0;
+  
+  for( int digit =0 ; digit < 7 ; digit++ )
+  {
+    if( digit == 0 ) pattern = 0x00; // nothing  -- half dig
+    if( millis() >= (long)textTimeout ) { // not elegant, but good for now
+      if( digit == 1 ) pattern = dig[threeHex[0][0]];
+      if( digit == 2 ) pattern = dig[threeHex[0][1]];
+      if( digit == 3 ) pattern = dig[threeHex[1][0]];
+      if( digit == 4 ) pattern = dig[threeHex[1][1]];
+      if( digit == 5 ) pattern = dig[threeHex[2][0]];
+      if( digit == 6 ) pattern = dig[threeHex[2][1]];
+    } else {
+      if( digit == 1 ) pattern = dig[textHex[0][0]];
+      if( digit == 2 ) pattern = dig[textHex[0][1]];
+      if( digit == 3 ) pattern = dig[textHex[1][0]];
+      if( digit == 4 ) pattern = dig[textHex[1][1]];
+      if( digit == 5 ) pattern = dig[textHex[2][0]];
+      if( digit == 6 ) pattern = dig[textHex[2][1]];
+    }
+    
+    // patch the digits
+    if( digit == 0 && shiftKey ) pattern |= 0x02;  // shift indicator
+    if( digit == 4 ) pattern |= 0x80;  // decimal point separator
+    
+    displayPattern( digit, pattern );
+  }
+}
+#endif
+
 } // end of C segment
 
 
@@ -449,6 +606,7 @@ uint8_t parseChar(uint8_t n) //  parse keycode to return its ASCII code
     case	18	: c = 	7;   break;	// GO
     case	17	: c =   16;  break;	// PC
     case	16	: c = (SSTmode==0?']':'[');  break; // 	SST toggle
+    default             : c = n; // pass-through
   }
   return c;
 }
@@ -461,9 +619,11 @@ uint8_t xkeyPressed()    // just see if there's any keypress waiting
 
 extern "C" {  // the extern C is to make function accessible from within cpu.c
 
+
 #ifdef CKeyThreeEight
 void scanKeys() 
 {
+  return;
   int led,row,col, noKeysScanned;
   static int keyCode = -1, prevKey = 0;
   static unsigned long timeFirstPressed = 0;
@@ -614,6 +774,213 @@ void scanKeys()
     }
   }
 }
+#endif
+
+#ifdef CKeyNovus
+
+// keypad definition
+#define kROWS (3)
+#define kCOLS (7)
+byte rowPins[kROWS] = { 9, 10, 11 }; //connect to the row pinouts of the keypad
+byte colPins[kCOLS] = { 2, 3, 4, 5, 6, 7, 8 }; //connect to the column pinouts of the keypad
+#define kNoPress ('Z')
+
+/* NOVUS 750 keypad is layed out like this:
+   (sw)        /
+   7   8   9   x
+   4   5   6   -
+   1   2   3   +
+   CE  0   .   =
+   
+   with the "default" keymap being defined as such:
+        { 'c', ' ', '0' },
+        { '=', '7', '1' },
+        { '-', '8', '2' },
+        { '+', '9', '3' },
+        { ' ', '.', '4' },
+        { '$', ' ', '5' },
+        { 'x', ' ', '6' }
+        
+   key definitions we can use:
+       '0'-'9', 'A'-'F' for digits
+        7: GO   20: STEP  18: RESET  't': SST TOGGLE
+        1: AD    4: DA    16: PC     '+': PLUS
+        '$': shift toggle
+        '>': EEPROM WRITE MODE TOGGLE
+        
+   So, we'll define our layouts:
+       [regular]          [shifted]
+     (sw)        $      (sw)        $
+     C   D   E   F      GO  ST  RS  SST
+     8   9   A   B      AD  DA  PC  +
+     4   5   6   7      EE
+     0   1   2   3      
+*/
+
+char lookup[kCOLS][kROWS] =
+{
+  { '0', ' ', '1' },
+  { '3', 'C', '4' },
+  { 'B', 'D', '5' },
+  { '7', 'E', '6' },
+  { ' ', '2', '8' },
+  { '$', ' ', '9' },
+  { 'F', ' ', 'A' }
+};
+
+char lookup_shifted[kCOLS][kROWS] = 
+{
+  { ' ', ' ', ' ' },
+  { ' ',  7 , '>' },
+  { '#',  20, ' ' }, // # is the popping version of +
+  { '+',  18, ' ' },
+  { ' ', ' ',  1  },
+  { '$', ' ',  4  },
+  { 't', ' ',  16 }
+};
+
+#define kLEDs (7)
+//                      p   a   b   c    d   e   f  g
+char   segments[8] = { A5,  2,  3,  4,   5,  6,  7, 8 };
+char digits[kLEDs] = { 12, 13, 14, 15, 16, 17, 18    };
+
+void initKeypad()
+{
+    for( int x=0 ; x<kLEDs ; x++ )
+  {
+    // output, low - press causes all digits to light
+    // input, low/high - press causes one dight to light
+    // output, high - streaming things
+    pinMode( digits[x], INPUT );
+    digitalWrite( digits[x], LOW );
+  }
+
+  for( int x=0 ; x<kROWS ; x++ )
+  {
+    pinMode( rowPins[x], OUTPUT );
+    digitalWrite( rowPins[x], HIGH );
+  }
+  for( int x=0 ; x<kCOLS ; x++ )
+  {
+    pinMode( colPins[x], INPUT );
+    digitalWrite( colPins[x], HIGH );
+  }
+}
+
+
+char scanKeypad()
+{
+  initKeypad();
+  for( int r=0 ; r<kROWS ; r++ )
+  {
+    digitalWrite( rowPins[r], LOW );
+    for( int c=0 ; c<kCOLS ; c++ )
+    {
+      if( digitalRead( colPins[c] ) == LOW ) {
+        if( shiftKey ) {
+          return lookup_shifted[c][r];
+        } else {
+          return lookup[c][r];
+        }
+      }
+    }
+    digitalWrite( rowPins[r], HIGH );
+  }
+
+  return kNoPress;
+}
+
+// wrap all of that with an event thingy
+#define kEventIdle     (0)
+#define kEventPressed  (1)
+#define kEventPressing (2)
+#define kEventRelease  (3)
+
+char currentKey = kNoPress;
+char previousKey = kNoPress;
+char keyEvent = kEventIdle;
+
+char scanKeypadEvents()
+{
+  char ret = 0;
+  currentKey = scanKeypad();
+  keyEvent = kEventIdle;
+
+  if( currentKey != kNoPress ) {
+    keyEvent = kEventPressing; // Pressing still
+    ret = currentKey;
+  }
+
+  if( currentKey != previousKey ) {
+    if( currentKey == kNoPress ) {
+      keyEvent = kEventRelease; // key just released
+      ret = previousKey;
+    } else {
+      keyEvent = kEventPressed; // key just pressed
+      ret = currentKey;
+    }
+  }
+  previousKey = currentKey;
+  return ret;
+}
+
+void scanKeys()
+{
+  char ke = scanKeypadEvents();
+  static char popShift = 0;
+  
+  curkey = 0;
+  switch( keyEvent ) {
+    case( kEventPressed ):
+      switch( ke ) {
+        case( '$' ):   shiftKey ^= 1; break;
+        
+        /* the following "pop" the shift key out */
+        case( '#' ):
+          ke = '+';  // and adjust it
+        case( 1 ): // AD
+        case( 4 ): // DA
+        case( 18 ): // RS
+        case( 't' ): // SST toggle
+        case( 16 ):  // PC
+        case( '>' ): // EEPROM TOGGLE
+          popShift= 0;
+          /* fall through */
+        default:
+          curkey = ke;
+      }
+      break;
+
+    case( kEventRelease ):
+      // we need to do it this way, otherwise it gets confused and re-scans
+      // the single press, giving a faulty ghost repress
+      if( popShift ) {
+        popShift = 0;
+        shiftKey = 0;
+      }
+    
+    case( kEventPressing ):
+    case( kEventIdle ):
+    default:
+      break;
+  }
+  // check for text display
+  switch( curkey ) {
+    case( 't' ):
+      curkey = SSTmode==0?']':'[';
+      if( SSTmode == 0 ) displayText( kDt_SST_ON, 500 );
+      else               displayText( kDt_SST_OFF, 500 );
+      break;
+    case( '>' ):
+      if( eepromProtect == 0 ) displayText( kDt_EE_RO, 500 );
+      else                     displayText( kDt_EE_RW, 500 );
+      break;
+    default:
+      break;
+  }
+      
+}
+
 #endif
 } // end C segment
 

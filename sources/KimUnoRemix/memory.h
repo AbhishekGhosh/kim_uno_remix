@@ -3,11 +3,16 @@
  *  encapsulate memory access, ROM and RAM code. (ROM read directly from PROGMEM on AVR)
  */
 
+#include <Arduino.h>
 #include <stdint.h>
+
+#ifndef AVRX
 #include <avr/pgmspace.h>
+#endif
 
 #ifndef __MEMORY_H__
 #define __MEMORY_H__
+
 /* the basic idea is:
   ROM - data contained in PROGMEM
   RAM - data contained in RAM array
@@ -44,6 +49,7 @@ uint8_t writeMemory( uint16_t address, uint8_t data, MMAP * segments ); /* write
 uint8_t readMemory( uint16_t address, MMAP * segments ); /* read from RAM or PROGMEM ROM */
 
 void copyRamSegments( MMAP * segs ); /* Copy the list of segments from PROGMEM into RAM at the specified locations */
+
 
 #endif /* __MEMORY_H__*/
 

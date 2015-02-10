@@ -80,6 +80,17 @@ int sersim::read( void )
 #define HEX	(16)
 #endif
 
+/*
+void sersim::print( uint8_t v, int fmt=DEC ) // BIN, OCT, DEC, HEX
+{
+	this->print( (long) v, fmt );
+}
+
+void sersim::print( uint16_t v, int fmt=DEC ) // BIN, OCT, DEC, HEX
+{
+	this->print( (long) v, fmt );
+}
+*/
 
 void sersim::print( long v, int fmt ) // BIN, OCT, DEC, HEX
 {
@@ -127,6 +138,19 @@ void sersim::print( std::string v )
 {
 	std::cout << v << std::flush;
 }
+
+
+/*
+void sersim::println( uint8_t v, int fmt=DEC ) // BIN, OCT, DEC, HEX
+{
+	this->println( (long) v, fmt );
+}
+
+void sersim::println( uint16_t v, int fmt=DEC ) // BIN, OCT, DEC, HEX
+{
+	this->println( (long) v, fmt );
+}
+*/
 
 void sersim::println( long v, int fmt ) // BIN, OCT, DEC, HEX
 {
