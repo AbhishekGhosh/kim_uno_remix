@@ -36,7 +36,7 @@ byte aCols[8] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to
 byte aRows[3] = { 9,10,11 };
 byte ledSelect[8] =  { 12, 13, A0, A1,  A2, A3, A4, A7 }; // note that A6 and A7 are not used at present. Can delete them.
 
-byte dig[26] = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" */ 
+byte dig[30] = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" */ 
 // bits     _6543210
 // digits   abcdefg
           B01111110,//0  
@@ -68,9 +68,14 @@ byte dig[26] = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" 
           B01100111, // 21 'p'  "EEP"
           B00000101, // 22 'r'  "E ro"/"E rw"
           B00001111, // 23 't'  "sst"
-          B00101010, // 24 'w'  "rw" (common version for 7 seg)
-          B00111110, // 25 'U'  "Uno"  
+          B00111110, // 24 'U'  "Uno"  
+          B00101010, // 25 'w'  "rw" (common version for 7 seg)
+          B00001101, // 26 'c'
+          B00010111, // 27 'h'
+          B00100000, // 28 'i'
+          B01111101, // 29 'a'
 };
+
 
 void setupUno();
 
@@ -90,6 +95,8 @@ unsigned long textTimeout;
 #define kDt_EE_RW   (3)
 #define kDt_EE_RO   (4)
 #define kDt_Uno     (5)
+#define kDt_Scott   (6)
+#define kDt_Oscar   (7)
 
 void displayText( int which, long timeMillis )
 {
@@ -112,7 +119,7 @@ void displayText( int which, long timeMillis )
     textHex[0][1] = 14; // E
     textHex[1][0] = 21; // P
     textHex[2][0] = 22; // R
-    textHex[2][1] = 24; // W
+    textHex[2][1] = 25; // W
   } else if( which ==  kDt_EE_RO ) {
     textHex[0][0] = 14; // E
     textHex[0][1] = 14; // E
@@ -120,11 +127,25 @@ void displayText( int which, long timeMillis )
     textHex[2][0] = 22; // R
     textHex[2][1] = 20; // o
   } else if( which == kDt_Uno ) {
-    textHex[0][0] = 25; // U
+    textHex[0][0] = 24; // U
     textHex[0][1] = 19; // n
     textHex[1][0] = 20; // o
     textHex[2][0] = 0;  // v 0
     textHex[2][1] = 6;  //    6
+  } else if( which == kDt_Scott ) {
+    textHex[0][0] = 5; // s
+    textHex[0][1] = 26; // c
+    textHex[1][0] = 20; // o
+    textHex[1][1] = 23; // t
+    textHex[2][0] = 23; // t
+    textHex[2][1] = 18;
+  } else if( which == kDt_Oscar ) {
+    textHex[0][0] = 20; // o
+    textHex[0][1] = 5; // s
+    textHex[1][0] = 26; // c
+    textHex[1][1] = 29; // a
+    textHex[2][0] = 22; // r
+    textHex[2][1] = 18;
   }
 
   textTimeout = millis() + timeMillis; // 1/2 second
@@ -830,7 +851,7 @@ char lookup[kCOLS][kROWS] =
 
 char lookup_shifted[kCOLS][kROWS] = 
 {
-  { ' ', ' ', ' ' },
+  { 's', ' ', 'o' }, // s = scott, o = oscar
   { ' ',  7 , '>' },
   { '#',  20, ' ' }, // # is the popping version of +
   { '+',  18, ' ' },
@@ -933,7 +954,9 @@ void scanKeys()
   switch( keyEvent ) {
     case( kEventPressed ):
       switch( ke ) {
-        case( '$' ):   shiftKey ^= 1; break;
+        case( '$' ): shiftKey ^= 1; break;
+        case( 's' ): displayText( kDt_Scott, 1000 ); break;
+        case( 'o' ): displayText( kDt_Oscar, 1000 ); break;
         
         /* the following "pop" the shift key out */
         case( '#' ):
@@ -944,7 +967,7 @@ void scanKeys()
         case( 't' ): // SST toggle
         case( 16 ):  // PC
         case( '>' ): // EEPROM TOGGLE
-          popShift= 0;
+          popShift= 1;
           /* fall through */
         default:
           curkey = ke;
