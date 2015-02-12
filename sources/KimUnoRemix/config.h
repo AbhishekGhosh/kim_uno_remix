@@ -4,11 +4,12 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.6 Feb 9" // be sure to change kDt_Uno also
+#define kVersionString "v23.7 Feb 12" // be sure to change kDt_Uno also
 /* 
  * Version history
  *
- v v23.6 - popping +, popping fix
+ * v23.7 - extracting out keys and display
+ * v23.6 - popping +, popping fix
  * v23.5 - Better LED and Keypad support
  * v23.4 - Additional warnings removed from Arduino build
  * v23.3 - memory.[ch] added, initial integration (phase 1)
@@ -34,18 +35,38 @@
 /* in kimuno.ino, this only relates to some code segments that are shared with PC version */
 #define AVRX
 
-/* are we using the stock Common Anode LED or the 11 digit Common Cathode display? */
-/* NOTE: not updated for calculator mode */
-#undef CLedCommonAnode  /* original to KIM-UNO hardware */
-#undef CLedCommonCathode
-#define CLedNovus        /* novus 750 6.5 digit driver */
+/* ****************************************************************************************** */
+/* Display */
+
+/* #define this if it's a common anode display (base KIM Uno board) */
+#define kDisplayIsCommonAnode
+/* OR */
+/* #define this if it's a common cathode display (Novus) */
+#undef kDisplayIsCommonCathode 
+
+/*   Novus uses 1  5  0  4 */
+/* KIM UNO uses 0  5 -1 -1 */
+#define kDisplayAddrOffset  (0)  /* starting segment for address (0 indexed) */
+#define kDisplayDataOffset  (5)  /* starting segment for data 0 indeced */
+
+/* these are for optional display, eg shift indicator, separator dot */
+#define kDisplayShift       (-1)  /* where to display the shift */
+#define kDisplayDot         (-1)  /* where to display the dot */
+
+
+/* ****************************************************************************************** */
+/* Keypad */
 
 /* are we using the stock scanning (3x8) or the keypad library (4x6) */
-#undef CKeyThreeEight  /* original to KIM-UNO hardware */
+#define CKeyThreeEight  /* original to KIM-UNO hardware */
 
 #undef CUseKeypadLibrary /* all of the below require this */
 #undef CKeyFourSix
-#define CKeyNovus /* Novus calculator */
+#undef CKeyNovus /* Novus calculator */
+
+
+/* ****************************************************************************************** */
+/* Serial */
 
 /* Serial interface baud rate */
 #define kBaudRate (9600)
