@@ -14,13 +14,23 @@ char shiftKey = 0;  // is the keypad shift key in effect?
 char threeHex[3][2];        // seLED display
 char textHex[7];
 
+// For all of this, we'll assume that they're wired correctly
+// ledSegments corrolates with the bits in "segmentLookup" below ( dp, a, b, c, d, e, f, g)
 const byte ledSegments[8] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
-// ledSegments corrolates with the bits in "dig" below ( dp, a, b, c, d, e, f, g)
+#define kDisplayDP   (0x80) /* which bit is the decimal point -- needs to be 0x80 */
 
+
+/* some of the displays may be wired incorrectly... */
+#ifdef kPlatformKIMUno
 const byte ledDigits[8] =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
 // notice that the displays are ordred on the KIM UNO board as:
 // led1 led2 led3 led4   led7 led5 led6 (led8)    (led8 is not connected)
 //  D12  D13  A0   A1     A4   A2   A3    (A7)
+#endif
+
+#ifdef kPlatformNovus750
+const byte ledDigits[8] =  { 12, 13, A0, A1,  A2, A3, A4, A7 };
+#endif
 
 
 byte segmentLookup[31] = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" */ 
@@ -84,67 +94,57 @@ unsigned long textTimeout;
 
 void displayText( int which, long timeMillis )
 {
+  int x = 0;
   for( int x = 0 ; x<8 ; x++ ) 
     textHex[x] = 18; // ' ' space
 
   if( which == kDt_SST_ON ) {
-    textHex[0] = 5;  // 5
     textHex[1] = 5;  // 5
-    textHex[2] = 23; // t
-    textHex[4] = 20; // o
-    textHex[5] = 19; // n
+    textHex[2] = 5;  // 5
+    textHex[3] = 23; // t
+    textHex[5] = 20; // o
+    textHex[6] = 19; // n
   } else if( which == kDt_SST_OFF ) {
-    textHex[0] = 5;  // 5
     textHex[1] = 5;  // 5
-    textHex[2] = 23; // t
+    textHex[2] = 5;  // 5
+    textHex[3] = 23; // t
     textHex[4] = 20; // o
     textHex[5] = 15; // f
     textHex[6] = 15; // f
   } else if( which ==  kDt_EE_RW ) {
-    textHex[0] = 14; // E
     textHex[1] = 14; // E
-    textHex[2] = 21; // P
-    textHex[4] = 22; // R
-    textHex[5] = 25; // W
+    textHex[2] = 14; // E
+    textHex[3] = 21; // P
+    textHex[5] = 22; // R
+    textHex[6] = 25; // W
   } else if( which ==  kDt_EE_RO ) {
-    textHex[0] = 14; // E
     textHex[1] = 14; // E
-    textHex[2] = 21; // P
-    textHex[4] = 22; // R
-    textHex[5] = 20; // o
+    textHex[2] = 14; // E
+    textHex[3] = 21; // P
+    textHex[5] = 22; // R
+    textHex[6] = 20; // o
   } else if( which == kDt_Uno ) {
-    textHex[0] = 24; // U
-    textHex[1] = 19; // n
-    textHex[2] = 20; // o
-    textHex[3] = 30; // .
-    textHex[4] = 0;  // 0
-    textHex[5] = 7;  //   7
+    textHex[1] = 24; // U
+    textHex[2] = 19; // n
+    textHex[3] = 20; // o
+    textHex[4] = 18 | kDisplayDP;
+    textHex[5] = kVersionMinorA;  // 0
+    textHex[6] = kVersionMinorB;  //   7
   } else if( which == kDt_Scott ) {
-    textHex[0] = 5;  // s
-    textHex[1] = 26; // c
-    textHex[2] = 20; // o
-    textHex[3] = 23; // t
-    textHex[4] = 23; // t
-  } else if( which == kDt_Oscar ) {
-    textHex[0] = 20; // o
     textHex[1] = 5;  // s
     textHex[2] = 26; // c
-    textHex[3] = 29; // a
-    textHex[4] = 22; // r
+    textHex[3] = 20; // o
+    textHex[4] = 23; // t
+    textHex[5] = 23; // t
+  } else if( which == kDt_Oscar ) {
+    textHex[1] = 20; // o
+    textHex[2] = 5;  // s
+    textHex[3] = 26; // c
+    textHex[4] = 29; // a
+    textHex[5] = 22; // r
   }
 
   textTimeout = millis() + timeMillis; // when to switch back
-}
-
-void disableLEDs()
-{
-  for (int led=0;led<8;led++)
-  { 
-    pinMode(ledDigits[led], INPUT);  // set led pins to input
-                                  // not really necessary, just to stop them
-                                 // from driving either high or low.
-    digitalWrite(ledDigits[led], HIGH); // Use builtin pullup resistors
-  }
 }
 
 
@@ -184,19 +184,20 @@ void displayPattern( int digit, int pattern )
 
   // enable this digit
   digitalWrite( ledDigits[digit], kEnableDigit );
-  delay( 2 );
+  delay( 1 );
   digitalWrite( ledDigits[digit], kClearDigit );
 }
 
 void driveLEDs()
 {
-  for( int i=0 ; i<=8 ; i++ ) /* segment a .. segment f, dp */
+  int i,j;
+  for( i=0 ; i<=8 ; i++ ) /* segment a .. segment f, dp */
   {
     pinMode( ledSegments[i], OUTPUT );
     digitalWrite( ledSegments[i], LOW );
   }
 
-  for( int j=0 ; j <=7 ; j++ ) /* digit 0 .. digit 6 */
+  for( j=0 ; j <=7 ; j++ ) /* digit 0 .. digit 6 */
   {
     pinMode( ledDigits[j], OUTPUT );
     digitalWrite( ledDigits[j], LOW );
@@ -218,12 +219,16 @@ void driveLEDs()
     else 
     {
       // display the temporary text
-      pattern = segmentLookup[textHex[digit]];
+      i = textHex[digit] & 0x7F; // digit to display, mask off dpoint bit (0x80)
+      
+      pattern = (segmentLookup[ i ]) | (textHex[digit] & 0x80); // add the dp bit back on
     }
     
-    // patch the digits
-    if( (digit == kDisplayShift)  &&  shiftKey ) pattern |= 0x02;  // shift indicator
-    if( digit == kDisplayDot ) pattern |= 0x80;  // decimal point separator
+    // patch the digits (only when viewing the whole thing )
+    if( millis() >= (long)textTimeout ) {
+      if( (digit == kDisplayShift)  &&  shiftKey ) pattern |= 0x02;  // shift indicator
+      if( digit == kDisplayDot ) pattern |= 0x80;  // decimal point separator
+    }
     
     displayPattern( digit, pattern );
   }

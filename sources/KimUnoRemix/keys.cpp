@@ -7,62 +7,27 @@
  
 #include "Arduino.h"
 #include "config.h"
-#include "display.h" 
+#include "keys.h"
+#include "display.h"
 
 extern "C" {
+  
+uint8_t curkey = 0;
 
 extern uint8_t serialEnable;
-
-byte aCols[8] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
-
-byte aRows[3] = { 9,10,11 };
-
-
 extern uint8_t SSTmode;
-extern uint8_t useKeyboardLed; // 0 to use Serial port or 1 for HEX digits.
-uint8_t curkey = 0;
-uint8_t eepromProtect=1;  // default is to write-protect EEPROM
-int blitzMode=1;  // microchess status variable. 1 speeds up chess moves (and dumbs down play)
-uint8_t keyboardMode=0;  // start with keyboard in 0: KIM-1 mode. 2: luxury mode
+extern uint8_t eepromProtect;  // default is to write-protect EEPROM
 
-  // ---------- in cpu.c ------------------------------
-  void exec6502(int32_t tickcount);
-  void reset6502();
-  void nmi6502();
-  void initKIM(void);
-  void loadTestProgram(void);
-  extern void driveLEDs();
-  void scanKeys(); 
+uint8_t getAkey()   { return(curkey);  }
+void clearkey()     { curkey = 0; }
 
-
-  uint8_t getAkey()            { return(curkey);  }
-  void clearkey()             { curkey = 0; }
 
   // getKIMkey() translates ASCII keypresses to codes the KIM ROM expects.
   // note that, inefficiently, the KIM Uno board's key codes are first translated to ASCII, then routed through
   // here just like key presses from the ASCII serial port are. That's inefficient but left like this
   // for hysterical raisins.
   
-void initKeypad()
-{
-  int i;
-  // --------- initialse for scanning keyboard matrix -----------------
-  // set columns to input with pullups
-  for (i=0;i<8;i++)
-  {  pinMode(aCols[i], INPUT);           // set pin to input
-     digitalWrite(aCols[i], HIGH);       // turn on pullup resistors  
-  }
-  // set rows to output, and set them High to be in Neutral position
-  for (i=0;i<3;i++)
-  {  pinMode(aRows[i], OUTPUT);           // set pin to output
-     digitalWrite(aRows[i], HIGH);       // set to high
-  }
-
-}
-  
 uint8_t getKIMkey() {
-  //Serial.print('#');  Serial.print(curkey);  Serial.print('#');
-
   if (curkey==0)
     return (0xFF);	//0xFF: illegal keycode 
 
@@ -89,12 +54,10 @@ uint8_t getKIMkey() {
   // curkey==ctrlT for ST key (/NMI) is handled in main loop!
   
   // additional control press shortcuts
-  if( keyboardMode == 0 ) {
-    if( curkey == 'g' ) return( 0x07 ); /* GO */
-    if( curkey == 'l' ) return( 0x10 ); /* AD - address Location */
-    if( curkey == 'v' ) return( 0x11 ); /* DA - data Value */
-    if( curkey == 'p' ) return( 0x14 ); /* PC */
-  }
+  if( curkey == 'g' ) return( 0x07 ); /* GO */
+  if( curkey == 'l' ) return( 0x10 ); /* AD - address Location */
+  if( curkey == 'v' ) return( 0x11 ); /* DA - data Value */
+  if( curkey == 'p' ) return( 0x14 ); /* PC */
   
   return(curkey); // any other key, should not be hit but ignored by KIM
 }
@@ -105,13 +68,9 @@ void interpretkeys()
 {    
   // round 1: keys that always have the same meaning
   switch (curkey) {
-    case 'r': // reset but only in mode 1.
-      if( keyboardMode != 0 ) break;
     case 18:  // CtrlR = RS key = hardware reset (RST)
       reset6502(); clearkey(); Serial.print("RSet\n"); break;
     
-    case 's':
-      if( keyboardMode != 0 ) break;
     case 20: // CtrlT = ST key = throw an NMI to stop execution of user program
       nmi6502(); clearkey(); Serial.print("STop\n"); break;
       
@@ -120,6 +79,7 @@ void interpretkeys()
       Serial.print(F("                                      SST OFF         "));
       displayText( kDt_SST_OFF, 500 );
       break;
+
     case ']': // SST on
       SSTmode = 1; clearkey();
       Serial.print(F("                                      SST ON          ")); 
@@ -128,9 +88,11 @@ void interpretkeys()
       
     case 9: // TAB pressed, toggle between serial port and onboard keyboard/display
       if (useKeyboardLed==0) 
-      { useKeyboardLed=1;    Serial.print(F("                    Keyboard/Hex Digits Mode ")); }
-      else 
-      { useKeyboardLed=0;    Serial.print(F("                        Serial Terminal Mode         "));}
+      {
+        useKeyboardLed=1;    Serial.print(F("                    Keyboard/Hex Digits Mode "));
+      } else {
+        useKeyboardLed=0;    Serial.print(F("                        Serial Terminal Mode         "));
+      }
       reset6502();  clearkey();  break;
       
     case '>': // Toggle write protect on eeprom
@@ -142,7 +104,7 @@ void interpretkeys()
         eepromProtect = 0;
         Serial.print(F("                                      Eeprom R/W     "));
         displayText( kDt_EE_RW, 500 );
-        delay(20);
+        //delay(20);
       }
       clearkey(); break;
   }
@@ -192,164 +154,47 @@ uint8_t xkeyPressed()    // just see if there's any keypress waiting
 }
 
 
-#ifdef CKeyThreeEight
-void scanKeys() 
+/* ******************************* */
+
+/*
+   key definitions we can use:
+       '0'-'9', 'A'-'F' for digits
+        7: GO   20: STEP  18: RESET  't': SST TOGGLE
+        1: AD    4: DA    16: PC     '+': PLUS
+        '$': shift toggle
+        '>': EEPROM WRITE MODE TOGGLE
+        
+*/
+
+#ifdef kPlatformKIMUno
+#define kROWS (3)
+#define kCOLS (8)
+
+byte colPins[kCOLS] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
+byte rowPins[kROWS] = { 9,10,11 };
+
+char lookup[kCOLS][kROWS] =
 {
-  int led,row,col, noKeysScanned;
-  static int keyCode = -1, prevKey = 0;
-  static unsigned long timeFirstPressed = 0;
-    
-  // 0. disable driving the 7segment LEDs -----------------
-  disableLEDs();
-  // 1. initialise: set columns to input with pullups
-  for (col=0;col<8;col++)
-  {  pinMode(aCols[col], INPUT);           // set pin to input
-     digitalWrite(aCols[col], HIGH);       // turn on pullup resistors  
-  }
-  // 2. perform scanning
-  noKeysScanned=0;
-
-  for (row=0; row<3; row++)
-  { digitalWrite(aRows[row], LOW);       // activate this row     
-    for (col=0;col<8;col++)
-    { if (digitalRead(aCols[col])==LOW)  // key is pressed
-      { keyCode = col+row*8+1;
-        if (keyCode!=prevKey)
-        {   //Serial.println();
-            //Serial.print(" col: ");  Serial.print(col, DEC); 
-            //Serial.print(" row: ");  Serial.print(row, DEC); 
-            //Serial.print(" prevKey: ");  Serial.print(prevKey, DEC); 
-            //Serial.print(" KeyCode: ");  Serial.println(keyCode, DEC); 
-           prevKey = keyCode;
-           curkey = parseChar(keyCode);
-            //Serial.print(" curkey: ");  Serial.print(curkey, DEC); 
-           timeFirstPressed=millis();  // 
-        }
-        else // if pressed for >1sec, it's a ModeShift key
-        {
-          if ((millis()-timeFirstPressed)>1000) // more than 1000 ms
-          {
-              if (keyCode==17) //it was the SST button
-              {
-//                keyboardMode=(keyboardMode==0?1:0); // toggle
-//                Serial.print(F("                                      Eeprom R/O     ")); 
-//                Serial.print(F("                                keyboardMode: "));  Serial.print(keyboardMode, DEC); 
-//                SSTmode=0;
-//                curkey=0;  // don't do anything else with this keypress
-              }
-              if (keyCode==9) // it was RS button
-                curkey = '>';  // toggle eeprom write protect
-              timeFirstPressed=millis(); // because otherwise you toggle right back!
-          }          
-        }
-      }
-      else
-        noKeysScanned++;  // another row in which no keys were pressed
-    }     
-    digitalWrite(aRows[row], HIGH);       // de-activate this row
-  }
-
-  if (noKeysScanned==24)    // no keys detected in any row, 3 rows * 8 columns = 24. used to be 28.
-    prevKey=0;        // allows you to enter same key twice 
-} // end of function
-#endif
-
-#ifdef CKeyFourSix
-
-const byte ROWS = 6; // six rows
-const byte COLS = 4; // four columns
-char keys[ROWS][COLS] = {
-  {   7,  20,  18, 't' }, // go (7), step(0x12), reset (18), sst (20)
-  {   1,   4,  16, '+' } , // ad (0x10), da (0x11), PC (16), plus (0x12)
-  { 'C', 'D', 'E', 'F' }, // 0..15
-  { '8', '9', 'A', 'B' },
-  { '4', '5', '6', '7' },
-  { '0', '1', '2', '3' }
+  {  20,  18, 't' },
+  { '6', 'D', 16  },
+  { '5', 'C',  7  },
+  { '4', 'B', '+' },
+  { '3', 'A',  4  },
+  { '2', '9',  1  },
+  { '1', '8', 'F' },
+  { '0', '7', 'E' }
 };
 
-// set up with the same as KIM UNO
-byte rowPins[ROWS] = { 7, 6, 5, 4, 3, 2 }; //connect to the row pinouts of the keypad
-byte colPins[COLS] = { 10, 11, A5, 9 };    //connect to the column pinouts of the keypad
+char lookup_shifted[kCOLS][kROWS] = {};
 
-Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
-
-
-// Four by six
-void scanKeys()
-{
-  static int keyCode = -1, prevKey = 0;
-  static unsigned long timeFirstPressed = 0;
-
-  // scan the keys and then remap them
-   int i;
-
-  // first, wipe everything
-  for( i = 0 ; i<8 ; i++ ) {
-    pinMode( aCols[i], INPUT );
-    digitalWrite( aCols[i], LOW );
-    pinMode( ledSelect[i], INPUT );
-    digitalWrite( ledSelect[i], LOW );
-  }
-
-  for( i=0 ; i<ROWS ; i++ ) {
-    pinMode( rowPins[i], INPUT );
-    digitalWrite( rowPins[i], HIGH );
-  }
-
-  for( i=0 ; i<COLS ; i++ ) {
-    pinMode( colPins[i], OUTPUT );
-    digitalWrite( colPins[i], HIGH );
-  }
-
-  char key = keypad.getKey();
-    if( key == NO_KEY && ((keypad.getState() == IDLE) || ( keypad.getState() == RELEASED ))) {
-    prevKey = 0;
-    return;
-  }
-
-  // convert key to keycode (addressing in the other matrix )
-  if( key == 't' ) {
-    // sst toggle
-    key = SSTmode==0?']':'[';
-  }
-
-  if( key != NO_KEY )
-    keyCode = key; // fill this.
-
-  if (keyCode!=prevKey)
-  {
-    prevKey = keyCode;
-    curkey = key; // we're already decoded. parseChar(keyCode);
-    timeFirstPressed=millis();  // 
-  }
-  else // if pressed for >1sec, it's a ModeShift key
-  {
-    if ((millis()-timeFirstPressed)>1000) // more than 1000 ms
-    {   
-        if (key == '[' || key == ']' ) //keyCode==17) //it was the SST button
-        { 
-//          keyboardMode=(keyboardMode==0?1:0); // toggle
-//                Serial.print(F("                                      Eeprom R/O     ")); 
-//          Serial.print(F("                                keyboardMode: "));  Serial.print(keyboardMode, DEC);
-//          SSTmode=0;
-//          curkey=0;  // don't do anything else with this keypress
-        }
-        if (keyCode==18) // it was RS button // fix
-          curkey = '>';  // toggle eeprom write protect
-        timeFirstPressed=millis(); // because otherwise you toggle right back!
-    }
-  }
-}
 #endif
 
-#ifdef CKeyNovus
-
+#ifdef kPlatformNovus750
 // keypad definition
 #define kROWS (3)
 #define kCOLS (7)
 byte rowPins[kROWS] = { 9, 10, 11 }; //connect to the row pinouts of the keypad
 byte colPins[kCOLS] = { 2, 3, 4, 5, 6, 7, 8 }; //connect to the column pinouts of the keypad
-#define kNoPress ('Z')
 
 /* NOVUS 750 keypad is layed out like this:
    (sw)        /
@@ -366,13 +211,6 @@ byte colPins[kCOLS] = { 2, 3, 4, 5, 6, 7, 8 }; //connect to the column pinouts o
         { ' ', '.', '4' },
         { '$', ' ', '5' },
         { 'x', ' ', '6' }
-        
-   key definitions we can use:
-       '0'-'9', 'A'-'F' for digits
-        7: GO   20: STEP  18: RESET  't': SST TOGGLE
-        1: AD    4: DA    16: PC     '+': PLUS
-        '$': shift toggle
-        '>': EEPROM WRITE MODE TOGGLE
         
    So, we'll define our layouts:
        [regular]          [shifted]
@@ -404,32 +242,31 @@ char lookup_shifted[kCOLS][kROWS] =
   { '$', ' ',  4  },
   { 't', ' ',  16 }
 };
+#endif
 
-#define kLEDs (7)
-//                      p   a   b   c    d   e   f  g
-char   segments[8] = { A5,  2,  3,  4,   5,  6,  7, 8 };
-char digits[kLEDs] = { 12, 13, 14, 15, 16, 17, 18    };
+#define kNoPress ('Z')
+
+
+#ifdef kDisplayIsCommonAnode
+#define kHL  (HIGH)
+#define kLH  (LOW)
+#else
+#define kHL  (LOW)
+#define kLH  (HIGH)
+#endif
 
 void initKeypad()
 {
-    for( int x=0 ; x<kLEDs ; x++ )
-  {
-    // output, low - press causes all digits to light
-    // input, low/high - press causes one dight to light
-    // output, high - streaming things
-    pinMode( digits[x], INPUT );
-    digitalWrite( digits[x], LOW );
-  }
 
   for( int x=0 ; x<kROWS ; x++ )
   {
     pinMode( rowPins[x], OUTPUT );
-    digitalWrite( rowPins[x], HIGH );
+    digitalWrite( rowPins[x], kHL );
   }
   for( int x=0 ; x<kCOLS ; x++ )
   {
     pinMode( colPins[x], INPUT );
-    digitalWrite( colPins[x], HIGH );
+    digitalWrite( colPins[x], kHL );
   }
 }
 
@@ -439,18 +276,21 @@ char scanKeypad()
   initKeypad();
   for( int r=0 ; r<kROWS ; r++ )
   {
-    digitalWrite( rowPins[r], LOW );
+    digitalWrite( rowPins[r], kLH );
     for( int c=0 ; c<kCOLS ; c++ )
     {
-      if( digitalRead( colPins[c] ) == LOW ) {
+      if( digitalRead( colPins[c] ) == kLH )
+      {
         if( shiftKey ) {
           return lookup_shifted[c][r];
         } else {
+          //Serial.write( lookup[c][r] );
+          //Serial.println ("" );
           return lookup[c][r];
         }
       }
     }
-    digitalWrite( rowPins[r], HIGH );
+    digitalWrite( rowPins[r], kHL );
   }
 
   return kNoPress;
@@ -492,12 +332,16 @@ char scanKeypadEvents()
 
 void scanKeys()
 {
+  static long startPressTime = 0;
   char ke = scanKeypadEvents();
   static char popShift = 0;
+  static int holdTicks = 0;
   
   curkey = 0;
   switch( keyEvent ) {
     case( kEventPressed ):
+      startPressTime = millis();
+      holdTicks = 0;
       switch( ke ) {
         case( '$' ): shiftKey ^= 1; break;
         case( 's' ): displayText( kDt_Scott, 1000 ); break;
@@ -526,8 +370,20 @@ void scanKeys()
         popShift = 0;
         shiftKey = 0;
       }
+      startPressTime = 0;
     
     case( kEventPressing ):
+      if( (millis() - startPressTime) > 1000 ) {
+        if( holdTicks == 0 ) {
+          Serial.println( "Hold" );
+          if( ke == 18 ) {
+            curkey = currentKey = ke ='>';
+          }
+        }
+        holdTicks++;
+      }
+      break;
+      
     case( kEventIdle ):
     default:
       break;
@@ -545,12 +401,8 @@ void scanKeys()
       break;
     default:
       break;
-  }
-      
+  }      
 }
-
-#endif
-
 
 
 }

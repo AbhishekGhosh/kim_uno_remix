@@ -5,10 +5,10 @@
  *   It also handles text rendering
  */
 
-#include "Arduino.h"
-#include "config.h"
-
-
+#ifndef __DISPLAY_H__
+#define __DISPLAY_H__
+extern "C" {
+  
 extern char shiftKey;  // is the keypad shift key in effect?
 extern char threeHex[3][2];        // LED display
 
@@ -29,3 +29,5 @@ void displayText( int which, long timeMillis );
 void disableLEDs();
 void driveLEDs();
 
+}
+#endif

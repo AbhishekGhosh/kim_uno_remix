@@ -4,10 +4,14 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.7 Feb 12" // be sure to change kDt_Uno also
+#define kVersionString "v23.8 Feb 12" // be sure to change kDt_Uno also
+#define kVersionMajor  (23)
+#define kVersionMinorA (0)
+#define kVersionMinorB (7)
 /* 
  * Version history
  *
+ * v23.8 - 
  * v23.7 - extracting out keys and display
  * v23.6 - popping +, popping fix
  * v23.5 - Better LED and Keypad support
@@ -36,33 +40,61 @@
 #define AVRX
 
 /* ****************************************************************************************** */
+/* Platform */
+
+/* this is for Oscar's Kim Uno platform */
+#define kPlatformKIMUno
+#undef kPlatformNovus750
+
+/* ****************************************************************************************** */
 /* Display */
 
-/* #define this if it's a common anode display (base KIM Uno board) */
+#ifdef kPlatformExample
+/* #define this if it's a common anode display (eg KIM Uno board) */
 #define kDisplayIsCommonAnode
 /* OR */
-/* #define this if it's a common cathode display (Novus) */
+/* #define this if it's a common cathode display (eg Novus Calculator) */
 #undef kDisplayIsCommonCathode 
 
-/*   Novus uses 1  5  0  4 */
-/* KIM UNO uses 0  5 -1 -1 */
-#define kDisplayAddrOffset  (0)  /* starting segment for address (0 indexed) */
-#define kDisplayDataOffset  (5)  /* starting segment for data 0 indeced */
+#define kDisplayAddrOffset  (0)  /* starting segment for address  0 indexed, 4 digits, so this shows [0,1,2,3] */
+#define kDisplayDataOffset  (5)  /* starting segment for data 0 indexed, so this shows [5,6] */
 
 /* these are for optional display, eg shift indicator, separator dot */
-#define kDisplayShift       (-1)  /* where to display the shift */
-#define kDisplayDot         (-1)  /* where to display the dot */
+#define kDisplayShift       (-1)  /* which digit to display the shift indicator (segment f) */
+#define kDisplayDot         (-1)  /* which digit to display the dot */
+
+/* for text display -- if defined, it uses a condensed version of the display strings */
+#define kDisplayCompress
+#endif
+
+#ifdef kPlatformKIMUno
+  /* this is for Oscar's reference KIM Uno platform */
+  #define kDisplayIsCommonAnode
+  #define kDisplayAddrOffset   (0) /* [0,1,2,3] */
+  #define kDisplayDataOffset   (5) /* [5,6] */
+  #define kDisplayShift        (-1) /* no shift indicator */
+  #define kDisplayDot          (-1) /* no dot indicator */
+#endif
+
+#ifdef kPlatformNovus750
+  /* this is for Scott's Novus 750 calculator hack */
+  #define kDisplayIsCommonCathode
+  #define kDisplayAddrOffset   (1) /* digit 0 is half digit, shift over by one [1,2,3,4] */
+  #define kDisplayDataOffset   (5) /* data directly adjoins it [5,6] */
+  #define kDisplayShift        (0) /* shift indicator goes on half digit */
+  #define kDisplayDot          (4) /* dot separates addr from data */
+#endif
 
 
 /* ****************************************************************************************** */
 /* Keypad */
 
 /* are we using the stock scanning (3x8) or the keypad library (4x6) */
-#define CKeyThreeEight  /* original to KIM-UNO hardware */
+#undef CKeyThreeEight  /* original to KIM-UNO hardware */
 
 #undef CUseKeypadLibrary /* all of the below require this */
 #undef CKeyFourSix
-#undef CKeyNovus /* Novus calculator */
+#define CKeyNovus /* Novus calculator */
 
 
 /* ****************************************************************************************** */

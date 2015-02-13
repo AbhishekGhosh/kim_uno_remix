@@ -4,21 +4,20 @@
  *   support for scanning the keypad(s)
  */
  
- 
-#include "Arduino.h"
-#include "config.h"
-#include "display.h" 
+#ifndef __KEYS_H__
+#define __KEYS_H__
 
 extern "C" {
-
 extern uint8_t serialEnable;
+extern uint8_t eepromProtect;  // default is to write-protect EEPROM
+
 extern uint8_t SSTmode;
 extern uint8_t useKeyboardLed; // 0 to use Serial port or 1 for HEX digits.
 extern uint8_t curkey;
-extern uint8_t eepromProtect;  // default is to write-protect EEPROM
 extern uint8_t keyboardMode;  // start with keyboard in 0: KIM-1 mode. 2: luxury mode
 
   // ---------- in cpu.c ------------------------------
+  
   void exec6502(int32_t tickcount);
   void reset6502();
   void nmi6502();
@@ -55,3 +54,6 @@ char scanKeypadEvents();
 void scanKeys();
 
 }
+
+#endif
+

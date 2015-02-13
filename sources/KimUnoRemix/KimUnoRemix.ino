@@ -36,9 +36,6 @@ extern "C" {
   void nmi6502();
   void initKIM(void);
   void loadTestProgram(void);
-  void driveLEDs();
-  extern uint8_t curkey;
-  void scanKeys(); 
   
   // ---------- called from cpu.c ----------------------
   uint8_t serialEnable = 0;
@@ -58,7 +55,8 @@ int freeRam () {
   
 extern "C" {
   
-extern uint8_t eepromProtect;
+uint8_t eepromProtect = 1;
+
   // move this into memory.c?
 uint8_t eepromread(uint16_t eepromaddress) {
   return EEPROM.read(eepromaddress);

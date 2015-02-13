@@ -39,7 +39,9 @@ uint16_t debugPC;
 // temporary:
 
 extern char threeHex[3][2]; // buffer for 3 hex digits
-extern int blitzMode;		// status variable only for microchess
+
+uint8_t blitzMode = 1;		// status variable only for microchess 
+// microchess status variable. 1 speeds up chess moves (and dumbs down play)
 
 extern void printhex(uint16_t val);
 extern void serout(uint8_t value);
