@@ -344,8 +344,10 @@ void scanKeys()
       holdTicks = 0;
       switch( ke ) {
         case( '$' ): shiftKey ^= 1; break;
+        /*
         case( 's' ): displayText( kDt_Scott, 1000 ); break;
         case( 'o' ): displayText( kDt_Oscar, 1000 ); break;
+        */
         
         /* the following "pop" the shift key out */
         case( '#' ):

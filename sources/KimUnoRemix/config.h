@@ -7,7 +7,7 @@
 #define kVersionString "v23.8 Feb 12" // be sure to change kDt_Uno also
 #define kVersionMajor  (23)
 #define kVersionMinorA (0)
-#define kVersionMinorB (7)
+#define kVersionMinorB (8)
 /* 
  * Version history
  *
