@@ -228,9 +228,49 @@ unsigned char rom002[1024] = {
 	0x04, 0x2A, 0x26, 0xF8, 0x26, 0xF9, 0x88, 0xD0, 0xF8, 0xA9, 0x00, 0x60,
 	0xA5, 0xF8, 0x85, 0xFA, 0xA5, 0xF9, 0x85, 0xFB, 0x60, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x0A, 0x0D, 0x4D, 0x49, 0x4B, 0x20, 0x13, 0x52, 0x52,
-	0x45, 0x20, 0x13, 0xBF, 0x86, 0xDB, 0xCF, 0xE6, 0xED, 0xFD, 0x87, 0xFF,
-	0xEF, 0xF7, 0xFC, 0xB9, 0xDE, 0xF9, 0xF1, 0xFF, 0xFF, 0xFF, 0x1C, 0x1C,
-	0x22, 0x1C, 0x1F, 0x1C
+	0x45, 0x20, 0x13, 
+
+	/* the LED font... */
+        /* 0x1FE7   0x02e7 */
+	0xBF, 0x86, 0xDB, 0xCF, 0xE6, 0xED, 0xFD, 0x87, 
+	0xFF, 0xEF, 0xF7, 0xFC, 0xB9, 0xDE, 0xF9, 0xF1, 
+	/* 
+		 aaa
+		f   b
+		f   b
+		 ggg
+		e   c
+		e   c
+		 ddd
+	*/
+	/*
+		                x g f e  d c b a
+		0	0xBF	1 0 1 1  1 1 1 1
+		1	0x86	1 0 0 0  0 1 1 0
+		2	0xDB	1 1 0 1  1 0 1 1
+		3	0xCF	1 1 0 0  1 1 1 1
+		4 	0xE6	1 1 1 0  0 1 1 0
+		5 	0xED	0 1 1 1  1 1 0 1
+		6	0xFD	1 1 1 1  1 1 0 1
+		7	0x87	1 0 0 0  0 1 1 1
+		8	0xFF	1 1 1 1  1 1 1 1
+		9	0xEF	1 1 1 0  1 1 1 1
+		A	0xF7	1 1 1 1  0 1 1 1 
+		B	0xFC	1 1 1 1  1 1 0 0 
+		C	0xB9    1 0 1 1  1 0 0 1
+		D	0xDE	1 1 0 1  1 1 1 0
+		E	0xF9	1 1 1 1  1 0 0 1 
+		F	0xF1	1 1 1 1  0 0 0 1
+	*/
+
+	0xFF, 0xFF, 0xFF, 
+
+	/* NMIT */
+	0x1C, 0x1C, 
+	/* RSTENT */
+	0x22, 0x1C, 
+	/* IRQENT */
+	0x1F, 0x1C
 };
 
 #ifdef AVRX
@@ -616,12 +656,18 @@ uint8_t read6502(uint16_t address) {
   
   if (address < 0x2000)				// 0x1C00-0x2000 is ROM 002. It needs some intercepting from emulator...
   {
+    ////////////////////////////////////////
+    // OUTCH -serial output byte
     if (address == 0x1EA0) // intercept OUTCH (send char to serial)
     {
       serout(a);		// print A to serial
       pc = 0x1ED3;   // skip subroutine
       return (0xEA); // and return from subroutine with a fake NOP instruction
     }
+
+
+    ////////////////////////////////////////
+    // GETCH - get key from serial
     if (address == 0x1E65)	//intercept GETCH (get char from serial). used to be 0x1E5A, but intercept *within* routine just before get1 test
     {
       a=getAkey();		// get A from main loop's curkey
@@ -634,6 +680,9 @@ uint8_t read6502(uint16_t address) {
       pc = 0x1E87;   // skip subroutine
       return (0xEA); // and return from subroutine with a fake NOP instruction
     }
+
+    ////////////////////////////////////////
+    // DETCPS 
     if (address == 0x1C2A) // intercept DETCPS
     {
       RAM002[0x17F3-0x17C0] = 1;  // just store some random bps delay on TTY in CNTH30
@@ -641,6 +690,9 @@ uint8_t read6502(uint16_t address) {
       pc = 0x1C4F;    // skip subroutine
       return (0xEA); // and return from subroutine with a fake NOP instruction
     }
+
+    ////////////////////////////////////////
+    // SCANDS - display F9 FA FB to LEDs
     if (address == 0x1F1F) // intercept SCANDS (display F9,FA,FB)
     {
       // light LEDs ---------------------------------------------------------
@@ -669,6 +721,8 @@ uint8_t read6502(uint16_t address) {
       return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now go to AK
     }
     
+    ////////////////////////////////////////
+    // AK  - key pressed?
     if (address == 0x1EFE) // intercept AK (check for any key pressed)
     {
       a=getAkey();	 // 0 means no key pressed - the important bit - but if a key is pressed is curkey the right value to send back?
@@ -678,6 +732,8 @@ uint8_t read6502(uint16_t address) {
       return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
     }
 
+    ////////////////////////////////////////
+    // GETKEY - get key from keypad
     if (address == 0x1F6A) // intercept GETKEY (get key from keyboard)
     {
       a=getKIMkey();		 // curkey = the key code in the emulator's keyboard buffer

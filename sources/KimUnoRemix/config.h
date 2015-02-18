@@ -11,7 +11,7 @@
 /* 
  * Version history
  *
- * v23.8 - 
+ * v23.8 - Platform 2411 added (handheld), EEPROM toggle bug fixed
  * v23.7 - extracting out keys and display
  * v23.6 - popping +, popping fix
  * v23.5 - Better LED and Keypad support
@@ -44,7 +44,10 @@
 
 /* this is for Oscar's Kim Uno platform */
 #define kPlatformKIMUno
+/* this is for the Novus 750 hacked calculator */
 #undef kPlatformNovus750
+/* This is for the 24 key, 11 digit display handheld */
+#undef kPlatform2411
 
 /* ****************************************************************************************** */
 /* Display */
@@ -83,6 +86,15 @@
   #define kDisplayDataOffset   (5) /* data directly adjoins it [5,6] */
   #define kDisplayShift        (0) /* shift indicator goes on half digit */
   #define kDisplayDot          (4) /* dot separates addr from data */
+#endif
+
+#ifdef kPlatform2411
+  /* this is for Scott's Novus 750 calculator hack */
+  #define kDisplayIsCommonCathode
+  #define kDisplayAddrOffset   (0) /* digit 0 is half digit, shift over by one [1,2,3,4] */
+  #define kDisplayDataOffset   (5) /* data directly adjoins it [5,6] */
+  #define kDisplayShift        (-1) /* shift indicator goes on half digit */
+  #define kDisplayDot          (-1) /* dot separates addr from data */
 #endif
 
 

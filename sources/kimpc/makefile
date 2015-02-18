@@ -24,6 +24,8 @@ SRCS := \
 	$(ARDMAIN).cpp \
 	\
 	$(ARDUINOSRCDIR)/cpu.cpp \
+	$(ARDUINOSRCDIR)/keys.cpp \
+	$(ARDUINOSRCDIR)/display.cpp \
 	$(ARDUINOSRCDIR)/memory.cpp 
 
 # additional include directories

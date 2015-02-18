@@ -244,6 +244,31 @@ char lookup_shifted[kCOLS][kROWS] =
 };
 #endif
 
+#ifdef kPlatform2411
+#define kROWS (4)
+#define kCOLS (6)
+
+byte colPins[kCOLS] = { 7,6,5,4,3,2 }; // note col A5 is the extra one linked to DP
+byte rowPins[kROWS] = { 10,11,A5,9 };
+
+char lookup[kCOLS][kROWS] =
+{
+  { 7,  20, 18, 't' },
+  { 1, 4, 16, '+' },
+  { 'C', 'D',  'E', 'F'  },
+  { '8', '9', 'A', 'B' },
+  { '4', '5',  '6', '7'  },
+  { '0', '1',  '2', '3'  }
+};
+
+
+        
+char lookup_shifted[kCOLS][kROWS] = {};
+
+#endif
+
+
+
 #define kNoPress ('Z')
 
 
@@ -373,11 +398,11 @@ void scanKeys()
         shiftKey = 0;
       }
       startPressTime = 0;
+      break;
     
     case( kEventPressing ):
       if( (millis() - startPressTime) > 1000 ) {
         if( holdTicks == 0 ) {
-          Serial.println( "Hold" );
           if( ke == 18 ) {
             curkey = currentKey = ke ='>';
           }

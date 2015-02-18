@@ -32,6 +32,9 @@ const byte ledDigits[8] =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
 const byte ledDigits[8] =  { 12, 13, A0, A1,  A2, A3, A4, A7 };
 #endif
 
+#ifdef kPlatform2411
+const byte ledDigits[8] =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
+#endif
 
 byte segmentLookup[31] = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" */ 
 // bits     _6543210
