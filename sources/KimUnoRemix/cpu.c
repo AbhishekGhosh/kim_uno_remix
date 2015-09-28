@@ -141,7 +141,7 @@ uint8_t RAM002[64];    // RAM from 6530-002  0x17C0-0x17FF, free for user except
 // movit (first book of kim)                                           to $1780
 // ---------------------------------------------------------------------------------
 #ifdef AVRX
-prog_uchar rom002[1024] PROGMEM = {
+const unsigned char rom002[1024] PROGMEM = {
 #else
 unsigned char rom002[1024] = {
 #endif
@@ -274,7 +274,7 @@ unsigned char rom002[1024] = {
 };
 
 #ifdef AVRX
-prog_uchar rom003[1024] PROGMEM = {
+const unsigned char rom003[1024] PROGMEM = {
 #else
 unsigned char rom003[1024] = {
 #endif
@@ -371,7 +371,7 @@ unsigned char rom003[1024] = {
    StartOffset: 00000000, EndOffset: 00000570, Length: 00000571 */
 
 #ifdef AVRX
-prog_uchar mchess[1393] PROGMEM = {  
+const unsigned char mchess[1393] PROGMEM = {  
 #else
 unsigned char mchess[1393] = {
 #endif
@@ -498,7 +498,7 @@ unsigned char mchess[1393] = {
 /* C:\temp27\KIM Uno\sw\tools\WozBaum disasm\WozBaum disasm\dis2.bin (02/09/2014 23:58:36)
    StartOffset: 00000000, EndOffset: 000001F8, Length: 000001F9 */
 #ifdef AVRX
-prog_uchar disasm[505] PROGMEM = {
+const unsigned char disasm[505] PROGMEM = {
 #else
 unsigned char disasm[505] = {
 #endif
@@ -562,7 +562,7 @@ MMAP ROMSegments[6] = {
 /* MOVIT utility, copied into RAM 1780-17E3. Length: decimal 102 */
 /* for use, see http://users.telenet.be/kim1-6502/6502/fbok.html#p114 */
 #ifdef AVRX
-prog_uchar movit[100] PROGMEM = {  
+const unsigned char movit[100] PROGMEM = {  
 #else
 unsigned char movit[95] = {
 #endif
@@ -577,7 +577,7 @@ unsigned char movit[95] = {
 /* RELOCATE utility, copied into RAM 0110-01A4. Length: decimal 149 */
 /* for use, see http://users.telenet.be/kim1-6502/6502/fbok.html#p114 */
 #ifdef AVRX
-prog_uchar relocate[149] PROGMEM = {  
+const unsigned char relocate[149] PROGMEM = {  
 #else
 unsigned char relocate[149] = {
 #endif
@@ -596,7 +596,7 @@ unsigned char relocate[149] = {
 /* BRANCH calculation utility, to be copied into RAM anywhere you want (relocatable). Length: decimal 42 */
 /* for use, see http://users.telenet.be/kim1-6502/6502/fbok.html#p114 */
 #ifdef AVRX
-prog_uchar branch[42] PROGMEM = {  
+const unsigned char branch[42] PROGMEM = {  
 #else
 unsigned char branch[42] = {
 #endif

@@ -4,13 +4,14 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.8 Feb 12" // be sure to change kDt_Uno also
+#define kVersionString "v23.9 Sep 25" // be sure to change kDt_Uno also
 #define kVersionMajor  (23)
 #define kVersionMinorA (0)
-#define kVersionMinorB (8)
+#define kVersionMinorB (9)
 /* 
  * Version history
  *
+ * v23.9 - Updated for Arduino 1.6.0 (prog_char -> const 
  * v23.8 - Platform 2411 added (handheld), EEPROM toggle bug fixed
  * v23.7 - extracting out keys and display
  * v23.6 - popping +, popping fix
@@ -43,9 +44,9 @@
 /* Platform */
 
 /* this is for Oscar's Kim Uno platform */
-#define kPlatformKIMUno
+#undef kPlatformKIMUno
 /* this is for the Novus 750 hacked calculator */
-#undef kPlatformNovus750
+#define kPlatformNovus750
 /* This is for the 24 key, 11 digit display handheld */
 #undef kPlatform2411
 

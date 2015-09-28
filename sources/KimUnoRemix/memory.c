@@ -96,7 +96,7 @@ uint8_t readMemory( uint16_t address, MMAP * segments )
   // okay, figure out the index into the buffer
   uint16_t inset = address - segments[segment].aStart;
   // and the buffer pointer itself (necessary for pgm_read_x_near())
-  prog_uchar * buf = segments[segment].buffer;
+  const unsigned char * buf = segments[segment].buffer;
 
 #ifdef AVRX
   return pgm_read_byte_near( buf + inset );

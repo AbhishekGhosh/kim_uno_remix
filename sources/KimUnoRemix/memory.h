@@ -33,7 +33,7 @@
 typedef struct MMAP {
   uint16_t aStart;
   uint16_t aSize;
-  prog_uchar * buffer;
+  unsigned char * buffer;
 } MMAP;
 
 #define kEndOfSegments (0xFFFF)
