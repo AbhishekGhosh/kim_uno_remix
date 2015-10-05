@@ -13,35 +13,27 @@
 #ifndef __MEMORY_H__
 #define __MEMORY_H__
 
-/* the basic idea is:
-  ROM - data contained in PROGMEM
-  RAM - data contained in RAM array
- */
 
-// NOTE: This doesn't seem to work in practice due to the added calls requiring RAM we don't have
-// This needs to be reworked/removed.
- 
-/* our Memory Map structure */
-typedef struct MMAP {
-  uint16_t aStart;
-  uint16_t aSize;
-  unsigned char * buffer;
-} MMAP;
 
-#define kEndOfSegments (0xFFFF)
+// --- OVERVIEW OF KIM-1 MEMORY MAP -------------------------------------------------
+extern uint8_t RAM[1024];    // main 1KB RAM         0x0000-0x03FF
+#ifndef AVRX
+extern uint8_t RAM2[1024];   // on PC, ram in        0x0400-0x07FF instead of Arduino EEPROM
+#endif 
 
-////////////////////////
-// RAM and ROM space
+// I/O and timer of 6530-003, free for user          0x1700-0x173F, not used in KIM ROM
+// I/O and timer of 6530-002, used by KIM            0x1740-0x177F, used by LED/Keyboard
+extern uint8_t RAM003[64];    // RAM from 6530-003   0x1780-0x17BF, free for user applications
+extern uint8_t RAM002[64];    // RAM from 6530-002   0x17C0-0x17FF, free for user except 0x17E7-0x17FF
 
-#define kNotFound  (0xff)
+extern const unsigned char rom002[1024] PROGMEM;  // 0x1c00
+extern const unsigned char rom003[1024] PROGMEM;  // 0x1800
+extern const unsigned char mchess[1393] PROGMEM;  // 0xC000
+extern const unsigned char disasm[505] PROGMEM;   // 0x2000
 
-uint8_t xfindAddressSegment( uint16_t address, MMAP * segents ); /* return the segment containing the requested address, 0xff if not found */
-uint8_t xvalidWrite( uint16_t address, MMAP * segments ); /* returns 1 if the segment is valid to write to */
-uint8_t xwriteMemory( uint16_t address, uint8_t data, MMAP * segments ); /* write to RAM data byte at the specified address */
-uint8_t xreadMemory( uint16_t address, MMAP * segments ); /* read from RAM or PROGMEM ROM */
+/*********************************************************************************/
 
-void copyRamSegments( MMAP * segs ); /* Copy the list of segments from PROGMEM into RAM at the specified locations */
-
+void loadProgramsToRam( void );
 
 #endif /* __MEMORY_H__*/
 

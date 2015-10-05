@@ -4,13 +4,14 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.10 15/10/05"
+#define kVersionString "v23.11 15/10/05"
 #define kVersionMajor  (23)
 #define kVersionMinorA (1)
-#define kVersionMinorB (0)
+#define kVersionMinorB (1)
 /* 
  * Version history
  *
+ * v23.11 - Changed loading of programs to RAM, programs moved to memory.c, "Mini Program B-D"
  * v23.10 - moved FONT to PROGMEM, removed ram/rom table code (low memory instability)
  * v23.9  - Updated for Arduino 1.6.0 (prog_char -> const)
  * v23.8  - Platform 2411 added (handheld), EEPROM toggle bug fixed

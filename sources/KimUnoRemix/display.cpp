@@ -37,45 +37,56 @@ const byte ledDigits[8] =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
 #endif
 
 #define kCharMax (31)
-const unsigned char segmentLookup[kCharMax] PROGMEM = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" */ 
-// bits     _6543210
-// digits   abcdefg
-          B01111110,//0  
-          B00110000,//1
-          B01101101,//2
-          B01111001,//3
-          B00110011,//4
-          B01011011,//5
-          B01011111,//6
-          B01110000,//7
-          B01111111,//8
-          B01111011,//9
-          B01110111,//a
-          B00011111,//b
-          B01001110,//c
-          B00111101,//d
-          B01001111,//e
-          B01000111,//f
-          /* all of the above are confirmed identical to the ROM  */
+const unsigned char segmentLookup[kCharMax] PROGMEM = { 
+  /* NOTE: this is copied from the rom at 0x1FE7 */ 
+  /*
+   The builtin 7-segment LED "font"
+   
+     aaa
+    f   b
+    f   b
+     ggg
+    e   c
+    e   c
+     ddd  x
+  */
+  /*           x g f e  d c b a */
+  0xBF, /* 0   1 0 1 1  1 1 1 1 */
+  0x86, /* 1   1 0 0 0  0 1 1 0 */
+  0xDB, /* 2   1 1 0 1  1 0 1 1 */
+  0xCF, /* 3   1 1 0 0  1 1 1 1 */
+  0xE6, /* 4   1 1 1 0  0 1 1 0 */
+  0xED, /* 5   1 1 1 0  1 1 0 1 */
+  0xFD, /* 6   1 1 1 1  1 1 0 1 */
+  0x87, /* 7   1 0 0 0  0 1 1 1 */
+  0xFF, /* 8   1 1 1 1  1 1 1 1 */
+  0xEF, /* 9   1 1 1 0  1 1 1 1 */
+  0xF7, /* A   1 1 1 1  0 1 1 1 */
+  0xFC, /* B   1 1 1 1  1 1 0 0 */
+  0xB9, /* C   1 0 1 1  1 0 0 1 */
+  0xDE, /* D   1 1 0 1  1 1 1 0 */
+  0xF9, /* E   1 1 1 1  1 0 0 1 */
+  0xF1, /* F   1 1 1 1  0 0 0 1 */
           
-          /* additional characters */
-          B00000001, //g printed as -
-          B00001000, //h printed as _
-          B00000000, //i printed as <space>
-          
-          /* some letters we need for text display */
-          B00010101, // 19 'n'  "s on"
-          B00011101, // 20 'o'  "s on"/"s off"
-          B01100111, // 21 'p'  "EEP"
-          B00000101, // 22 'r'  "E ro"/"E rw"
-          B00001111, // 23 't'  "sst"
-          B00111110, // 24 'U'  "Uno"  
-          B00101010, // 25 'w'  "rw" (common version for 7 seg)
-          B00001101, // 26 'c'
-          B00010111, // 27 'h'
-          B00100000, // 28 'i'
-          B01111101, // 29 'a'
-          B10000000  // 30 '.'
+  /* additional characters */
+  // xgfedcba
+    B01000000, // 16 printed as -
+    B00001000, // 17 printed as _
+    B00000000, // 18 printed as <space>
+    
+    /* some letters we need for text display */
+    B01010100, // 19 'n'  "s on"
+    B01011100, // 20 'o'  "s on"/"s off"
+    B01110011, // 21 'p'  "EEP"
+    B01010000, // 22 'r'  "E ro"/"E rw"
+    B01111000, // 23 't'  "sst"
+    B00111110, // 24 'U'  "Uno"  
+    B00011101, // 25 'w'  "rw" (common version for 7 seg)
+    B01011000, // 26 'c'
+    B01010100, // 27 'h'
+    B00000010, // 28 'i'
+    B01011111, // 29 'a'
+    B10000000  // 30 '.'
 };
 
 
@@ -178,13 +189,13 @@ void displayPattern( int digit, int pattern )
 
   // enable the right segments
   if( pattern & 0x80 ) digitalWrite( ledSegments[0], kEnableSeg ); // dp
-  if( pattern & 0x40 ) digitalWrite( ledSegments[1], kEnableSeg ); // a
-  if( pattern & 0x20 ) digitalWrite( ledSegments[2], kEnableSeg ); // b
-  if( pattern & 0x10 ) digitalWrite( ledSegments[3], kEnableSeg ); // c
+  if( pattern & 0x01 ) digitalWrite( ledSegments[1], kEnableSeg ); // a
+  if( pattern & 0x02 ) digitalWrite( ledSegments[2], kEnableSeg ); // b
+  if( pattern & 0x04 ) digitalWrite( ledSegments[3], kEnableSeg ); // c
   if( pattern & 0x08 ) digitalWrite( ledSegments[4], kEnableSeg ); // d
-  if( pattern & 0x04 ) digitalWrite( ledSegments[5], kEnableSeg ); // e
-  if( pattern & 0x02 ) digitalWrite( ledSegments[6], kEnableSeg ); // f
-  if( pattern & 0x01 ) digitalWrite( ledSegments[7], kEnableSeg ); // g
+  if( pattern & 0x10 ) digitalWrite( ledSegments[5], kEnableSeg ); // e
+  if( pattern & 0x20 ) digitalWrite( ledSegments[6], kEnableSeg ); // f
+  if( pattern & 0x40 ) digitalWrite( ledSegments[7], kEnableSeg ); // g
 
   // enable this digit
   digitalWrite( ledDigits[digit], kEnableDigit );
@@ -217,17 +228,18 @@ void driveLEDs()
   
   for( int displayDigit = 0 ; displayDigit < 8 ; displayDigit++ )
   {
-    byte pattern = 0;
+    byte pattern = 18; // space
     if( millis() >= (long)textTimeout ) { // not elegant, but good for now
       // display the internal digits
-      if( displayDigit == kDisplayAddrOffset   ) pattern = pgm_read_byte_near( segmentLookup + kimHex[0] );
-      if( displayDigit == kDisplayAddrOffset+1 ) pattern = pgm_read_byte_near( segmentLookup + kimHex[1] );
-      if( displayDigit == kDisplayAddrOffset+2 ) pattern = pgm_read_byte_near( segmentLookup + kimHex[2] );
-      if( displayDigit == kDisplayAddrOffset+3 ) pattern = pgm_read_byte_near( segmentLookup + kimHex[3] );
+      if( displayDigit == kDisplayAddrOffset   ) pattern = kimHex[0];
+      if( displayDigit == kDisplayAddrOffset+1 ) pattern = kimHex[1];
+      if( displayDigit == kDisplayAddrOffset+2 ) pattern = kimHex[2];
+      if( displayDigit == kDisplayAddrOffset+3 ) pattern = kimHex[3];
       // 4
-      if( displayDigit == kDisplayDataOffset   ) pattern = pgm_read_byte_near( segmentLookup + kimHex[4] );
-      if( displayDigit == kDisplayDataOffset+1 ) pattern = pgm_read_byte_near( segmentLookup + kimHex[5] );
+      if( displayDigit == kDisplayDataOffset   ) pattern = kimHex[4];
+      if( displayDigit == kDisplayDataOffset+1 ) pattern = kimHex[5];
 
+      pattern = pgm_read_byte_near( segmentLookup + pattern ) & 0x7f; // ignore decimal point here.
     } 
     else 
     {
@@ -243,7 +255,7 @@ void driveLEDs()
       if( displayDigit == kDisplayDot ) pattern |= 0x80;  // decimal point separator
     }
     
-    displayPattern( displayDigit,  pattern );
+    displayPattern( displayDigit,  pattern & 0x7f );
   }
 }
 

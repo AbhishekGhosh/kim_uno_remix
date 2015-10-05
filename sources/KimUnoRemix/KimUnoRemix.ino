@@ -13,37 +13,33 @@
 #ifndef AVRX
   #include <stdint.h>
 #endif
-#include <util/delay.h>
-#ifdef CUseKeypadLibrary
-  ///#include <Keypad.h>
-#endif
+
+
+/**************************/
+/* Emulated CPU Functions */
 
 extern "C" {
-#include "memory.h"
-}
-
-void setupUno();
-
-
-////////////////////////////////////////
-// just see if there's any keypress waiting
-uint8_t xkeyPressed();
-
-extern "C" {
+  #include "memory.h"
   // ---------- in cpu.c ------------------------------
   void exec6502(int32_t tickcount);
   void reset6502();
-  void nmi6502();
-  void initKIM(void);
-  void loadTestProgram(void);
-  
+}
+
+
+/******************/
+/* Serial functions */
+
+extern "C" {
   // ---------- called from cpu.c ----------------------
   uint8_t serialEnable = 0;
   void serout(uint8_t val)    { if( serialEnable ) Serial.write(val);  }
   void serouthex(uint8_t val) { if( serialEnable ) Serial.print(val, HEX); }
   void printhex(uint16_t val) { if( serialEnable ) { Serial.print(val, HEX); Serial.println(); } }
+} /* C */
 
-}
+
+/***********/
+/* Utility */
 
 // check for out of RAM
 int freeRam () {
@@ -52,51 +48,55 @@ int freeRam () {
   return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
 }
 
-  
+
+/********************/
+/* EEPROM FUNCTIONS */
 extern "C" {
-  
-uint8_t eepromProtect = 1;
+  uint8_t eepromProtect = 1;
 
-  // move this into memory.c?
-uint8_t eepromread(uint16_t eepromaddress) {
-  return EEPROM.read(eepromaddress);
-}
-
-void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue) {
-  if (eepromProtect==0) {
-    EEPROM.write(eepromaddress, bytevalue);
-  } else {
-    Serial.println(F("ERROR: EEPROM STATE IS WRITE-PROTECTED. HIT '>' TO TOGGLE WRITE PROTECT"));
-    Serial.println(freeRam());
+  uint8_t eepromread(uint16_t eepromaddress) {
+    return EEPROM.read(eepromaddress);
   }
-}
+  
+  void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue) {
+    if (eepromProtect==0) {
+      EEPROM.write(eepromaddress, bytevalue);
+    } else {
+      Serial.println(F("ERROR: EEPROM STATE IS WRITE-PROTECTED. HIT '>' TO TOGGLE WRITE PROTECT"));
+      //Serial.println(freeRam());
+    }
+  }
 
-}
+} /* C */
 
-extern "C" {
-#include "memory.h"
-}
-extern MMAP ROMSegments[];
+
+/******************/
+/* Arduino Engine */
 
 void setup () {
   /* set up serial */
   Serial.begin ( kBaudRate );
   Serial.println ();
-  
-  /* initialize the hardware */
-  setupUno();
 
+  /* clear the display buffer */
+  for( int i=0 ; i<6 ; i++) kimHex[i] = '0';
+
+  /* reset the CPU */
   reset6502();
-  initKIM(); // Enters 1c00 in KIM vectors 17FA and 17FE. Might consider doing 17FC as well????????
-  loadTestProgram();
+
+  /* set up vectors and load programs to RAM */
+  loadProgramsToRam();
   
   /* splash display */
   displayText( kDt_Uno, 1000 );
 
+  /* display user prompt */
   Serial.print(F(kVersionString " Free:")); // just a little check, to avoid running out of RAM!
   Serial.println(freeRam());
 }
 
+/************************/
+/* Run the emulation... */
 
 void loop () {
   exec6502(100); //do 100 6502 instructions
@@ -113,19 +113,4 @@ void loop () {
     interpretkeys();
 
   //driveLEDs(); // doing that here would cause a massive slowdown but keeps display on at all times
-}
-
-
-// =================================================================================================
-// KIM Uno Board functions are bolted on from here
-// =================================================================================================
-
-
-void setupUno() {
-  int i;
-  initKeypad();
-  
-  // --------- clear display buffer ------------------------------------
-  for (i=0;i<6;i++) kimHex[i] = '0';
-  Serial.println(F("Ready"));
 }
