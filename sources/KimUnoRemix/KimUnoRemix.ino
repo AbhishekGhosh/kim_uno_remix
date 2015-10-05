@@ -15,7 +15,7 @@
 #endif
 #include <util/delay.h>
 #ifdef CUseKeypadLibrary
-  #include <Keypad.h>
+  ///#include <Keypad.h>
 #endif
 
 extern "C" {
@@ -126,7 +126,6 @@ void setupUno() {
   initKeypad();
   
   // --------- clear display buffer ------------------------------------
-  for (i=0;i<3;i++)
-  { threeHex[i][0]=threeHex[i][0]=0; }
+  for (i=0;i<6;i++) kimHex[i] = '0';
   Serial.println(F("Ready"));
 }

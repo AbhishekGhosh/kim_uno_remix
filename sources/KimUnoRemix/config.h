@@ -4,21 +4,22 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.9 Sep 25" // be sure to change kDt_Uno also
+#define kVersionString "v23.10 15/10/05"
 #define kVersionMajor  (23)
-#define kVersionMinorA (0)
-#define kVersionMinorB (9)
+#define kVersionMinorA (1)
+#define kVersionMinorB (0)
 /* 
  * Version history
  *
- * v23.9 - Updated for Arduino 1.6.0 (prog_char -> const 
- * v23.8 - Platform 2411 added (handheld), EEPROM toggle bug fixed
- * v23.7 - extracting out keys and display
- * v23.6 - popping +, popping fix
- * v23.5 - Better LED and Keypad support
- * v23.4 - Additional warnings removed from Arduino build
- * v23.3 - memory.[ch] added, initial integration (phase 1)
- * v23.2 - config.h, updated version string
+ * v23.10 - moved FONT to PROGMEM, removed ram/rom table code (low memory instability)
+ * v23.9  - Updated for Arduino 1.6.0 (prog_char -> const)
+ * v23.8  - Platform 2411 added (handheld), EEPROM toggle bug fixed
+ * v23.7  - extracting out keys and display
+ * v23.6  - popping +, popping fix
+ * v23.5  - Better LED and Keypad support
+ * v23.4  - Additional warnings removed from Arduino build
+ * v23.3  - memory.[ch] added, initial integration (phase 1)
+ * v23.2  - config.h, updated version string
  *         Baud Rate (below)
  *         Serial mode 0 keys to replace ctrl-keys for usability. In summary:
  *           'g' - GO
@@ -32,8 +33,8 @@
  *         Smart Serial added (won't stream out the display until it gets traffic)
  *         Upload warning removed with CAFE BABE
  *         Calculator and floading point library removed
- * v23.1 - CC Led, 4x6 keypad, Text display on LEDs
- * v23.0 - initial starting code from Oscar
+ * v23.1  - CC Led, 4x6 keypad, Text display on LEDs
+ * v23.0  - initial starting code from Oscar
  */
 
 /* define on for Arduino, off for normal PC C compilers. */
@@ -44,9 +45,9 @@
 /* Platform */
 
 /* this is for Oscar's Kim Uno platform */
-#undef kPlatformKIMUno
+#define kPlatformKIMUno
 /* this is for the Novus 750 hacked calculator */
-#define kPlatformNovus750
+#undef kPlatformNovus750
 /* This is for the 24 key, 11 digit display handheld */
 #undef kPlatform2411
 
@@ -78,6 +79,9 @@
   #define kDisplayDataOffset   (5) /* [5,6] */
   #define kDisplayShift        (-1) /* no shift indicator */
   #define kDisplayDot          (-1) /* no dot indicator */
+
+  #undef CUseKeypadLibrary
+  #define CKeyThreeEight  /* original to KIM-UNO hardware */
 #endif
 
 #ifdef kPlatformNovus750
@@ -87,6 +91,9 @@
   #define kDisplayDataOffset   (5) /* data directly adjoins it [5,6] */
   #define kDisplayShift        (0) /* shift indicator goes on half digit */
   #define kDisplayDot          (4) /* dot separates addr from data */
+
+  #define CUseKeypadLibrary /* all of the below require this */
+  #define CKeyNovus /* Novus calculator */
 #endif
 
 #ifdef kPlatform2411
@@ -96,18 +103,11 @@
   #define kDisplayDataOffset   (5) /* data directly adjoins it [5,6] */
   #define kDisplayShift        (-1) /* shift indicator goes on half digit */
   #define kDisplayDot          (-1) /* dot separates addr from data */
+
+  #define CUseKeypadLibrary /* all of the below require this */
+  #define CKeyFourSix
 #endif
 
-
-/* ****************************************************************************************** */
-/* Keypad */
-
-/* are we using the stock scanning (3x8) or the keypad library (4x6) */
-#undef CKeyThreeEight  /* original to KIM-UNO hardware */
-
-#undef CUseKeypadLibrary /* all of the below require this */
-#undef CKeyFourSix
-#define CKeyNovus /* Novus calculator */
 
 
 /* ****************************************************************************************** */
@@ -118,4 +118,3 @@
 
 /* additional debug config */
 #undef DEBUGUNO
-

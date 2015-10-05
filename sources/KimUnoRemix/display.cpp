@@ -11,7 +11,7 @@
 extern "C" {
 
 char shiftKey = 0;  // is the keypad shift key in effect?
-char threeHex[3][2];        // seLED display
+unsigned char kimHex[6];        // seLED display
 char textHex[7];
 
 // For all of this, we'll assume that they're wired correctly
@@ -36,7 +36,8 @@ const byte ledDigits[8] =  { 12, 13, A0, A1,  A2, A3, A4, A7 };
 const byte ledDigits[8] =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
 #endif
 
-byte segmentLookup[31] = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" */ 
+#define kCharMax (31)
+const unsigned char segmentLookup[kCharMax] PROGMEM = { /* NOTE: this mirrors the values in the end of the ROM "TABLE" */ 
 // bits     _6543210
 // digits   abcdefg
           B01111110,//0  
@@ -76,6 +77,7 @@ byte segmentLookup[31] = { /* NOTE: this mirrors the values in the end of the RO
           B01111101, // 29 'a'
           B10000000  // 30 '.'
 };
+
 
 
 ////////////////////////////////////////
@@ -165,7 +167,6 @@ void displayPattern( int digit, int pattern )
   #define kEnableSeg   HIGH
   #define kEnableDigit LOW
 #endif
-  byte commonAnode = 1;
   
   // clear all segments
   for( int i=0 ; i<=8 ; i++ ) /* segment a .. segment f, dp */
@@ -194,46 +195,55 @@ void displayPattern( int digit, int pattern )
 void driveLEDs()
 {
   int i,j;
+
   for( i=0 ; i<=8 ; i++ ) /* segment a .. segment f, dp */
   {
     pinMode( ledSegments[i], OUTPUT );
     digitalWrite( ledSegments[i], LOW );
   }
 
-  for( j=0 ; j <=7 ; j++ ) /* digit 0 .. digit 6 */
+  for( j=0 ; j <=6 ; j++ ) /* digit 0 .. digit 6 */
   {
     pinMode( ledDigits[j], OUTPUT );
     digitalWrite( ledDigits[j], LOW );
   }
 
-  for( int digit =0 ; digit < 8 ; digit++ )
+  //for( int x = 0 ; x < 6 ; x++ )
+  //{
+  //    if( x == 4 ) Serial.print( " " );
+  //    Serial.print( kimHex[x], HEX );
+  //}
+  //Serial.println( "" );
+  
+  for( int displayDigit = 0 ; displayDigit < 8 ; displayDigit++ )
   {
     byte pattern = 0;
     if( millis() >= (long)textTimeout ) { // not elegant, but good for now
       // display the internal digits
-      if( digit == kDisplayAddrOffset   ) pattern = segmentLookup[threeHex[0][0]];
-      if( digit == kDisplayAddrOffset+1 ) pattern = segmentLookup[threeHex[0][1]];
-      if( digit == kDisplayAddrOffset+2 ) pattern = segmentLookup[threeHex[1][0]];
-      if( digit == kDisplayAddrOffset+3 ) pattern = segmentLookup[threeHex[1][1]];
-      
-      if( digit == kDisplayDataOffset   ) pattern = segmentLookup[threeHex[2][0]];
-      if( digit == kDisplayDataOffset+1 ) pattern = segmentLookup[threeHex[2][1]];
+      if( displayDigit == kDisplayAddrOffset   ) pattern = pgm_read_byte_near( segmentLookup + kimHex[0] );
+      if( displayDigit == kDisplayAddrOffset+1 ) pattern = pgm_read_byte_near( segmentLookup + kimHex[1] );
+      if( displayDigit == kDisplayAddrOffset+2 ) pattern = pgm_read_byte_near( segmentLookup + kimHex[2] );
+      if( displayDigit == kDisplayAddrOffset+3 ) pattern = pgm_read_byte_near( segmentLookup + kimHex[3] );
+      // 4
+      if( displayDigit == kDisplayDataOffset   ) pattern = pgm_read_byte_near( segmentLookup + kimHex[4] );
+      if( displayDigit == kDisplayDataOffset+1 ) pattern = pgm_read_byte_near( segmentLookup + kimHex[5] );
+
     } 
     else 
     {
       // display the temporary text
-      i = textHex[digit] & 0x7F; // digit to display, mask off dpoint bit (0x80)
+      i = textHex[displayDigit] & 0x7F; // digit to display, mask off dpoint bit (0x80)
       
-      pattern = (segmentLookup[ i ]) | (textHex[digit] & 0x80); // add the dp bit back on
+      pattern = pgm_read_byte_near( segmentLookup + i) | (textHex[displayDigit] & 0x80); // add the dp bit back on
     }
     
     // patch the digits (only when viewing the whole thing )
     if( millis() >= (long)textTimeout ) {
-      if( (digit == kDisplayShift)  &&  shiftKey ) pattern |= 0x02;  // shift indicator
-      if( digit == kDisplayDot ) pattern |= 0x80;  // decimal point separator
+      if( (displayDigit == kDisplayShift)  &&  shiftKey ) pattern |= 0x02;  // shift indicator
+      if( displayDigit == kDisplayDot ) pattern |= 0x80;  // decimal point separator
     }
     
-    displayPattern( digit, pattern );
+    displayPattern( displayDigit,  pattern );
   }
 }
 

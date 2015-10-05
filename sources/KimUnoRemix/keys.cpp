@@ -253,12 +253,12 @@ byte rowPins[kROWS] = { 10,11,A5,9 };
 
 char lookup[kCOLS][kROWS] =
 {
-  { 7,  20, 18, 't' },
-  { 1, 4, 16, '+' },
-  { 'C', 'D',  'E', 'F'  },
-  { '8', '9', 'A', 'B' },
-  { '4', '5',  '6', '7'  },
-  { '0', '1',  '2', '3'  }
+  {   7,  20,  18,  't' },
+  {   1,   4,  16,  '+' },
+  { 'C', 'D',  'E', 'F' },
+  { '8', '9',  'A', 'B' },
+  { '4', '5',  '6', '7' },
+  { '0', '1',  '2', '3' }
 };
 
 
@@ -282,7 +282,6 @@ char lookup_shifted[kCOLS][kROWS] = {};
 
 void initKeypad()
 {
-
   for( int x=0 ; x<kROWS ; x++ )
   {
     pinMode( rowPins[x], OUTPUT );

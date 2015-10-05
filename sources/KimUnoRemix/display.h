@@ -9,8 +9,8 @@
 #define __DISPLAY_H__
 extern "C" {
   
-extern char shiftKey;  // is the keypad shift key in effect?
-extern char threeHex[3][2];        // LED display
+extern char shiftKey;   // is the keypad shift key in effect?
+extern char kimHex[6];  // LED display
 
 // displayText
 //  pass it in one of these values, and the number of ms to display (eg 500)
