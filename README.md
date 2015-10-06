@@ -6,7 +6,10 @@ This code is intended for the KIM Uno PCB, but actually runs on most newer Ardui
 
 This "remix" takes the original KIM-1 emulation codebase from Oscar, which and changes some things around for expandability and reusability.  Some things have been removed to make space for the additional functionality, including his calculator and floating point library.
 
-"Remixed" differences:
+--------
+"Remixed" differences from Oscar's oroginal version:
+- Broken out into multiple files (cpu.c, memory.c, keys.cpp, display.cpp)
+- Easily configured for different platforms (config.h)
 - Easily configurable ROM layouts (in progress)
 - Easy-loaded programs to RAM (see memory.c)
 - PC version will updated use the same source files (cpu.c, kimuno.ino) directly
@@ -14,28 +17,29 @@ This "remix" takes the original KIM-1 emulation codebase from Oscar, which and c
   - Framebuffer/TV Out
   - PS2 Keyboard
 
---------
-New features implemented:
-- config.h set up for setting platform, system configuration, version
-- New keys to replace ctrl-keys over serial for usability: (mirror mode)
- - 'g' - GO - go
- - 's' - ST - stop
- - 'r' - RS - reset
- - 'l' - AD - address *L*ocation
- - 'v' - DA - data *V*alue)
- - 'p' - PC - program counter
-- "smart" serial - only "display" if it detects serial traffic
-- Common anode/cathode LED support
-- display arragement configurability
- - address and data start on specified digits
- - decimal point for very narrow displays
- - shift indicator position
-- customizable keypad support
-- 'shift' option for keypads smaller than 24 keys
-- Serial baud rate configurable
-- Calculator Mode removed
-- Floating Point ROM removed
-- various cleanups
+New changes implemented:
+- Serial interface
+ - "smart" serial - only "display" if it detects serial traffic
+ - Serial baud rate configurable
+ - Serial interface usability: new keys to replace ctrl-keys:
+  - 'g' - GO - go
+  - 's' - ST - stop
+  - 'r' - RS - reset
+  - 'l' - AD - address *L*ocation
+  - 'v' - DA - data *V*alue)
+  - 'p' - PC - program counter
+- Display
+ - Common anode OR cathode LED support
+ - display arragement configurability
+  - address and data start on specified digits
+  - decimal point for very narrow displays
+  - shift indicator position
+- Keypad
+ - customizable keypad support
+ - 'shift' option for keypads smaller than 24 keys
+- Misc
+ - Calculator Mode removed
+ - Floating Point ROM removed
 
 --------
 
