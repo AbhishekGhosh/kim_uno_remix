@@ -51,22 +51,22 @@ const unsigned char segmentLookup[kCharMax] PROGMEM = {
      ddd  x
   */
   /*           x g f e  d c b a */
-  0xBF, /* 0   1 0 1 1  1 1 1 1 */
-  0x86, /* 1   1 0 0 0  0 1 1 0 */
-  0xDB, /* 2   1 1 0 1  1 0 1 1 */
-  0xCF, /* 3   1 1 0 0  1 1 1 1 */
-  0xE6, /* 4   1 1 1 0  0 1 1 0 */
-  0xED, /* 5   1 1 1 0  1 1 0 1 */
-  0xFD, /* 6   1 1 1 1  1 1 0 1 */
-  0x87, /* 7   1 0 0 0  0 1 1 1 */
-  0xFF, /* 8   1 1 1 1  1 1 1 1 */
-  0xEF, /* 9   1 1 1 0  1 1 1 1 */
-  0xF7, /* A   1 1 1 1  0 1 1 1 */
-  0xFC, /* B   1 1 1 1  1 1 0 0 */
-  0xB9, /* C   1 0 1 1  1 0 0 1 */
-  0xDE, /* D   1 1 0 1  1 1 1 0 */
-  0xF9, /* E   1 1 1 1  1 0 0 1 */
-  0xF1, /* F   1 1 1 1  0 0 0 1 */
+  0x3F, /* 0   1 0 1 1  1 1 1 1 */
+  0x06, /* 1   1 0 0 0  0 1 1 0 */
+  0x5B, /* 2   1 1 0 1  1 0 1 1 */
+  0x4F, /* 3   1 1 0 0  1 1 1 1 */
+  0x66, /* 4   1 1 1 0  0 1 1 0 */
+  0x6D, /* 5   1 1 1 0  1 1 0 1 */
+  0x7D, /* 6   1 1 1 1  1 1 0 1 */
+  0x07, /* 7   1 0 0 0  0 1 1 1 */
+  0x7F, /* 8   1 1 1 1  1 1 1 1 */
+  0x6F, /* 9   1 1 1 0  1 1 1 1 */
+  0x77, /* A   1 1 1 1  0 1 1 1 */
+  0x7C, /* B   1 1 1 1  1 1 0 0 */
+  0x39, /* C   1 0 1 1  1 0 0 1 */
+  0x5E, /* D   1 1 0 1  1 1 1 0 */
+  0x79, /* E   1 1 1 1  1 0 0 1 */
+  0x71, /* F   1 1 1 1  0 0 0 1 */
           
   /* additional characters */
   // xgfedcba
@@ -239,23 +239,20 @@ void driveLEDs()
       if( displayDigit == kDisplayDataOffset   ) pattern = kimHex[4];
       if( displayDigit == kDisplayDataOffset+1 ) pattern = kimHex[5];
 
-      pattern = pgm_read_byte_near( segmentLookup + pattern ) & 0x7f; // ignore decimal point here.
-    } 
+      pattern = pgm_read_byte_near( segmentLookup + pattern ); // remove decimal point here.
+      
+      if( (displayDigit == kDisplayShift)  &&  shiftKey ) pattern |= 0xff;//B01001001;  // shift indicator
+      if( displayDigit == kDisplayDot ) pattern |= 0x80;  // decimal point separator
+     } 
     else 
     {
       // display the temporary text
-      i = textHex[displayDigit] & 0x7F; // digit to display, mask off dpoint bit (0x80)
+      i = textHex[displayDigit]; // digit to display, mask off dpoint bit (0x80)
       
       pattern = pgm_read_byte_near( segmentLookup + i) | (textHex[displayDigit] & 0x80); // add the dp bit back on
     }
-    
-    // patch the digits (only when viewing the whole thing )
-    if( millis() >= (long)textTimeout ) {
-      if( (displayDigit == kDisplayShift)  &&  shiftKey ) pattern |= 0x02;  // shift indicator
-      if( displayDigit == kDisplayDot ) pattern |= 0x80;  // decimal point separator
-    }
-    
-    displayPattern( displayDigit,  pattern & 0x7f );
+   
+    displayPattern( displayDigit,  pattern );
   }
 }
 
