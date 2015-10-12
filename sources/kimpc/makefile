@@ -20,13 +20,15 @@ TARG := KimRemix
 # list of all sources, starting with the main.ino
 # then going through all of the additional sources 
 # in the arduino directory (if any)
-SRCS := \
+SRCPPS := \
 	$(ARDMAIN).cpp \
 	\
-	$(ARDUINOSRCDIR)/cpu.cpp \
 	$(ARDUINOSRCDIR)/keys.cpp \
-	$(ARDUINOSRCDIR)/display.cpp \
-	$(ARDUINOSRCDIR)/memory.cpp 
+	$(ARDUINOSRCDIR)/display.cpp
+
+SRCS := \
+	$(ARDUINOSRCDIR)/cpu.c \
+	$(ARDUINOSRCDIR)/memory.c 
 
 # additional include directories
 INCS += -I$(ARDUINOSRCDIR)
@@ -49,7 +51,7 @@ INCS += -I$(shell pwd)/ardsim
 ########################################
 
 # generate a list of .o foles
-OBJS := $(SRCS:%.cpp=%.o) $(SRCSIM:%.cpp=%.o)
+OBJS := $(SRCS:%.c=%.o) $(SRCPPS:%.cpp=%.o) $(SRCSIM:%.cpp=%.o)
 
 # build flags and such
 CFLAGS += -g -DDESKTOP -Wall -pedantic $(INCS)

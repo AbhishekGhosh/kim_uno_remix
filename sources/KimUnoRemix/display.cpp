@@ -7,12 +7,13 @@
 
 #include "Arduino.h"
 #include "config.h"
+#include <avr/pgmspace.h>
 
 extern "C" {
 
 char shiftKey = 0;  // is the keypad shift key in effect?
 unsigned char kimHex[6];        // seLED display
-char textHex[7];
+unsigned char textHex[7];
 
 // For all of this, we'll assume that they're wired correctly
 // ledSegments corrolates with the bits in "segmentLookup" below ( dp, a, b, c, d, e, f, g)
@@ -110,7 +111,6 @@ unsigned long textTimeout;
 
 void displayText( int which, long timeMillis )
 {
-  int x = 0;
   for( int x = 0 ; x<8 ; x++ ) 
     textHex[x] = 18; // ' ' space
 

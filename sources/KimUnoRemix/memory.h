@@ -5,10 +5,7 @@
 
 #include <Arduino.h>
 #include <stdint.h>
-
-#ifndef AVRX
 #include <avr/pgmspace.h>
-#endif
 
 #ifndef __MEMORY_H__
 #define __MEMORY_H__

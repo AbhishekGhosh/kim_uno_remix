@@ -620,6 +620,9 @@ const unsigned char miniProgramD[18] PROGMEM = {
         0x4c, 0x63, 0x02  //  JMP STORE
 };
 
+
+void write6502(uint16_t address, uint8_t value);
+
 void loadRam( const unsigned char * buf, int bufsz, int address )
 {
   while( bufsz > 0 ) {
