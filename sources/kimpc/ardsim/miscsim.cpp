@@ -48,3 +48,10 @@ long random( long max )
 {
 	return random( 0, max );
 }
+
+////////////////////////////////////////////////////////////////////////////////
+unsigned char pgm_read_byte_near( const unsigned char * buf )
+{
+	if( !buf ) return 0x00;
+	return( buf[0] );
+}

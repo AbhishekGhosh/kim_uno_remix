@@ -30,6 +30,11 @@
 #define RAMEND (0x0fff)
 #endif
 
+// PROGMEM directive ignored
+#ifndef PROGMEM
+#define PROGMEM 
+#endif
+
 // boolean datatype
 #ifndef boolean
 typedef bool boolean;

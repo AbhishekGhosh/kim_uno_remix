@@ -1,5 +1,7 @@
 /* swiped from arduino 1.0.6 */
 
+#include "ardsim.h"
+
 #define makeKeymap(x) ((char*)x)
 
 typedef char KeypadEvent;

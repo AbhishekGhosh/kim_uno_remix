@@ -331,6 +331,7 @@ uint8_t read6502(uint16_t address) {
   return (0);	// This should never be reached unless some addressing bug, so return 6502 BRK
 }
 
+
 void write6502(uint16_t address, uint8_t value) 
 {
   if (address < 0x0400) {

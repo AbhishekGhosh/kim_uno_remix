@@ -665,6 +665,9 @@ const unsigned char directory[] PROGMEM = {
 	0xFF, 0xFF
 };
 
+
+void write6502(uint16_t address, uint8_t value);
+
 void loadRam( const unsigned char * buf, int bufsz, int address )
 {
   while( bufsz > 0 ) {
