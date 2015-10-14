@@ -72,6 +72,10 @@ all: $(TARG)
 	@echo $(CXX) $<
 	@$(CXX) $(CFLAGS) $(DEFS) $(INCS) -c -o $@ $<
 
+%.o: %.c
+	@echo $(CXX) $<
+	@$(CXX) $(CFLAGS) $(DEFS) $(INCS) -c -o $@ $<
+
 
 # gcc doesn't know what to do with an INO, so we'll make a 
 # symlink .cpp version of it to use.
@@ -82,7 +86,7 @@ $(ARDMAIN).cpp: $(ARDUINOSRCDIR)/$(ARDMAIN).ino
 
 # final build...
 $(TARG): $(OBJS) 
-	@echo Link $@
+	@echo Link $@ $(OBJS)
 	@$(CXX) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 
 
