@@ -4,9 +4,13 @@
  *  interface for the ROM and RAM
  */
    
-#include <avr/pgmspace.h>
-#include "memory.h"
+#include "Arduino.h"
 #include "config.h"
+#include "memory.h"
+#ifndef DESKTOP_KIM
+#include <avr/pgmspace.h>
+#else
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 

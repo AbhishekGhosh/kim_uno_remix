@@ -4,13 +4,14 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.11 15/10/05"
+#define kVersionString "v23.12 15/10/22"
 #define kVersionMajor  (23)
 #define kVersionMinorA (1)
-#define kVersionMinorB (1)
+#define kVersionMinorB (2)
 /* 
  * Version history
  *
+ * v23.12 - Desktop version via QT Creator, and minor changes to the main program
  * v23.11 - Changed loading of programs to RAM, programs moved to memory.c, "Mini Program B-D"
  * v23.10 - moved FONT to PROGMEM, removed ram/rom table code (low memory instability)
  * v23.9  - Updated for Arduino 1.6.0 (prog_char -> const)
@@ -40,7 +41,9 @@
 
 /* define on for Arduino, off for normal PC C compilers. */
 /* in kimuno.ino, this only relates to some code segments that are shared with PC version */
+#ifndef DESKTOP_KIM
 #define AVRX
+#endif
 
 /* ****************************************************************************************** */
 /* Platform */

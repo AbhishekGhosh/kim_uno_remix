@@ -4,8 +4,11 @@
  */
 
 #include <Arduino.h>
+#include "config.h"
 #include <stdint.h>
+#ifndef DESKTOP_KIM
 #include <avr/pgmspace.h>
+#endif
 
 #ifndef __MEMORY_H__
 #define __MEMORY_H__

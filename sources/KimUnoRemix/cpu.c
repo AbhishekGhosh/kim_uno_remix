@@ -23,7 +23,7 @@
 #else
   #include <stdio.h>
   #include <stdint.h>
-  #pragma warning(disable : 4996) // MS VC2008 does not like unsigned char -> signed char converts.
+  //  #pragma warning(disable : 4996) // MS VC2008 does not like unsigned char -> signed char converts.
 #endif
 
 #define WREG_OFFSET 0x0360
@@ -36,8 +36,7 @@ uint16_t debugPC;
 #endif
 
 // temporary:
-
-extern char kimHex[6]; // buffer for 3 hex digits
+extern char kimHex[]; // buffer for 3 hex digits
 
 uint8_t blitzMode = 1;		// status variable only for microchess 
 // microchess status variable. 1 speeds up chess moves (and dumbs down play)
@@ -222,9 +221,7 @@ uint8_t read6502(uint16_t address) {
       serouthex( kimHex[5] );
       serout('<'); serout( 13 ); 
       //#endif          // remove this line to get led digits on serial for AVR too
-      #ifdef AVRX
       driveLEDs();
-      #endif
 
       pc = 0x1F45;    // skip subroutine part that deals with LEDs
       return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now go to AK

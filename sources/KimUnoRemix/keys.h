@@ -8,6 +8,8 @@
 #define __KEYS_H__
 
 extern "C" {
+#include <stdint.h>
+
 extern uint8_t serialEnable;
 extern uint8_t eepromProtect;  // default is to write-protect EEPROM
 
