@@ -7,15 +7,15 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
-#include "../sources/KimUnoRemix/display.h"
+#include "../sources/KimUnoRemix/config.h"
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber 2
+#define kVersionNumber "003"
 #define kVersionDate   "2015-10-22"
 
 /*
+ * v003 - 2015-10-23 - Complete build with display, keys, etc
  * v002 - 2015-10-22 - quit, about handlers
  * v001 - 2015-10-22 - initial build, gui, nothing more
  */
@@ -27,6 +27,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     // initialize the UI
     ui->setupUi(this);
+
+    // adjust the titlebar
+    std::ostringstream title;
+    title << kAppName;
+    title << " v" << kVersionNumber;
+    this->setWindowTitle( title.str().c_str() );
 
     // set up the timer
     this->timer = new QTimer( this );
@@ -64,6 +70,7 @@ bool MainWindow::reallyQuit()
     confirmQuitBox.setStandardButtons( QMessageBox::Yes );
     confirmQuitBox.addButton( QMessageBox::No );
     confirmQuitBox.setDefaultButton( QMessageBox::No );
+    confirmQuitBox.setIcon( QMessageBox::Warning ); // Question Warning Critical
     if( confirmQuitBox.exec() == (QMessageBox::Yes) ){
         return( true );
     } else {
@@ -89,12 +96,13 @@ void MainWindow::on_actionAbout_triggered()
     content << "Kim Uno Remix - Desktop Version" << std::endl;
     content << std::endl;
     content << " Version " << kVersionNumber << ", " << kVersionDate << std::endl;
-    content << " the latest version is available at https://github.com/BleuLlama/kim_uno_remix" << std::endl;
+    content << " using engine " << kVersionString << std::endl;
     content << std::endl;
-    content << " by Scott Lawrence, yorgle@gmail.com" << std::endl;
+    content << "Project at https://github.com/BleuLlama/kim_uno_remix" << std::endl;
     content << std::endl;
-    content << " Original Kim UNO engine by Oscar Vermeulen" << std::endl;
-    content << " 6502 emulator by Mike Chambers" << std::endl;
+    content << "by Scott Lawrence, yorgle@gmail.com" << std::endl;
+    content << "- Original Kim UNO engine by Oscar Vermeulen" << std::endl;
+    content << "- 6502 emulator by Mike Chambers" << std::endl;
 
     QString txt( content.str().c_str() );
 
