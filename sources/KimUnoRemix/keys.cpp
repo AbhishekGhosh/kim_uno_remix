@@ -69,39 +69,41 @@ void interpretkeys()
   // round 1: keys that always have the same meaning
   switch (curkey) {
     case 18:  // CtrlR = RS key = hardware reset (RST)
-      reset6502(); clearkey(); break;
+      reset6502(); clearkey(); Serial.print("RSet\n"); break;
     
     case 20: // CtrlT = ST key = throw an NMI to stop execution of user program
-      nmi6502(); clearkey(); break;
+      nmi6502(); clearkey(); Serial.print("STop\n"); break;
       
     case '[': // SST off
       SSTmode = 0; clearkey();
-      std::cout << "SST OFF" << std::endl;
+      Serial.print(F("                                      SST OFF         "));
+      displayText( kDt_SST_OFF, 500 );
       break;
 
     case ']': // SST on
       SSTmode = 1; clearkey();
-      std::cout << "SST ON" << std::endl;
+      Serial.print(F("                                      SST ON          ")); 
+      displayText( kDt_SST_ON, 500 );
       break;
       
     case 9: // TAB pressed, toggle between serial port and onboard keyboard/display
       if (useKeyboardLed==0) 
       {
-          /* keyboard hex digits */
-        useKeyboardLed=1;
+        useKeyboardLed=1;    Serial.print(F("                    Keyboard/Hex Digits Mode "));
       } else {
-          /* keyboard terminal */
-        useKeyboardLed=0;
+        useKeyboardLed=0;    Serial.print(F("                        Serial Terminal Mode         "));
       }
       reset6502();  clearkey();  break;
       
     case '>': // Toggle write protect on eeprom
       if (eepromProtect==0) {
-        eepromProtect = 1;
-        std::cout << "EEPROM RO" << std::endl;
+        eepromProtect = 1; 
+        Serial.print(F("                                      Eeprom R/O     "));
+        displayText( kDt_EE_RO, 500 );
       } else {
         eepromProtect = 0;
-        std::cout << "EEPROM RW" << std::endl;
+        Serial.print(F("                                      Eeprom R/W     "));
+        displayText( kDt_EE_RW, 500 );
         //delay(20);
       }
       clearkey(); break;
@@ -114,8 +116,8 @@ uint8_t parseChar(uint8_t n) //  parse keycode to return its ASCII code
   uint8_t c = 0;
     
   // KIM-I keys
-  switch (n-1) {              //KIM Uno keyscan codes to ASCII codes used by emulator
-    case	7	: c = 	'0' ;  break;	//        note: these are n-1 numbers!
+  switch( n-1) { // kim uno keyscan codes to ascii codes used by emulator
+    case        7	: c =   '0';  break;    // note: these are n=1 numbers!
     case	6	: c = 	'1';  break;	// 
     case	5	: c = 	'2';  break;	// 
     case	4	: c = 	'3';  break;	//
