@@ -14,10 +14,12 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp\
+    interface.c  \
     ../sources/KimUnoRemix/cpu.c \
     ../sources/KimUnoRemix/memory.c
 
 HEADERS  += mainwindow.h\
+    interface.h \
     ../sources/KimUnoRemix/config.h \
     ../sources/KimUnoRemix/memory.h \
     Arduino.h
