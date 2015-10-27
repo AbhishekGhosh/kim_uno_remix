@@ -33,6 +33,16 @@ extern const unsigned char disasm[505] PROGMEM;   // 0x2000
 
 /*********************************************************************************/
 
+////////////////////////////////////////////////////////////////////////////////
+typedef struct MMAP {
+    uint16_t addr;
+    uint16_t len; /* the final element in the list has len = 0 */
+    const uint8_t * data;
+} MMAP;
+
+extern struct MMAP MemoryReadSegments[];  /* RAM and ROM bits */
+extern struct MMAP MemoryWriteSegments[]; /* RAM bits */
+
 void loadProgramsToRam( void );
 
 #endif /* __MEMORY_H__*/

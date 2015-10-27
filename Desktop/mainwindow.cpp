@@ -14,10 +14,11 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "004"
-#define kVersionDate   "2015-10-22"
+#define kVersionNumber "005"
+#define kVersionDate   "2015-10-26"
 
 /*
+ * v005 - 2015-10-26 - Serial terminal almost working
  * v004 - 2015-10-24 - pulled out interface.c to help it be more portable
  * v003 - 2015-10-23 - Complete build with display, keys, etc
  * v002 - 2015-10-22 - quit, about handlers
@@ -38,7 +39,18 @@ MainWindow::MainWindow(QWidget *parent) :
     title << " v" << kVersionNumber;
     this->setWindowTitle( title.str().c_str() );
 
-    // set up the timer
+    // start up the integrated terminal
+    this->term = new TerminalInterface( parent );
+    // and shove out some text to it because why not
+    title.str( "" );
+    title << kAppName << std::endl;
+    title << " v" << kVersionNumber << std::endl;
+    title << "  " << kVersionDate << std::endl;
+    title << std::endl;
+
+    this->term->putData( title.str().c_str() );
+
+    // set up the update timer
     this->timer = new QTimer( this );
     connect( this->timer, SIGNAL(timeout()), this, SLOT( on_timerTick() ));
     timer->start( 10 );
@@ -46,15 +58,14 @@ MainWindow::MainWindow(QWidget *parent) :
     // initialize the display
     this->updateDisplay();
 
-    // initialize SST
+    // initialize the SST button and indicator
     this->updateSSTButton();
-    this->initialize_emulation();
 
-    // other connections...
-    //connect( ui->pushButton_GO, SIGNAL(pressed()),
-    //         this, SLOT(on_Reset_option()) );
+    // and start up the emulator!
+    this->initialize_emulation();
 }
 
+// GOZER THE DESTRUCTOR!
 MainWindow::~MainWindow()
 {
     this->timer->stop();
@@ -63,11 +74,11 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
-
+// confirm with the user that we really want to exit
 bool MainWindow::reallyQuit()
 {
     QMessageBox confirmQuitBox;
+    return true;//HACK 2015
 
     confirmQuitBox.setWindowTitle( kAppName );
     confirmQuitBox.setText( "Are you sure you want to quit?" );
@@ -82,17 +93,18 @@ bool MainWindow::reallyQuit()
     }
 }
 
+// capture the window's close event [x]
 void MainWindow::closeEvent( QCloseEvent *bar )
 {
     if( this->reallyQuit() ) {
         bar->accept();
+        this->term->close();
     } else {
         bar->ignore();
     }
 }
 
-
-
+// user wants to know more about us. aw shucks!
 void MainWindow::on_actionAbout_triggered()
 {
     std::ostringstream content;
@@ -131,11 +143,20 @@ void MainWindow::updateDisplay()
 void MainWindow::on_timerTick()
 {
     exec6502(100); //do 100 6502 instructions
+
     // handle sst, NMI, etc...
     if( xkeyPressed() != 0 ) {
         interpretkeys();
     }
 
+    // handle serial
+    // take the bytes from the code shove them to our terminal
+    if( serOutBufPos > 0 ) {
+        this->term->putData( QByteArray( (const char * )serOutBuf, serOutBufPos ));
+        serOutBufPos = 0;
+    }
+
+    // and update the display
     this->updateDisplay();
 }
 
@@ -151,15 +172,23 @@ void MainWindow::initialize_emulation()
 
     /* set up vectors and load programs to RAM */
     loadProgramsToRam();
-
 }
 
 
 ///////////////////////////////////////////////////////////////////
 // menu
-void MainWindow::on_actionSerial_Monitor_triggered()
+
+// make the console visible
+void MainWindow::on_actionSerial_Console_triggered()
 {
+    if( this->term->isVisible() ){
+        this->term->setVisible( false );
+    } else {
+        this->term->setVisible( true );
+    }
 }
+
+
 
 void MainWindow::on_actionReset_triggered()
 {
@@ -173,6 +202,31 @@ void MainWindow::on_actionQuit_triggered()
     }
 }
 
+void MainWindow::on_actionFloodgap_Books_triggered()
+{
+    QUrl url( "http://www.floodgap.com/retrobits/kim-1/darc.html" );
+    (void) QDesktopServices::openUrl( url );
+}
+
+void MainWindow::on_action6502_Resources_triggered()
+{
+    QUrl url( "http://6502.org/documents/books/" );
+    (void) QDesktopServices::openUrl( url );
+}
+
+void MainWindow::on_actionKim_Uno_Remix_Github_triggered()
+{
+    QUrl url( "https://github.com/bleullama/kim_uno_remix" );
+    (void) QDesktopServices::openUrl( url );
+}
+
+void MainWindow::on_actionKim_UNO_Project_triggered()
+{
+    QUrl url( "http://obsolescence.wix.com/obsolescence#!kim-uno-summary/c1uuh" );
+    (void) QDesktopServices::openUrl( url );
+}
+
+
 ///////////////////////////////////////////////////////////////////
 // keypad
 
@@ -185,9 +239,9 @@ void MainWindow::button_pressed( int btn )
 void MainWindow::updateSSTButton()
 {
     if( SSTmode == 0 ) {
-        ui->pushButton_SST->setText( "SST\nis Off" );
+        ui->pushButton_SST->setText( "SS&T\nis Off" );
     } else {
-        ui->pushButton_SST->setText( "SST\nis On" );
+        ui->pushButton_SST->setText( "SS&T\nis On" );
     }
 
     // for some reason, the above setText breaks the shortcut in the .ui

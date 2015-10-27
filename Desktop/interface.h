@@ -1,3 +1,7 @@
+/* Interface.h
+ *
+ * Various interfaces between the desktop code ant the core of the emulator
+ */
 
 #ifndef __INTERFACE_H__
 #define __INTERFACE_H__
@@ -20,11 +24,19 @@ void loadProgramsToRam();
 void exec6502( int nCycles );
 
 
-/* serial fakeo */
+/* serial fakeo for KimUno */
 void serout( uint8_t ch );
 void serouthex( uint8_t ch );
 
-/* keyboard interface stuff */
+/* Kim Serial */
+/* output to terminal */
+void KimSerialOut( uint8_t ch ); /* KIM outputs bytes via this */
+
+/* input from terminal */
+uint8_t KimSerialIn();    // get serial key or 0
+
+
+/* keypad interface stuff */
 extern uint8_t curkey;
 
 extern uint8_t serialEnable;
@@ -38,10 +50,26 @@ void interpretkeys();
 uint8_t getKIMkey();
 uint8_t xkeyPressed();    // just see if there's any keypress waiting
 
+
 /* display fakeo */
 extern char kimHex[6];        // seLED display
 
 void driveLEDs( void );
 
+
+/* our interface to the builtin Serial console buffers */
+#define kSerBufSize  (512)
+extern uint8_t serOutBuf[ kSerBufSize ];
+extern uint16_t serOutBufPos;
+extern uint8_t serInBuf[ kSerBufSize ];
+extern uint16_t serInBufPos;
+
+void KimSerialReset( void );
+
+void KimSerialOut( uint8_t ch );
+
+uint8_t KimSerialIn();
+void KimSerialInPush( uint8_t ch );
+void KimSerialClearIn();
 
 #endif /* INTERFACE_H */

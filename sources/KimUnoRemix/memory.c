@@ -12,14 +12,6 @@
 #else
 #endif
 
-////////////////////////////////////////////////////////////////////////////////
-
-typedef struct MMAP {
-	uint16_t addr;
-	uint16_t len;
-	const unsigned char * data;
-} MMAP;
-
 
 ////////////////////////
 // ROMS
@@ -38,6 +30,15 @@ uint8_t RAM002[64];    // RAM from 6530-002  0x17C0-0x17FF, free for user except
 // rom003 is                                 0x1800-0x1BFF
 // rom002 is                                 0x1C00-0x1FFF
 
+MMAP MemoryWriteSegments[] = {
+  { 0x0000, 1024, RAM },
+#ifndef AVRX
+  { 0x0400, 1024, RAM2 },
+#endif
+  { 0x1780, 64, RAM003 },
+  { 0x17C0, 64, RAM002 },
+  { 0, 0, 0 }
+};
 // note that above 8K map is not replicated 8 times to fill 64K, 
 // but INSTEAD, emulator mirrors last 6 bytes of ROM 002 to FFFB-FFFF:
 //               FFFA, FFFB - NMI Vector
@@ -45,6 +46,7 @@ uint8_t RAM002[64];    // RAM from 6530-002  0x17C0-0x17FF, free for user except
 //               FFFE, FFFF - IRQ Vector
 // Application roms (mchess, calc) are above standard 8K of KIM-1
 
+/* ******************************************************************* */
 
 
 // --- ROM CODE SECTION ------------------------------------------------------------
@@ -520,17 +522,25 @@ const unsigned char disasm[505] PROGMEM = {
   0xC8
 };
 
-// this is for a lookup table method rather than a if-then method to be explored soon
-MMAP ROMSegments[6] = {
-  { 0x1800, 1024, rom003 },
-  { 0x1c00, 1024, rom002 },
-  { 0x2000, 504, disasm },
-  { 0xc000, 1393, mchess },
-  { 0xfffA, 6, rom002 + 0x3fa },
-  { 0, 0, 0 }
+/* ******************************************************************* */
+MMAP MemoryReadSegments[] = {
+    /* first let's do the RAM from above */
+    { 0x0000, 1024, RAM },
+  #ifndef AVRX
+    { 0x0400, 1024, RAM2 },
+  #endif
+    { 0x1780, 64, RAM003 },
+    { 0x17C0, 64, RAM002 },
+
+    /* and now here's the ROM bits */
+    { 0x1800, 1024, rom003 },
+    { 0x1c00, 1024, rom002 },
+    { 0x2000, 504, disasm },
+    { 0xc000, 1393, mchess },
+    { 0xfffA, 6, rom002 + 0x3fa }, /* remap the bottom of 002 */
+    { 0, 0, 0 }
 };
-#ifdef NEVER
-#endif
+
 
 /* ************************************************* */
 /*  The following get copied to RAM  */
@@ -654,22 +664,59 @@ const unsigned char miniProgramD[18] PROGMEM = {
         0x4c, 0x63, 0x02  //  JMP STORE   ; 0x0263
 };
 
-/* Directory listing */
-const unsigned char directory[] PROGMEM = {
-	0x00, 0xBB, '=', ' ', 'D', 'I', 'R', ' ', '=', ' ', /* at 0xBB00, doubles as a header */
-	0x00, 0xBF, 'S', 'C', 'A', 'N', 'S', 'E', 'G', 'S', /* 0xbf00, scan segments routine */
-
-	0x00, 0x1C, 'B', 'I', 'O', 'S', ' ', '0', '0', '2', /* ROM002 */
-	0x00, 0x18, 'B', 'I', 'O', 'S', ' ', '0', '0', '3', /* ROM003 */
-	0x00, 0xc0, 'M', ' ', 'C', 'H', 'E', 'S', 'S', ' ', /* Micro chess */
-#ifdef USE_FP
-	0x00, 0xD0, '6', '5', '0', '2', 'F', 'L', 'O', 'T', /* FP Lib */
-#endif
-	0x00, 0x20, '6', '5', '0', '2', 'D', 'A', 'S', 'M', /* Woz disasm */
-	0xFF, 0xFF
+#ifdef NEVER
+/* Timer - First book of Kim page 106 */
+/* 0 stop, 1 go, 4 KIM,  2 Reset */
+const unsigned char timerProgram[] PROGMEM = {
+    /* 200 */
+    0xA9, 0x00,
+    0x85, 0xF9,  0x85, 0xFA,  0x85, 0xFB,
+    0x20, 0x1f, 0x1f, 0x20, 0x6A, 0x1f,
+    0xc9, 0x04,
+    0xd0, 0x03,
+    0x4c, 0x64, 0x1c,
+    /* 215 */
+    0xc9, 0x02,
+    0xf0, 0xe7,
+    0xc9, 0x01,
+    0xd0, 0xeb,
+    0xa9, 0x9c,
+    0x8d, 0x06, 0x17,
+    /* 222 */
+    0x20, 0x1f, 0x1f,
+    0xAd, 0x07, 0x17,
+    0xf0, 0xfb,
+    0x8d, 0x00, 0x1c,
+    0xA9, 0x9c,
+    0x8d, 0x06, 0x17,
+    0x18,  0xF8,
+    /* 234 */
+    0xa5, 0xf9,
+    0x69, 0x01,
+    0x85, 0xf9,
+    0x85, 0xfa,
+    0x69, 0x00,
+    0x85, 0xFa,
+    /* 240 */
+    0xc9, 0x60,
+    0xD0, 0x0b,
+    0xA9, 0x00,
+    0x85, 0xfa,
+    0xA5, 0xfb,
+    0x18,
+    /* 24b */
+    0x69, 0x01,
+    0x85, 0xfb,
+    0xd8,
+    0x20, 0x6a, 0x1f,
+    0xc9, 0x00,
+    0xd0, 0xcb,
+    0xf0, 0xAF
 };
+#endif
 
 
+/* ******************************************************************* */
 void write6502(uint16_t address, uint8_t value);
 
 void loadRam( const unsigned char * buf, int bufsz, int address )
@@ -682,9 +729,6 @@ void loadRam( const unsigned char * buf, int bufsz, int address )
 
 void loadProgramsToRam() 
 {
-  // set up the reset vectors
-  loadRam( setupData, sizeof(setupData) ,0x17fa );
-
   // load in mini program A to 0x0200
   loadRam( miniProgramA, sizeof(miniProgramA), 0x0200 );
   loadRam( miniProgramAData, sizeof(miniProgramA), 0x0010 );
@@ -695,12 +739,18 @@ void loadProgramsToRam()
   // load in mini program C to 0x0240
   loadRam( miniProgramC, sizeof(miniProgramC), 0x0240 );
   
-    // load in mini program C to 0x0260
+  // load in mini program C to 0x0260
   loadRam( miniProgramD, sizeof(miniProgramD), 0x0260 );
 
   // and load up some utility programs
   loadRam( movit, sizeof(movit), 0x1780 );
   loadRam( relocate, sizeof(relocate), 0x0110 );
   loadRam( branch, sizeof(branch), 0x01A5 );
+
+//  loadRam( timerProgram, sizeof( timerProgram ), 0x0200 );
+
+  // and finally set up the reset vectors
+  loadRam( setupData, sizeof(setupData), 0x17fa );
+
 }
 

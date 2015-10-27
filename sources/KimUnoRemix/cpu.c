@@ -20,10 +20,17 @@
   #include <avr/pgmspace.h>
   extern uint8_t eepromread(uint16_t eepromaddress);
   extern void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue);
+
+  #define KimSerialIn()       getAkey()
+  #define KimSerialClearIn()  clearkey()
+  #define KimSerialOut( A )   serout( A )
 #else
   #include <stdio.h>
   #include <stdint.h>
   //  #pragma warning(disable : 4996) // MS VC2008 does not like unsigned char -> signed char converts.
+  uint8_t KimSerialIn();
+  void KimSerialClearIn();
+  void KimSerialOut( uint8_t );
 #endif
 
 #define WREG_OFFSET 0x0360
@@ -106,270 +113,201 @@ uint8_t opcode, oldcpustatus, useaccum;
 
 /* ************************************************* */
 
-/* notes about direction for this: 
-    - all ROM and RAM Programs will be moved into memory.c
-    - this entire function will be implemented there too
-      - retrieve the byte from RAM/ROM
-      - patch it if necessary
-      - return it
+/*
+ * Accuracy notes:
+ *  - Interval timer $1704-$170F are not implented (p170 FBOK)
+ *  - LED display is hardcoded, so KIM-1 Alphabet is not implemented (p168 FBOK)
+ *
 */
 
 uint8_t read6502(uint16_t address) {
-  uint8_t tempval = 0;
+    uint8_t tempval = 0xEF;
 
-  if (address < 0x0400) {				// 0x0000-0x0400 is RAM
-    return(RAM[address]);
-  }
-  if (address < 0x0800) {           
-    #ifdef AVRX
-    return(eepromread(address-0x0400));	// 0x0400-0x0800 is EEPROM for Arduino,
-    #else									// ...but second RAM unit for PC
-    return(RAM2[address-0x0400]);       	
-    #endif
-  }										// 0x0800-0x1700 is empty space, should not be read
-  if (address < 0x1700) {             		// read in empty space
-    serout('%');  serout('5');      		// error code 5 - read in empty space
-    return(0);
-  }
-  if (address < 0x1740) {             	// 0x1700-0x1740 is IO space of RIOT 003
-    serout('%');  serout('7');      		// trap code 7 - read in I/O 003
-    return(0);
-  }
-  
-  if (address < 0x1780) {             	// 0x1740-0x1780 is IO space of RIOT 002
-	if (address == 0x1747) return (0xFF); // CLKRDI  =$1747,READ TIME OUT BIT,count is always complete...
-	if (address == 0x1740) return (useKeyboardLed);	// returns 1 for Keyboard/LED or 0 for Serial terminal
-    serout('%');  serout('6');      		// trap code 6 - read in I/O 002
-    return(0);
-  }
-  
-  if (address < 0x17C0) {             	// 0x1780-0x17C0 is RAM from RIOT 003
-    return(RAM003[address-0x1780]);
-  }
-  if (address < 0x1800) {            	// 0x17C0-0x1800 is RAM from RIOT 002
-    return(RAM002[address-0x17C0]);
-  }
-  if (address < 0x1C00) {              	// 0x1800-0x1C00 is ROM 003
+    // Search the memory map for readable content
+    int seg = 0;
+    while( MemoryReadSegments[seg].len != 0x0000 ) {
+        if( address >= MemoryReadSegments[seg].addr &&
+                address <= MemoryReadSegments[seg].addr + MemoryReadSegments[seg].len )
+        {
+            // found it!
+            tempval = MemoryReadSegments[seg].data[ address - MemoryReadSegments[seg].addr ];
+        }
+        seg++;
+    }
+
+    // at this point, tempval is obtained (or not). it might be patched though
 #ifdef AVRX
-    return(pgm_read_byte_near(rom003 + address - 0x1800));
-#else
-  return rom003[address - 0x1800];
+    // 0x0400-0x0800 is EEPROM for Arduino,
+    if (address >= 0x0400 && address < 0x0800) {
+        return(eepromread(address-0x0400));
+    }
 #endif
 
+    // RIOT 002 patch handlers
+	if (address == 0x1747) return (0xFF); // CLKRDI  =$1747,READ TIME OUT BIT,count is always complete...
+	if (address == 0x1740) return (useKeyboardLed);	// returns 1 for Keyboard/LED or 0 for Serial terminal
 
-//    readMemory( address, ROMSegments );
-  }
   
-  
-  if (address < 0x2000)				// 0x1C00-0x2000 is ROM 002. It needs some intercepting from emulator...
-  {
     ////////////////////////////////////////
     // OUTCH -serial output byte
     if (address == 0x1EA0) // intercept OUTCH (send char to serial)
     {
-      serout(a);		// print A to serial
+      KimSerialOut(a);		// print A to serial
       pc = 0x1ED3;   // skip subroutine
       return (0xEA); // and return from subroutine with a fake NOP instruction
     }
-
 
     ////////////////////////////////////////
     // GETCH - get key from serial
     if (address == 0x1E65)	//intercept GETCH (get char from serial). used to be 0x1E5A, but intercept *within* routine just before get1 test
     {
-      a=getAkey();		// get A from main loop's curkey
-      if (a==0) {
-        pc=0x1E60;	// cycle through GET1 loop for character start, let the 6502 runs through this loop in a fake way
-        return (0xEA);
-      }
-      clearkey();
-      x = RAM[0x00FD];	// x is saved in TMPX by getch routine, we need to get it back in x;
-      pc = 0x1E87;   // skip subroutine
-      return (0xEA); // and return from subroutine with a fake NOP instruction
+        a = KimSerialIn();
+//        a=getAkey();		// get A from main loop's curkey
+        if (a==0) {
+            pc=0x1E60;	// cycle through GET1 loop for character start, let the 6502 runs through this loop in a fake way
+            return (0xEA);
+        }
+//        clearkey();
+        KimSerialClearIn();
+        x = RAM[0x00FD];	// x is saved in TMPX by getch routine, we need to get it back in x;
+        pc = 0x1E87;   // skip subroutine
+        return (0xEA); // and return from subroutine with a fake NOP instruction
     }
 
     ////////////////////////////////////////
     // DETCPS 
     if (address == 0x1C2A) // intercept DETCPS
     {
-      RAM002[0x17F3-0x17C0] = 1;  // just store some random bps delay on TTY in CNTH30
-      RAM002[0x17F2-0x17C0] = 1;	// just store some random bps delay on TTY in CNTL30
-      pc = 0x1C4F;    // skip subroutine
-      return (0xEA); // and return from subroutine with a fake NOP instruction
+        RAM002[0x17F3-0x17C0] = 1;  // just store some random bps delay on TTY in CNTH30
+        RAM002[0x17F2-0x17C0] = 1;	// just store some random bps delay on TTY in CNTL30
+        pc = 0x1C4F;    // skip subroutine
+        return (0xEA); // and return from subroutine with a fake NOP instruction
     }
 
     ////////////////////////////////////////
     // SCANDS - display F9 FA FB to LEDs
     if (address == 0x1F1F) // intercept SCANDS (display F9,FA,FB)
     {
-      // light LEDs ---------------------------------------------------------
-      kimHex[0]= (RAM[0x00FB] & 0xF0) >> 4;
-      kimHex[1]= RAM[0x00FB] & 0x0F;
-      kimHex[2]= (RAM[0x00FA] & 0xF0) >> 4;
-      kimHex[3]= RAM[0x00FA] & 0x0F;
-      kimHex[4]= (RAM[0x00F9] & 0xF0) >> 4;
-      kimHex[5]=  RAM[0x00F9] & 0x0F;
-                        
-      //#ifndef AVRX      // remove this line to get led digits on serial for AVR too
-      serout(13); serout('>');
-      serouthex( kimHex[0] );
-      serouthex( kimHex[1] );
-      serouthex( kimHex[2] );
-      serouthex( kimHex[3] );
-      serout( ' ' );
-      serouthex( kimHex[4] );
-      serouthex( kimHex[5] );
-      serout('<'); serout( 13 ); 
-      //#endif          // remove this line to get led digits on serial for AVR too
-      driveLEDs();
+        // light LEDs ---------------------------------------------------------
+        kimHex[0]= (RAM[0x00FB] & 0xF0) >> 4;
+        kimHex[1]= RAM[0x00FB] & 0x0F;
+        kimHex[2]= (RAM[0x00FA] & 0xF0) >> 4;
+        kimHex[3]= RAM[0x00FA] & 0x0F;
+        kimHex[4]= (RAM[0x00F9] & 0xF0) >> 4;
+        kimHex[5]=  RAM[0x00F9] & 0x0F;
 
-      pc = 0x1F45;    // skip subroutine part that deals with LEDs
-      return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now go to AK
+        //#ifndef AVRX      // remove this line to get led digits on serial for AVR too
+        serout(13); serout('>');
+        serouthex( kimHex[0] );
+        serouthex( kimHex[1] );
+        serouthex( kimHex[2] );
+        serouthex( kimHex[3] );
+        serout( ' ' );
+        serouthex( kimHex[4] );
+        serouthex( kimHex[5] );
+        serout('<'); serout( 13 );
+        //#endif          // remove this line to get led digits on serial for AVR too
+        driveLEDs();
+
+        pc = 0x1F45;    // skip subroutine part that deals with LEDs
+        return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now go to AK
     }
     
     ////////////////////////////////////////
     // AK  - key pressed?
     if (address == 0x1EFE) // intercept AK (check for any key pressed)
     {
-      a=getAkey();	 // 0 means no key pressed - the important bit - but if a key is pressed is curkey the right value to send back?
-      //a= getKIMkey();
-      if (a==0)	a=0xFF; // that's how AK wants to see 'no key'
-      pc = 0x1F14;    // skip subroutine 
-      return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
+        a=getAkey();	 // 0 means no key pressed - the important bit - but if a key is pressed is curkey the right value to send back?
+        if (a==0) a=0xFF; // that's how AK wants to see 'no key'
+        pc = 0x1F14;    // skip subroutine
+        return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
     }
 
     ////////////////////////////////////////
     // GETKEY - get key from keypad
     if (address == 0x1F6A) // intercept GETKEY (get key from keyboard)
     {
-      a=getKIMkey();		 // curkey = the key code in the emulator's keyboard buffer
-      clearkey();
-      pc = 0x1F90;    // skip subroutine part that deals with LEDs
-      return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
-      }
-
-      // if we're still here, it's normal reading from the highest ROM 002.
-      //return readMemory( address, ROMSegments );
-      #ifdef AVRX
-      return(pgm_read_byte_near(rom002 + address - 0x1C00)); // ROM 002
-      #else
-      return rom002[address - 0x1C00];
-      #endif
-  }
-
-  if (address < 0x21F9)              	// 0x2000-0x21F8 is disasm
-  {
-    return 0x42; //readMemory( address, ROMSegments );
-  }
+          a=getKIMkey();  // curkey = the key code in the emulator's keyboard buffer
+          clearkey();
+          pc = 0x1F90;    // skip subroutine part that deals with LEDs
+          return (0xEA);  // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
+     }
   
-
-  if (address >= 0xC000 && address <=0xC571) 	// Read to Microchess ROM between $C000 and $C571
-  { 
-    if (address == 0xC202) 	// intercept C202: Blitz mode should return 0 instead of 8
-    if (blitzMode==1)	// This is the Blitz mode hack from the microchess manual.
-      return((uint8_t) 0x00);
-
-    return 0x42; //readMemory( address, ROMSegments );
-  }
-
-  
-  // I/O functions just for Microchess: ---------------------------------------------------
-  // $F003: 0 = no key pressed, 1 key pressed
-  // $F004: input from user
-  // (also, in write6502: $F001: output character to display)
-  if (address == 0xCFF4) 					//simulated keyboard input
-  {
-    tempval = getAkey();
-    clearkey();
-    // translate KIM-1 button codes into ASCII code expected by this version of Microchess
-    switch (tempval) 
+    // I/O functions just for Microchess: ---------------------------------------------------
+    // $F003: 0 = no key pressed, 1 key pressed
+    // $F004: input from user
+    // (also, in write6502: $F001: output character to display)
+    if (address == 0xCFF4) 					//simulated keyboard input
     {
-      case 16:  tempval = 'P';  break;    // PC translated to P
-      case 'F':  tempval = 13;  break;    // F translated to Return
-      case '+': tempval = 'W'; break;    // + translated to W meaning Blitz mode toggle 
+        tempval = getAkey();
+        clearkey();
+        // translate KIM-1 button codes into ASCII code expected by this version of Microchess
+        switch (tempval)
+        {
+            case 16:  tempval = 'P';  break;    // PC translated to P
+            case 'F':  tempval = 13;  break;    // F translated to Return
+            case '+': tempval = 'W'; break;    // + translated to W meaning Blitz mode toggle
+        }
+
+        if (tempval==0x57) // 'W'. If user presses 'W', he wants to enable Blitz mode.
+        {
+            if (blitzMode==1) (blitzMode=0);
+            else              (blitzMode=1);
+            serout('>'); serout( (blitzMode==1)?'B':'N' );	serout('<');
+        }
+        return(tempval);
     }
-    
-    if (tempval==0x57) // 'W'. If user presses 'W', he wants to enable Blitz mode. 
-    {
-      if (blitzMode==1) (blitzMode=0);
-      else              (blitzMode=1);
-      serout('>'); serout( (blitzMode==1)?'B':'N' );	serout('<');
-    }
-    return(tempval);
-  }
   
-  if (address == 0xCFF3) 					//simulated keyboard input 0=no key press, 1 = key press 
-  { 	
-    // light LEDs ---------------------------------------------------------
-    kimHex[0]= (RAM[0x00FB] & 0xF0) >> 4;
-    kimHex[1]= RAM[0x00FB] & 0xF;
-    kimHex[2]= (RAM[0x00FA] & 0xF0) >> 4;
-    kimHex[3]= RAM[0x00FA] & 0xF;
-    kimHex[4]= (RAM[0x00F9] & 0xF0) >> 4;
-    kimHex[5]= RAM[0x00F9] & 0xF;
-    #ifdef AVRX
-    driveLEDs();
-    #endif  
-    
-    return(getAkey()==0?(uint8_t)0:(uint8_t)1);
-  }
+    if (address == 0xCFF3) 					//simulated keyboard input 0=no key press, 1 = key press
+    {
+        // light LEDs ---------------------------------------------------------
+        kimHex[0]= (RAM[0x00FB] & 0xF0) >> 4;
+        kimHex[1]= RAM[0x00FB] & 0xF;
+        kimHex[2]= (RAM[0x00FA] & 0xF0) >> 4;
+        kimHex[3]= RAM[0x00FA] & 0xF;
+        kimHex[4]= (RAM[0x00F9] & 0xF0) >> 4;
+        kimHex[5]= RAM[0x00F9] & 0xF;
+        #ifdef AVRX
+        driveLEDs();
+        #endif
 
+        return(getAkey()==0?(uint8_t)0:(uint8_t)1);
+    }
 
-  if (address >= 0xFFFA) {				// 6502 reset and interrupt vectors. Reroute to top of ROM002.
-    //return readMemory( address, ROMSegments );
-    #ifdef AVRX
-      return(pgm_read_byte_near(rom002 + address - 0xFC00));
-    #else
-    return rom002[address - 0xFC00];
-    #endif
-  }
-
-  serout('%'); serout('9');
-  return (0);	// This should never be reached unless some addressing bug, so return 6502 BRK
+    return( tempval );
 }
 
 
 void write6502(uint16_t address, uint8_t value) 
 {
-  if (address < 0x0400) {
-    RAM[address]=value;
-    return;
-  }
-  if (address < 0x0800) {             
-    #ifdef AVRX
-    eepromwrite(address-0x0400, value);  // 0x0500-0x0900 is EEPROM for Arduino,
-    #else
-    RAM2[address-0x0400]=value;                // ...but second RAM unit for PC
-	#endif
-    return;
-  }
-  if (address < 0x1700) {                          // illegal access
-    serout('%');  serout('1');      // error code 1 - write in empty space
-    return;
-  }
-  if (address < 0x1740) {                          // I/O 003
-    serout('%');  serout('3');      // trap code 3 - io3 access
-    return;
-  }
-  if (address < 0x1780) {                          // I/O 002
-//    serout('%');  serout('2');      // trap code 2 - io2 access
-    return;
-  }
-  if (address < 0x17C0) {                          // RAM 003
-    RAM003[address-0x1780]=value;
-    return;
-  }
-  if (address < 0x1800) {                          // RAM002
-    RAM002[address-0x17C0]=value;
-    return;
-  }
+    int seg = 0;
 
-  // Character out function for microchess only: write to display at $F001
-  if (address == 0xCFF1) {                          // Character out for microchess only
-	serout(value);
-	return;
-  }
-  serout('%');  serout('4');      // error code 4 - write to ROM
+    /* patch first */
+    if (address == 0xCFF1) {
+        // Character out for microchess only
+        KimSerialOut( value );
+        return;
+    }
+
+#ifdef AVRX
+    if (address >= 0x0400 && address < 0x0800) {
+        eepromwrite(address-0x0400, value);  // 0x0400-0x03ff is EEPROM for Arduino,
+        return;
+    }
+#endif
+
+    while( MemoryWriteSegments[seg].len ) {
+        if( address >= MemoryWriteSegments[seg].addr &&
+                address <= MemoryWriteSegments[seg].addr + MemoryWriteSegments[seg].len )
+        {
+            // found it!
+            uint8_t * data = (uint8_t *) MemoryWriteSegments[seg].data;
+
+            data[ address - MemoryWriteSegments[seg].addr ] = value;
+            return;
+        }
+        seg++;
+    }
 }
 
 
@@ -400,8 +338,6 @@ uint8_t pull8() {
 }
 
 void reset6502() {
-//printf ("test at reset: %x %x\n",0xFFFC, 0xFFFD);
-
     pc = (uint16_t)read6502(0xFFFC) | ((uint16_t)read6502(0xFFFD) << 8);
 //pc = 0x1C22; 
 //	printf ("pc: %x\n",pc);
@@ -448,18 +384,26 @@ void abso() { //absolute
 }
 
 void absx() { //absolute,X
+    /* COMPILER WARNING FIX
     uint16_t startpage;
+    */
     ea = ((uint16_t)read6502(pc) | ((uint16_t)read6502(pc+1) << 8));
+    /*
     startpage = ea & 0xFF00;
+    */
     ea += (uint16_t)x;
 
     pc += 2;
 }
 
 void absy() { //absolute,Y
+    /* COMPILER WARNING FIX
     uint16_t startpage;
+    */
     ea = ((uint16_t)read6502(pc) | ((uint16_t)read6502(pc+1) << 8));
+    /*
     startpage = ea & 0xFF00;
+    */
     ea += (uint16_t)y;
 
     pc += 2;
@@ -480,11 +424,16 @@ void indx() { // (indirect,X)
 }
 
 void indy() { // (indirect),Y
-    uint16_t eahelp, eahelp2, startpage;
+    uint16_t eahelp, eahelp2;
+    /* COMPILER WARNING FIX
+    uint16_t startpage;
+    */
     eahelp = (uint16_t)read6502(pc++);
     eahelp2 = (eahelp & 0xFF00) | ((eahelp + 1) & 0x00FF); //zero-page wraparound
     ea = (uint16_t)read6502(eahelp) | ((uint16_t)read6502(eahelp2) << 8);
+    /*
     startpage = ea & 0xFF00;
+    */
     ea += (uint16_t)y;
 
 }

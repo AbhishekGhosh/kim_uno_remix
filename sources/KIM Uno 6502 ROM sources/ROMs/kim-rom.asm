@@ -18,6 +18,7 @@
 ; The SRC can be assembled with my own programmed assembler. This assembler
 ; for the PC is available as freeware, including sourcecode for Turbo Pascal.
 ;
+; 2015-10-26 - Scott Lawrence (added additional .ba ops)
 ;
 ; Sourcode of the KIM-1
 ;
@@ -811,7 +812,9 @@ MODIFY  ldy     #0      ; get contents of input buffer
 	sta     (POINTL),y      ;  specified by POINT
 	jmp     RTRN
 ;
-; Subroutine to print POINT = address
+;
+.ba $1e1e
+; Subroutine to TTY print POINT = address
 PRTPNT  lda     POINTH
 	jsr     PRTBYT
 	jsr     CHK
@@ -820,7 +823,7 @@ PRTPNT  lda     POINTH
 	jsr     CHK
 	rts
 ;
-; Print ASCII-string from TOP+X to TOP
+; TTY Print ASCII-string from TOP+X to TOP
 CRLF    ldx     #7      ; output <RETURN> and <LF>
 PRTST   lda     TOP,x
 	jsr     OUTCH
@@ -829,7 +832,8 @@ PRTST   lda     TOP,x
 
 PRT1    rts
 ;
-; Print 1 hex byte as 2 ASCII chars
+.ba $1e3b
+; TTY Print 1 hex byte as 2 ASCII chars
 PRTBYT  sta     TEMP    ; save A
 	lsr             ; shift A 4 times
 	lsr
@@ -850,6 +854,8 @@ HEXTA   and     #$0F    ; mask bit 0..4
 HEXTA1  adc     #$30    ; convert to ASCII-char...
 	jmp     OUTCH   ;  ...and print it
 ;
+;
+.ba $1e5a
 ; Get char from TTY in A
 GETCH   stx     TMPX
 	ldx     #8      ; count 8 bits
@@ -898,7 +904,9 @@ INIT1   ldX     #0
 	rts
 ;
 ; Output char in A to TTY       $1E9E
+.ba $1e9E
 OUTSP   lda     #" "    ; print space
+.ba $1eA0
 OUTCH   sta     CHAR
 	stx     TMPX
 	jsr     DELAY
@@ -955,7 +963,11 @@ DEHALF  lda     CNTH30
 ; ????
 ;
 ;
+.ba $1EFE
 ; Determine if key is depressed: NO -> A=0, YES -> A>0
+; A == 0 -> a key is down
+; A != 0 -> no key is down
+; X and Y lost
 AK      ldy     #3      ; 3 rows
 	ldX     #1      ; select 74145 output 0
 
@@ -975,6 +987,7 @@ AKA     stx     SBD     ; enable output = select row
 	eor     #$FF    ; if A still is $FF -> A := 0
 	rts
 ;
+.ba $1f1f
 ; Output to 7-segment-display
 SCAND   ldy     #0      ; POINTL/POINTH = address on display
 	lda     (POINTL),Y      ; get data from this address
@@ -1027,7 +1040,10 @@ INCPT   inc     POINTL
 	inc     POINTH
 INCPT2  rts
 ;
+
+.ba $1F6A
 ; Get key from keyboard in A
+; A > 15 is illegal or no key
 GETKEY  ldx     #$21    ; row 0 / disable input TTY
 GETKE5  ldy     #1      ; only one row in the time
 	jsr     ONEKEY  ; key?

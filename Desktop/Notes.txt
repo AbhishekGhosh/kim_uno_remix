@@ -1,0 +1,8 @@
+To do:
+- figure out why the console isn't accepting input
+  - write a 6502 program, install it on the original code/avr and test it
+  - see if that works here
+- go through all of the convoluted keypad code to clean it up
+  - it feels like there's a few layers of code that can be eliminated
+  - convert KIM keypad scancodes to #defines
+  - have all keypads sending those

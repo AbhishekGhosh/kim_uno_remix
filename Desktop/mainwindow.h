@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <terminalinterface.h>
 
 namespace Ui {
 class MainWindow;
@@ -18,6 +19,7 @@ public:
 private:
     Ui::MainWindow *ui;
     QTimer * timer;
+    TerminalInterface * term;
 
 private:
     void updateDisplay();
@@ -35,9 +37,16 @@ private slots:
 
 private slots:
     // menus
-    void on_actionSerial_Monitor_triggered();
     void on_actionReset_triggered();
     void on_actionQuit_triggered();
+    void on_actionAbout_triggered();
+
+    void on_actionSerial_Console_triggered();
+    void on_actionFloodgap_Books_triggered();
+    void on_action6502_Resources_triggered();
+    void on_actionKim_Uno_Remix_Github_triggered();
+    void on_actionKim_UNO_Project_triggered();
+
 
 private:
     void button_pressed( int b );
@@ -71,7 +80,6 @@ private slots:
     void on_pushButton_HEX_D_clicked();
     void on_pushButton_HEX_E_clicked();
     void on_pushButton_HEX_F_clicked();
-    void on_actionAbout_triggered();
 };
 
 #endif // MAINWINDOW_H

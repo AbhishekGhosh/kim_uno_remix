@@ -16,12 +16,20 @@ SOURCES += main.cpp\
         mainwindow.cpp\
     interface.c  \
     ../sources/KimUnoRemix/cpu.c \
-    ../sources/KimUnoRemix/memory.c
+    ../sources/KimUnoRemix/memory.c \
+    terminalinterface.cpp \
+    console.cpp
 
 HEADERS  += mainwindow.h\
     interface.h \
     ../sources/KimUnoRemix/config.h \
     ../sources/KimUnoRemix/memory.h \
-    Arduino.h
+    Arduino.h \
+    terminalinterface.h \
+    console.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    terminalinterface.ui
+
+OTHER_FILES += \
+    Notes.txt
