@@ -4,13 +4,14 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.12 15/10/22"
+#define kVersionString "v23.13 15/10/30"
 #define kVersionMajor  (23)
 #define kVersionMinorA (1)
-#define kVersionMinorB (2)
+#define kVersionMinorB (3)
 /* 
  * Version history
  *
+ * v23.13 - PROGMEM for Keypad, LED Segments, ROM/RAM tables to minimize use. Text splashes broken
  * v23.12 - Desktop version via QT Creator, and minor changes to the main program
  * v23.11 - Changed loading of programs to RAM, programs moved to memory.c, "Mini Program B-D"
  * v23.10 - moved FONT to PROGMEM, removed ram/rom table code (low memory instability)
@@ -76,6 +77,7 @@
 #define kDisplayCompress
 #endif
 
+
 #ifdef kPlatformKIMUno
   /* this is for Oscar's reference KIM Uno platform */
   #define kDisplayIsCommonAnode
@@ -85,8 +87,10 @@
   #define kDisplayDot          (-1) /* no dot indicator */
 
   #undef CUseKeypadLibrary
+  #undef kShiftKeypad
   #define CKeyThreeEight  /* original to KIM-UNO hardware */
 #endif
+
 
 #ifdef kPlatformNovus750
   /* this is for Scott's Novus 750 calculator hack */
@@ -97,11 +101,12 @@
   #define kDisplayDot          (4) /* dot separates addr from data */
 
   #define CUseKeypadLibrary /* all of the below require this */
+  #define kShiftKeypad
   #define CKeyNovus /* Novus calculator */
 #endif
 
 #ifdef kPlatform2411
-  /* this is for Scott's Novus 750 calculator hack */
+  /* this is for Scott's 24 key 11 digit calculator hack */
   #define kDisplayIsCommonCathode
   #define kDisplayAddrOffset   (0) /* digit 0 is half digit, shift over by one [1,2,3,4] */
   #define kDisplayDataOffset   (5) /* data directly adjoins it [5,6] */
@@ -109,9 +114,9 @@
   #define kDisplayDot          (-1) /* dot separates addr from data */
 
   #define CUseKeypadLibrary /* all of the below require this */
+  #undef kShiftKeypad
   #define CKeyFourSix
 #endif
-
 
 
 /* ****************************************************************************************** */

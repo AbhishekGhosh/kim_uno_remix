@@ -21,10 +21,11 @@
   extern uint8_t eepromread(uint16_t eepromaddress);
   extern void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue);
 
-  #define KimSerialIn()       getAkey()
-  #define KimSerialClearIn()  clearkey()
-  #define KimSerialOut( A )   serout( A )
+  #define KimSerialIn()       /* getAkey()   */ (0x00)
+  #define KimSerialClearIn()  /* clearkey()  */
+  #define KimSerialOut( A )   /* serout( A ) */
 #else
+
   #include <stdio.h>
   #include <stdint.h>
   //  #pragma warning(disable : 4996) // MS VC2008 does not like unsigned char -> signed char converts.
@@ -121,27 +122,49 @@ uint8_t opcode, oldcpustatus, useaccum;
 */
 
 uint8_t read6502(uint16_t address) {
-    uint8_t tempval = 0xEF;
+  uint8_t tempval = 0;
 
-    // Search the memory map for readable content
-    int seg = 0;
-    while( MemoryReadSegments[seg].len != 0x0000 ) {
-        if( address >= MemoryReadSegments[seg].addr &&
-                address <= MemoryReadSegments[seg].addr + MemoryReadSegments[seg].len )
-        {
-            // found it!
-            tempval = MemoryReadSegments[seg].data[ address - MemoryReadSegments[seg].addr ];
-        }
-        seg++;
-    }
+  int idx = 0;
+  uint16_t addr = 0;
+  uint16_t len = 0;
+  uint8_t * data = NULL;
+  uint8_t flags = 0;
 
-    // at this point, tempval is obtained (or not). it might be patched though
+  /* hack to fix ROM NMI Vector issue (look up table FAIL.) */
+  /* due to int16 unsigned, regions filling to 0xffff will fail the loop! */
+  if( address >=0xFFFA ) {
+    return( pgm_read_byte_near( &rom002Vectors[ address - 0xFFFA] ));
+  }
+
+  
+  do {
+    addr = pgm_read_word_near( &MemoryReadSegments[idx].addr );
+    len = pgm_read_word_near( &MemoryReadSegments[idx].len );
+    flags = pgm_read_byte_near( &MemoryReadSegments[idx].flags );
+    data = (uint8_t *)pgm_read_word_near( &MemoryReadSegments[idx].data );
+
+    if( address >= addr && address < (addr + len) ) {
+      /* this is the right block */
+      if( flags & kMMAP_PROGMEM ) {
+        /* PROGMEM */
+        tempval = pgm_read_byte_near( data + ( address - addr ) );
+      } else if( flags & kMMAP_RAM ) {
+        /* RAM */
+        return tempval = data[ address - addr ];
+      }
 #ifdef AVRX
-    // 0x0400-0x0800 is EEPROM for Arduino,
-    if (address >= 0x0400 && address < 0x0800) {
-        return(eepromread(address-0x0400));
-    }
+      else if( flags & kMMAP_EEPROM ) {
+        /* EEPROM.. never patched */
+        return eepromread(address-addr);
+      }
 #endif
+      else {
+        return 0xFF;
+      }
+    }
+
+    idx++;
+  } while( !(flags & kMMAP_END) );
 
     // RIOT 002 patch handlers
 	if (address == 0x1747) return (0xFF); // CLKRDI  =$1747,READ TIME OUT BIT,count is always complete...
@@ -195,7 +218,7 @@ uint8_t read6502(uint16_t address) {
         kimHex[3]= RAM[0x00FA] & 0x0F;
         kimHex[4]= (RAM[0x00F9] & 0xF0) >> 4;
         kimHex[5]=  RAM[0x00F9] & 0x0F;
-
+#ifdef NEVER_SEROUT
         //#ifndef AVRX      // remove this line to get led digits on serial for AVR too
         serout(13); serout('>');
         serouthex( kimHex[0] );
@@ -206,6 +229,7 @@ uint8_t read6502(uint16_t address) {
         serouthex( kimHex[4] );
         serouthex( kimHex[5] );
         serout('<'); serout( 13 );
+#endif
         //#endif          // remove this line to get led digits on serial for AVR too
         driveLEDs();
 
@@ -248,13 +272,14 @@ uint8_t read6502(uint16_t address) {
             case 'F':  tempval = 13;  break;    // F translated to Return
             case '+': tempval = 'W'; break;    // + translated to W meaning Blitz mode toggle
         }
-
+#ifdef NEVER_SEROUT
         if (tempval==0x57) // 'W'. If user presses 'W', he wants to enable Blitz mode.
         {
             if (blitzMode==1) (blitzMode=0);
             else              (blitzMode=1);
             serout('>'); serout( (blitzMode==1)?'B':'N' );	serout('<');
         }
+#endif
         return(tempval);
     }
   
@@ -280,34 +305,41 @@ uint8_t read6502(uint16_t address) {
 
 void write6502(uint16_t address, uint8_t value) 
 {
-    int seg = 0;
+  int idx = 0;
+  uint16_t addr = 0;
+  uint16_t len = 0;
+  uint8_t * data = NULL;
+  uint8_t flags = 0;
 
-    /* patch first */
-    if (address == 0xCFF1) {
-        // Character out for microchess only
-        KimSerialOut( value );
-        return;
-    }
+  /* patch first */
+  if (address == 0xCFF1) {
+      // Character out for microchess only
+      KimSerialOut( value );
+      return;
+  }
 
+  do {
+    addr = pgm_read_word_near( &MemoryWriteSegments[idx].addr );
+    len = pgm_read_word_near( &MemoryWriteSegments[idx].len );
+    flags = pgm_read_byte_near( &MemoryWriteSegments[idx].flags );
+    data = (uint8_t *)pgm_read_word_near( &MemoryWriteSegments[idx].data );
+
+    if( address >= addr && address < addr + len ) {
+      /* this is the right block */
+      if( flags & kMMAP_RAM ) {
+        /* RAM */
+        data[ address - addr ] = value;
+      }
 #ifdef AVRX
-    if (address >= 0x0400 && address < 0x0800) {
-        eepromwrite(address-0x0400, value);  // 0x0400-0x03ff is EEPROM for Arduino,
-        return;
-    }
+      else if( flags & kMMAP_EEPROM ) {
+        /* EEPROM */
+          eepromwrite( address-addr, value );
+      }
 #endif
-
-    while( MemoryWriteSegments[seg].len ) {
-        if( address >= MemoryWriteSegments[seg].addr &&
-                address <= MemoryWriteSegments[seg].addr + MemoryWriteSegments[seg].len )
-        {
-            // found it!
-            uint8_t * data = (uint8_t *) MemoryWriteSegments[seg].data;
-
-            data[ address - MemoryWriteSegments[seg].addr ] = value;
-            return;
-        }
-        seg++;
     }
+
+    idx++;
+  } while( !(flags & kMMAP_END) );
 }
 
 
@@ -996,7 +1028,7 @@ void irq6502() {
 }
 
 #ifdef USE_TIMING
-prog_char ticktable[256] PROGMEM = {
+const unsigned char ticktable[256] PROGMEM = {
 /*        |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |  9  |  A  |  B  |  C  |  D  |  E  |  F  |     */
 /* 0 */      7,    6,    2,    8,    3,    3,    5,    5,    3,    2,    2,    2,    4,    4,    6,    6,  /* 0 */
 /* 1 */      2,    5,    2,    8,    4,    4,    6,    6,    2,    4,    2,    7,    4,    4,    7,    7,  /* 1 */

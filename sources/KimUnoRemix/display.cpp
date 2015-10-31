@@ -10,27 +10,28 @@
 #include <avr/pgmspace.h>
 
 extern "C" {
-
+#ifdef kShiftKeypad
 char shiftKey = 0;  // is the keypad shift key in effect?
+#endif
 unsigned char kimHex[6];        // seLED display
 unsigned char textHex[7];
 
 // For all of this, we'll assume that they're wired correctly
 // ledSegments corrolates with the bits in "segmentLookup" below ( dp, a, b, c, d, e, f, g)
-const byte ledSegments[8] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
+const byte ledSegments[8]  = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
 #define kDisplayDP   (0x80) /* which bit is the decimal point -- needs to be 0x80 */
 
 
 /* some of the displays may be wired incorrectly... */
 #ifdef kPlatformKIMUno
-const byte ledDigits[8] =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
+const byte ledDigits[8] PROGMEM  =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
 // notice that the displays are ordred on the KIM UNO board as:
 // led1 led2 led3 led4   led7 led5 led6 (led8)    (led8 is not connected)
 //  D12  D13  A0   A1     A4   A2   A3    (A7)
 #endif
 
 #ifdef kPlatformNovus750
-const byte ledDigits[8] =  { 12, 13, A0, A1,  A2, A3, A4, A7 };
+const byte ledDigits[8] PROGMEM =  { 12, 13, A0, A1,  A2, A3, A4, A7 };
 #endif
 
 #ifdef kPlatform2411
@@ -38,6 +39,7 @@ const byte ledDigits[8] =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
 #endif
 
 #define kCharMax (31)
+
 const unsigned char segmentLookup[kCharMax] PROGMEM = { 
   /* NOTE: this is copied from the rom at 0x1FE7 */ 
   /*
@@ -111,9 +113,9 @@ unsigned long textTimeout;
 
 void displayText( int which, long timeMillis )
 {
+  return;
   for( int x = 0 ; x<8 ; x++ ) 
     textHex[x] = 18; // ' ' space
-
   if( which == kDt_SST_ON ) {
     textHex[1] = 5;  // 5
     textHex[2] = 5;  // 5
@@ -159,7 +161,6 @@ void displayText( int which, long timeMillis )
     textHex[4] = 29; // a
     textHex[5] = 22; // r
   }
-
   textTimeout = millis() + timeMillis; // when to switch back
 }
 
@@ -240,8 +241,9 @@ void driveLEDs()
       if( displayDigit == kDisplayDataOffset+1 ) pattern = kimHex[5];
 
       pattern = pgm_read_byte_near( segmentLookup + pattern ); // remove decimal point here.
-      
+#ifdef kShiftKeypad
       if( (displayDigit == kDisplayShift)  &&  shiftKey ) pattern |= 0xff;//B01001001;  // shift indicator
+#endif
       if( displayDigit == kDisplayDot ) pattern |= 0x80;  // decimal point separator
      } 
     else 

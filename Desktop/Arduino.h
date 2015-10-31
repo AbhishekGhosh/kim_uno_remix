@@ -18,7 +18,8 @@
 /* null-out the PROGMEM directive */
 #define PROGMEM /* */
 
-/* and convert the read-byte-near function to be a direct reference */
+/* and convert the read-x-near functions to be a direct reference */
 #define pgm_read_byte_near( A ) (*(A))
+#define pgm_read_word_near( A ) (*(A))
 
 #endif // ARDUINO_H

@@ -52,12 +52,14 @@ uint8_t getKIMkey() {
     return(0x14); // PC mode
   // curkey==ctrlR for hard reset (/RST) (KIM's RS key) is handled in main loop!
   // curkey==ctrlT for ST key (/NMI) is handled in main loop!
-  
+
+#ifdef NEVER_SEROUT
   // additional control press shortcuts
   if( curkey == 'g' ) return( 0x07 ); /* GO */
   if( curkey == 'l' ) return( 0x10 ); /* AD - address Location */
   if( curkey == 'v' ) return( 0x11 ); /* DA - data Value */
   if( curkey == 'p' ) return( 0x14 ); /* PC */
+#endif
   
   return(curkey); // any other key, should not be hit but ignored by KIM
 }
@@ -89,20 +91,22 @@ void interpretkeys()
     case 9: // TAB pressed, toggle between serial port and onboard keyboard/display
       if (useKeyboardLed==0) 
       {
-        useKeyboardLed=1;    Serial.print(F("                    Keyboard/Hex Digits Mode "));
+        useKeyboardLed=1;
+        // Serial.print(F("                    Keyboard/Hex Digits Mode "));
       } else {
-        useKeyboardLed=0;    Serial.print(F("                        Serial Terminal Mode         "));
+        useKeyboardLed=0;
+        // Serial.print(F("                        Serial Terminal Mode         "));
       }
       reset6502();  clearkey();  break;
       
     case '>': // Toggle write protect on eeprom
       if (eepromProtect==0) {
         eepromProtect = 1; 
-        Serial.print(F("                                      Eeprom R/O     "));
+        //Serial.print(F("                                      Eeprom R/O     "));
         displayText( kDt_EE_RO, 500 );
       } else {
         eepromProtect = 0;
-        Serial.print(F("                                      Eeprom R/W     "));
+        //Serial.print(F("                                      Eeprom R/W     "));
         displayText( kDt_EE_RW, 500 );
         //delay(20);
       }
@@ -170,22 +174,20 @@ uint8_t xkeyPressed()    // just see if there's any keypress waiting
 #define kROWS (3)
 #define kCOLS (8)
 
-byte colPins[kCOLS] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
-byte rowPins[kROWS] = { 9,10,11 };
+const byte colPins[kCOLS] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
+const byte rowPins[kROWS] = { 9,10,11 };
 
-char lookup[kCOLS][kROWS] =
+const char lookup[kCOLS * kROWS] PROGMEM =
 {
-  {  20,  18, 't' },
-  { '6', 'D', 16  },
-  { '5', 'C',  7  },
-  { '4', 'B', '+' },
-  { '3', 'A',  4  },
-  { '2', '9',  1  },
-  { '1', '8', 'F' },
-  { '0', '7', 'E' }
+   20,  18, 't',
+  '6', 'D',  16,
+  '5', 'C',   7,
+  '4', 'B', '+',
+  '3', 'A',   4,
+  '2', '9',   1,
+  '1', '8', 'F',
+  '0', '7', 'E'
 };
-
-char lookup_shifted[kCOLS][kROWS] = {};
 
 #endif
 
@@ -193,8 +195,8 @@ char lookup_shifted[kCOLS][kROWS] = {};
 // keypad definition
 #define kROWS (3)
 #define kCOLS (7)
-byte rowPins[kROWS] = { 9, 10, 11 }; //connect to the row pinouts of the keypad
-byte colPins[kCOLS] = { 2, 3, 4, 5, 6, 7, 8 }; //connect to the column pinouts of the keypad
+const byte rowPins[kROWS] = { 9, 10, 11 }; //connect to the row pinouts of the keypad
+const byte colPins[kCOLS] = { 2, 3, 4, 5, 6, 7, 8 }; //connect to the column pinouts of the keypad
 
 /* NOVUS 750 keypad is layed out like this:
    (sw)        /
@@ -221,26 +223,26 @@ byte colPins[kCOLS] = { 2, 3, 4, 5, 6, 7, 8 }; //connect to the column pinouts o
      0   1   2   3      
 */
 
-char lookup[kCOLS][kROWS] =
+const char lookup[kCOLS * kROWS] PROGMEM =
 {
-  { '0', ' ', '1' },
-  { '3', 'C', '4' },
-  { 'B', 'D', '5' },
-  { '7', 'E', '6' },
-  { ' ', '2', '8' },
-  { '$', ' ', '9' },
-  { 'F', ' ', 'A' }
+  '0', ' ', '1',
+  '3', 'C', '4',
+  'B', 'D', '5',
+  '7', 'E', '6',
+  ' ', '2', '8',
+  '$', ' ', '9',
+  'F', ' ', 'A'
 };
 
-char lookup_shifted[kCOLS][kROWS] = 
+const char lookup_shifted[kCOLS * kROWS] PROGMEM = 
 {
-  { 's', ' ', 'o' }, // s = scott, o = oscar
-  { ' ',  7 , '>' },
-  { '#',  20, ' ' }, // # is the popping version of +
-  { '+',  18, ' ' },
-  { ' ', ' ',  1  },
-  { '$', ' ',  4  },
-  { 't', ' ',  16 }
+  's', ' ', 'o', // s = scott, o = oscar
+  ' ',  7 , '>',
+  '#',  20, ' ', // # is the popping version of +
+  '+',  18, ' ',
+  ' ', ' ',  1 ,
+  '$', ' ',  4 ,
+  't', ' ',  16
 };
 #endif
 
@@ -248,26 +250,20 @@ char lookup_shifted[kCOLS][kROWS] =
 #define kROWS (4)
 #define kCOLS (6)
 
-byte colPins[kCOLS] = { 7,6,5,4,3,2 }; // note col A5 is the extra one linked to DP
-byte rowPins[kROWS] = { 10,11,A5,9 };
+const byte colPins[kCOLS] = { 7,6,5,4,3,2 }; // note col A5 is the extra one linked to DP
+const byte rowPins[kROWS] = { 10,11,A5,9 };
 
-char lookup[kCOLS][kROWS] =
+const char lookup[kCOLS * kROWS] PROGMEM =
 {
-  {   7,  20,  18,  't' },
-  {   1,   4,  16,  '+' },
-  { 'C', 'D',  'E', 'F' },
-  { '8', '9',  'A', 'B' },
-  { '4', '5',  '6', '7' },
-  { '0', '1',  '2', '3' }
+    7,  20,  18,  't',
+    1,   4,  16,  '+',
+  'C', 'D',  'E', 'F',
+  '8', '9',  'A', 'B',
+  '4', '5',  '6', '7',
+  '0', '1',  '2', '3'
 };
 
-
-        
-char lookup_shifted[kCOLS][kROWS] = {};
-
 #endif
-
-
 
 #define kNoPress ('Z')
 
@@ -305,13 +301,17 @@ char scanKeypad()
     {
       if( digitalRead( colPins[c] ) == kLH )
       {
+#ifdef kShiftKeypad
         if( shiftKey ) {
-          return lookup_shifted[c][r];
+          return pgm_read_byte_near( lookup_shifted + r + (c * kROWS ) );
         } else {
+#endif
           //Serial.write( lookup[c][r] );
           //Serial.println ("" );
-          return lookup[c][r];
+          return pgm_read_byte_near( lookup + r + (c * kROWS )  );
+#ifdef kShiftKeypad
         }
+#endif
       }
     }
     digitalWrite( rowPins[r], kHL );
@@ -358,7 +358,10 @@ void scanKeys()
 {
   static long startPressTime = 0;
   char ke = scanKeypadEvents();
+  
+#ifdef kShiftKeypad
   static char popShift = 0;
+#endif
   static int holdTicks = 0;
   
   curkey = 0;
@@ -367,12 +370,13 @@ void scanKeys()
       startPressTime = millis();
       holdTicks = 0;
       switch( ke ) {
+#ifdef kShiftKeypad
         case( '$' ): shiftKey ^= 1; break;
         /*
         case( 's' ): displayText( kDt_Scott, 1000 ); break;
         case( 'o' ): displayText( kDt_Oscar, 1000 ); break;
         */
-        
+#endif
         /* the following "pop" the shift key out */
         case( '#' ):
           ke = '+';  // and adjust it
@@ -382,7 +386,9 @@ void scanKeys()
         case( 't' ): // SST toggle
         case( 16 ):  // PC
         case( '>' ): // EEPROM TOGGLE
+#ifdef kShiftKeypad
           popShift= 1;
+#endif
           /* fall through */
         default:
           curkey = ke;
@@ -392,10 +398,12 @@ void scanKeys()
     case( kEventRelease ):
       // we need to do it this way, otherwise it gets confused and re-scans
       // the single press, giving a faulty ghost repress
+#ifdef kShiftKeypad
       if( popShift ) {
         popShift = 0;
         shiftKey = 0;
       }
+#endif
       startPressTime = 0;
       break;
     
@@ -427,7 +435,7 @@ void scanKeys()
       break;
     default:
       break;
-  }      
+  }
 }
 
 

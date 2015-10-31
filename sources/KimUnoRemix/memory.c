@@ -30,14 +30,16 @@ uint8_t RAM002[64];    // RAM from 6530-002  0x17C0-0x17FF, free for user except
 // rom003 is                                 0x1800-0x1BFF
 // rom002 is                                 0x1C00-0x1FFF
 
-MMAP MemoryWriteSegments[] = {
-  { 0x0000, 1024, RAM },
-#ifndef AVRX
-  { 0x0400, 1024, RAM2 },
+const MMAP MemoryWriteSegments[] PROGMEM = {
+  { 0x0000, 1024, kMMAP_RAM, RAM },
+#ifdef AVRX
+  { 0x0400, 1024, kMMAP_EEPROM },
+#else
+  { 0x0400, 1024, kMMAP_RAM,  RAM2 },
 #endif
-  { 0x1780, 64, RAM003 },
-  { 0x17C0, 64, RAM002 },
-  { 0, 0, 0 }
+  { 0x1780, 64, kMMAP_RAM, RAM003 },
+  { 0x17C0, 64, kMMAP_RAM, RAM002 },
+  { 0, 0, kMMAP_END }
 };
 // note that above 8K map is not replicated 8 times to fill 64K, 
 // but INSTEAD, emulator mirrors last 6 bytes of ROM 002 to FFFB-FFFF:
@@ -247,6 +249,12 @@ const unsigned char rom002[1024] PROGMEM = {
   
   0xFF, 0xFF, 0xFF, 
   
+  0x1C, 0x1C, /* NMIT */
+  0x22, 0x1C, /* RSTENT */
+  0x1F, 0x1C  /* IRQENT */
+};
+
+const unsigned char rom002Vectors[6] PROGMEM = {
   0x1C, 0x1C, /* NMIT */
   0x22, 0x1C, /* RSTENT */
   0x1F, 0x1C  /* IRQENT */
@@ -523,22 +531,27 @@ const unsigned char disasm[505] PROGMEM = {
 };
 
 /* ******************************************************************* */
-MMAP MemoryReadSegments[] = {
+const MMAP MemoryReadSegments[] PROGMEM = {
     /* first let's do the RAM from above */
-    { 0x0000, 1024, RAM },
-  #ifndef AVRX
-    { 0x0400, 1024, RAM2 },
-  #endif
-    { 0x1780, 64, RAM003 },
-    { 0x17C0, 64, RAM002 },
+    { 0x0000, 1024, kMMAP_RAM, RAM },
+#ifdef AVRX
+    { 0x0400, 1024, kMMAP_EEPROM },
+#else
+    { 0x0400, 1024, kMMAP_RAM, RAM2 },
+#endif
+    { 0x1780,   64, kMMAP_RAM, RAM003 },
+    { 0x17C0,   64, kMMAP_RAM, RAM002 },
 
     /* and now here's the ROM bits */
-    { 0x1800, 1024, rom003 },
-    { 0x1c00, 1024, rom002 },
-    { 0x2000, 504, disasm },
-    { 0xc000, 1393, mchess },
-    { 0xfffA, 6, rom002 + 0x3fa }, /* remap the bottom of 002 */
-    { 0, 0, 0 }
+    { 0x1800, 1024, kMMAP_PROGMEM, rom003 },
+    { 0x1c00, 1024, kMMAP_PROGMEM, rom002 },
+    { 0xfffA,    6, kMMAP_PROGMEM, rom002Vectors }, /* remap the bottom of 002 */
+
+    /* and some utility roms */
+    { 0x2000,  504, kMMAP_PROGMEM, disasm },
+    { 0xc000, 1393, kMMAP_PROGMEM, mchess },
+    
+    { 0, 0, kMMAP_END }
 };
 
 
@@ -719,6 +732,21 @@ const unsigned char timerProgram[] PROGMEM = {
 /* ******************************************************************* */
 void write6502(uint16_t address, uint8_t value);
 
+const MMAP MemoryCopySegments[] PROGMEM = {
+  { 0x0200,   9, kMMAP_PROGMEM, miniProgramA },
+  { 0x0010,   2, kMMAP_PROGMEM, miniProgramAData },
+  { 0x0220,  10, kMMAP_PROGMEM, miniProgramB },
+  { 0x0240,  14, kMMAP_PROGMEM, miniProgramC },
+  { 0x0260,  18, kMMAP_PROGMEM, miniProgramD },
+
+  { 0x1780, 100, kMMAP_PROGMEM, movit },
+  { 0x0110, 149, kMMAP_PROGMEM, relocate },
+  { 0x01A5,  42, kMMAP_PROGMEM, branch },
+
+  { 0, 0, kMMAP_END }
+};
+
+#ifdef NEVER
 void loadRam( const unsigned char * buf, int bufsz, int address )
 {
   while( bufsz > 0 ) {
@@ -726,9 +754,27 @@ void loadRam( const unsigned char * buf, int bufsz, int address )
     bufsz--;
   }
 }
+#endif
 
 void loadProgramsToRam() 
 {
+  int idx = 0;
+  uint16_t addr, writeaddr, len;
+  uint8_t flags = 0;
+  uint8_t * data;
+  do {
+    writeaddr = addr = pgm_read_word_near( &MemoryCopySegments[idx].addr );
+    len = pgm_read_word_near( &MemoryCopySegments[idx].len );
+    flags = pgm_read_byte_near( &MemoryCopySegments[idx].flags );
+    data = (uint8_t *)pgm_read_word_near( &MemoryCopySegments[idx].data );
+    while( len > 0 ) {
+      write6502( writeaddr++, pgm_read_byte_near( data++ ));
+      len--;
+    }
+    idx++;
+  } while( !(flags & kMMAP_END) );
+
+#ifdef NEVER
   // load in mini program A to 0x0200
   loadRam( miniProgramA, sizeof(miniProgramA), 0x0200 );
   loadRam( miniProgramAData, sizeof(miniProgramA), 0x0010 );
@@ -739,7 +785,7 @@ void loadProgramsToRam()
   // load in mini program C to 0x0240
   loadRam( miniProgramC, sizeof(miniProgramC), 0x0240 );
   
-  // load in mini program C to 0x0260
+  // load in mini program D to 0x0260
   loadRam( miniProgramD, sizeof(miniProgramD), 0x0260 );
 
   // and load up some utility programs
@@ -751,6 +797,6 @@ void loadProgramsToRam()
 
   // and finally set up the reset vectors
   loadRam( setupData, sizeof(setupData), 0x17fa );
-
+#endif
 }
 
