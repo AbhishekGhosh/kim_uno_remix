@@ -1,4 +1,5 @@
 .directory
 *.o
+*.pro.user.*
 sources/kimpc/KimUnoRemix.cpp
 *.swp
