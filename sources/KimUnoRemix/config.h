@@ -4,13 +4,14 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.13 15/10/30"
+#define kVersionString "v23.14 15/11/02"
 #define kVersionMajor  (23)
 #define kVersionMinorA (1)
-#define kVersionMinorB (3)
+#define kVersionMinorB (4)
 /* 
  * Version history
  *
+ * v23.14 - Keypad code converted to the new method, Runtime bug squashed
  * v23.13 - PROGMEM for Keypad, LED Segments, ROM/RAM tables to minimize use. Text splashes broken
  * v23.12 - Desktop version via QT Creator, and minor changes to the main program
  * v23.11 - Changed loading of programs to RAM, programs moved to memory.c, "Mini Program B-D"
@@ -33,6 +34,7 @@
  *           'v' - DA (*V*alue)
  *           'p' - PC
  *           '+' - +  (pre-existing)
+ *          ** note: this was temporarily removed as of 23.14 **
  *         Smart Serial added (won't stream out the display until it gets traffic)
  *         Upload warning removed with CAFE BABE
  *         Calculator and floading point library removed
@@ -46,7 +48,7 @@
 #define AVRX
 #endif
 
-/* ****************************************************************************************** */
+/* ************************************************************************** */
 /* Platform */
 
 /* this is for Oscar's Kim Uno platform */
@@ -56,7 +58,7 @@
 /* This is for the 24 key, 11 digit display handheld */
 #define kPlatform2411
 
-/* ****************************************************************************************** */
+/* ************************************************************************** */
 /* Display */
 
 #ifdef kPlatformExample
@@ -119,7 +121,7 @@
 #endif
 
 
-/* ****************************************************************************************** */
+/* ************************************************************************** */
 /* Serial */
 
 /* Serial interface baud rate */
@@ -127,3 +129,4 @@
 
 /* additional debug config */
 #undef DEBUGUNO
+

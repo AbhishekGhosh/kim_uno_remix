@@ -34,6 +34,11 @@
   void KimSerialOut( uint8_t );
 #endif
 
+uint8_t KIMKeyPressing(); /* returns 0 if nothing pressed, 1 if pressing */
+uint8_t KIMKeyGet();      /* returns a kKimScancode for the currently being pressed key */
+void    KimKeyUsed();     /* tells us that key has been used */
+
+
 #define WREG_OFFSET 0x0360
 
 #ifdef DEBUGUNO
@@ -121,6 +126,7 @@ uint8_t opcode, oldcpustatus, useaccum;
  *
 */
 
+/* ************************************************* */
 uint8_t read6502(uint16_t address) {
   uint8_t tempval = 0;
 
@@ -185,12 +191,10 @@ uint8_t read6502(uint16_t address) {
     if (address == 0x1E65)	//intercept GETCH (get char from serial). used to be 0x1E5A, but intercept *within* routine just before get1 test
     {
         a = KimSerialIn();
-//        a=getAkey();		// get A from main loop's curkey
         if (a==0) {
             pc=0x1E60;	// cycle through GET1 loop for character start, let the 6502 runs through this loop in a fake way
             return (0xEA);
         }
-//        clearkey();
         KimSerialClearIn();
         x = RAM[0x00FD];	// x is saved in TMPX by getch routine, we need to get it back in x;
         pc = 0x1E87;   // skip subroutine
@@ -241,7 +245,7 @@ uint8_t read6502(uint16_t address) {
     // AK  - key pressed?
     if (address == 0x1EFE) // intercept AK (check for any key pressed)
     {
-        a=getAkey();	 // 0 means no key pressed - the important bit - but if a key is pressed is curkey the right value to send back?
+        a=KIMKeyPressing();	 // 0 means no key pressed - the important bit - but if a key is pressed is curkey the right value to send back?
         if (a==0) a=0xFF; // that's how AK wants to see 'no key'
         pc = 0x1F14;    // skip subroutine
         return (0xEA); // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
@@ -251,8 +255,8 @@ uint8_t read6502(uint16_t address) {
     // GETKEY - get key from keypad
     if (address == 0x1F6A) // intercept GETKEY (get key from keyboard)
     {
-          a=getKIMkey();  // curkey = the key code in the emulator's keyboard buffer
-          clearkey();
+          a = KIMKeyGet();  // get the key
+          KIMKeyUsed();     // notify that we've used it
           pc = 0x1F90;    // skip subroutine part that deals with LEDs
           return (0xEA);  // and return a fake NOP instruction for this first read in the subroutine, it'll now RTS at its end
      }
@@ -263,8 +267,8 @@ uint8_t read6502(uint16_t address) {
     // (also, in write6502: $F001: output character to display)
     if (address == 0xCFF4) 					//simulated keyboard input
     {
-        tempval = getAkey();
-        clearkey();
+        tempval = KIMKeyGet();
+        KIMKeyUsed();
         // translate KIM-1 button codes into ASCII code expected by this version of Microchess
         switch (tempval)
         {
@@ -296,7 +300,7 @@ uint8_t read6502(uint16_t address) {
         driveLEDs();
         #endif
 
-        return(getAkey()==0?(uint8_t)0:(uint8_t)1);
+        return(KIMKeyPressing()==0?(uint8_t)0:(uint8_t)1);
     }
 
     return( tempval );
@@ -371,8 +375,7 @@ uint8_t pull8() {
 
 void reset6502() {
     pc = (uint16_t)read6502(0xFFFC) | ((uint16_t)read6502(0xFFFD) << 8);
-//pc = 0x1C22; 
-//	printf ("pc: %x\n",pc);
+
     a = 0;
     x = 0;
     y = 0;
@@ -1016,7 +1019,7 @@ void nmi6502() {
     push8(cpustatus);
     cpustatus |= FLAG_INTERRUPT;
 pc = (uint16_t)read6502(0xFFFA) | ((uint16_t)read6502(0xFFFB) << 8);
-pc = 0x1C1C;
+//pc = 0x1C1C;
 }
 
 void irq6502() {
@@ -1068,9 +1071,10 @@ void exec6502(int32_t tickcount) {
 	if ((SSTmode==1) & (pc<0x1C00)) // no mni if running ROM code (K7), that would also single-step the monitor code!
 			nmiFlag=1; // handled after this instruction has completed.
 // -------------
-
     opcode = read6502(pc++);
     cpustatus |= FLAG_CONSTANT;
+
+    if( pc == 0x0001 ) exit(0);
 
     useaccum = 0;
 

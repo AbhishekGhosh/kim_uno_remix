@@ -49,7 +49,6 @@ private slots:
 
 
 private:
-    void button_pressed( int b );
     void updateSSTButton( void );
 
 private slots:

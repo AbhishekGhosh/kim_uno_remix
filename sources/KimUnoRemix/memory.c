@@ -41,6 +41,7 @@ const MMAP MemoryWriteSegments[] PROGMEM = {
   { 0x17C0, 64, kMMAP_RAM, RAM002 },
   { 0, 0, kMMAP_END }
 };
+
 // note that above 8K map is not replicated 8 times to fill 64K, 
 // but INSTEAD, emulator mirrors last 6 bytes of ROM 002 to FFFB-FFFF:
 //               FFFA, FFFB - NMI Vector
@@ -255,9 +256,9 @@ const unsigned char rom002[1024] PROGMEM = {
 };
 
 const unsigned char rom002Vectors[6] PROGMEM = {
-  0x1C, 0x1C, /* NMIT */
-  0x22, 0x1C, /* RSTENT */
-  0x1F, 0x1C  /* IRQENT */
+  0x1C, 0x1C, /* $1c1c NMIT */
+  0x22, 0x1C, /* $1c22 RSTENT */
+  0x1F, 0x1C  /* $1c1F IRQENT */
 };
 
 
@@ -530,6 +531,10 @@ const unsigned char disasm[505] PROGMEM = {
   0xC8
 };
 
+/*
+ * http://www.ittybittycomputers.com/IttyBitty/TinyBasic/TinyBasic.asm
+const char unsigned
+
 /* ******************************************************************* */
 const MMAP MemoryReadSegments[] PROGMEM = {
     /* first let's do the RAM from above */
@@ -743,18 +748,10 @@ const MMAP MemoryCopySegments[] PROGMEM = {
   { 0x0110, 149, kMMAP_PROGMEM, relocate },
   { 0x01A5,  42, kMMAP_PROGMEM, branch },
 
+  { 0x17FA,   6, kMMAP_PROGMEM, setupData },
+
   { 0, 0, kMMAP_END }
 };
-
-#ifdef NEVER
-void loadRam( const unsigned char * buf, int bufsz, int address )
-{
-  while( bufsz > 0 ) {
-    write6502( address++, pgm_read_byte_near( buf++ ));
-    bufsz--;
-  }
-}
-#endif
 
 void loadProgramsToRam() 
 {
@@ -773,30 +770,5 @@ void loadProgramsToRam()
     }
     idx++;
   } while( !(flags & kMMAP_END) );
-
-#ifdef NEVER
-  // load in mini program A to 0x0200
-  loadRam( miniProgramA, sizeof(miniProgramA), 0x0200 );
-  loadRam( miniProgramAData, sizeof(miniProgramA), 0x0010 );
-
-  // load in mini program B to 0x0220
-  loadRam( miniProgramB, sizeof(miniProgramB), 0x0220 );
-
-  // load in mini program C to 0x0240
-  loadRam( miniProgramC, sizeof(miniProgramC), 0x0240 );
-  
-  // load in mini program D to 0x0260
-  loadRam( miniProgramD, sizeof(miniProgramD), 0x0260 );
-
-  // and load up some utility programs
-  loadRam( movit, sizeof(movit), 0x1780 );
-  loadRam( relocate, sizeof(relocate), 0x0110 );
-  loadRam( branch, sizeof(branch), 0x01A5 );
-
-//  loadRam( timerProgram, sizeof( timerProgram ), 0x0200 );
-
-  // and finally set up the reset vectors
-  loadRam( setupData, sizeof(setupData), 0x17fa );
-#endif
 }
 

@@ -140,14 +140,16 @@ void MainWindow::updateDisplay()
     ui->lcdNumber_DA_0F->display( (int) kimHex[5] );
 }
 
+extern "C" {
+uint16_t getpc();
+uint8_t read6502(uint16_t address);
+}
+
 void MainWindow::on_timerTick()
 {
     exec6502(100); //do 100 6502 instructions
 
-    // handle sst, NMI, etc...
-    if( xkeyPressed() != 0 ) {
-        interpretkeys();
-    }
+    // keypad scanning is happening elsewhere!
 
     // handle serial
     // take the bytes from the code shove them to our terminal
@@ -187,7 +189,6 @@ void MainWindow::on_actionSerial_Console_triggered()
         this->term->setVisible( true );
     }
 }
-
 
 
 void MainWindow::on_actionReset_triggered()
@@ -230,12 +231,7 @@ void MainWindow::on_actionKim_UNO_Project_triggered()
 ///////////////////////////////////////////////////////////////////
 // keypad
 
-void MainWindow::button_pressed( int btn )
-{
-    curkey = btn;
-    interpretkeys(); // catch NMI etc.
-}
-
+// SST (Single Step) needs some additional support to indicate the switch
 void MainWindow::updateSSTButton()
 {
     if( SSTmode == 0 ) {
@@ -248,34 +244,36 @@ void MainWindow::updateSSTButton()
     ui->pushButton_SST->setShortcut( QKeySequence::fromString( "Shift+T" ) );
 }
 
-void MainWindow::on_pushButton_GO_clicked()   { this->button_pressed( 7 ); }
-void MainWindow::on_pushButton_ST_clicked()   { this->button_pressed( 20 ); }
-void MainWindow::on_pushButton_RS_clicked()   { this->button_pressed( 18 ); }
-void MainWindow::on_pushButton_AD_clicked()   { this->button_pressed( 1 ); }
-void MainWindow::on_pushButton_DA_clicked()   { this->button_pressed( 4 ); }
-void MainWindow::on_pushButton_PC_clicked()   { this->button_pressed( 16 ); }
-void MainWindow::on_pushButton_PLUS_clicked() { this->button_pressed( '+' ); }
 void MainWindow::on_pushButton_SST_clicked()  {
-    this->button_pressed( (SSTmode==0)?']':'[' );
+    if( SSTmode == 0 ) KIMKeyPress( kKimScancode_SSTON );
+    else               KIMKeyPress( kKimScancode_SSTOFF );
     this->updateSSTButton();
 }
 
-/////////////////////////////////////////////////////
-// keypad digits
+// control keys
+void MainWindow::on_pushButton_GO_clicked()   { KIMKeyPress( kKimScancode_GO ); }
+void MainWindow::on_pushButton_ST_clicked()   { KIMKeyPress( kKimScancode_STOP ); }
+void MainWindow::on_pushButton_RS_clicked()   { KIMKeyPress( kKimScancode_RESET ); }
+void MainWindow::on_pushButton_AD_clicked()   { KIMKeyPress( kKimScancode_ADDR ); }
+void MainWindow::on_pushButton_DA_clicked()   { KIMKeyPress( kKimScancode_DATA ); }
+void MainWindow::on_pushButton_PC_clicked()   { KIMKeyPress( kKimScancode_PC ); }
+void MainWindow::on_pushButton_PLUS_clicked() { KIMKeyPress( kKimScancode_PLUS); }
 
-void MainWindow::on_pushButton_HEX_0_clicked() { this->button_pressed( '0' ); }
-void MainWindow::on_pushButton_HEX_1_clicked() { this->button_pressed( '1' ); }
-void MainWindow::on_pushButton_HEX_2_clicked() { this->button_pressed( '2' ); }
-void MainWindow::on_pushButton_HEX_3_clicked() { this->button_pressed( '3' ); }
-void MainWindow::on_pushButton_HEX_4_clicked() { this->button_pressed( '4' ); }
-void MainWindow::on_pushButton_HEX_5_clicked() { this->button_pressed( '5' ); }
-void MainWindow::on_pushButton_HEX_6_clicked() { this->button_pressed( '6' ); }
-void MainWindow::on_pushButton_HEX_7_clicked() { this->button_pressed( '7' ); }
-void MainWindow::on_pushButton_HEX_8_clicked() { this->button_pressed( '8' ); }
-void MainWindow::on_pushButton_HEX_9_clicked() { this->button_pressed( '9' ); }
-void MainWindow::on_pushButton_HEX_A_clicked() { this->button_pressed( 'A' ); }
-void MainWindow::on_pushButton_HEX_B_clicked() { this->button_pressed( 'B' ); }
-void MainWindow::on_pushButton_HEX_C_clicked() { this->button_pressed( 'C' ); }
-void MainWindow::on_pushButton_HEX_D_clicked() { this->button_pressed( 'D' ); }
-void MainWindow::on_pushButton_HEX_E_clicked() { this->button_pressed( 'E' ); }
-void MainWindow::on_pushButton_HEX_F_clicked() { this->button_pressed( 'F' ); }
+
+// keypad digits
+void MainWindow::on_pushButton_HEX_0_clicked() { KIMKeyPress( kKimScancode_0); }
+void MainWindow::on_pushButton_HEX_1_clicked() { KIMKeyPress( kKimScancode_1); }
+void MainWindow::on_pushButton_HEX_2_clicked() { KIMKeyPress( kKimScancode_2); }
+void MainWindow::on_pushButton_HEX_3_clicked() { KIMKeyPress( kKimScancode_3); }
+void MainWindow::on_pushButton_HEX_4_clicked() { KIMKeyPress( kKimScancode_4); }
+void MainWindow::on_pushButton_HEX_5_clicked() { KIMKeyPress( kKimScancode_5); }
+void MainWindow::on_pushButton_HEX_6_clicked() { KIMKeyPress( kKimScancode_6); }
+void MainWindow::on_pushButton_HEX_7_clicked() { KIMKeyPress( kKimScancode_7); }
+void MainWindow::on_pushButton_HEX_8_clicked() { KIMKeyPress( kKimScancode_8); }
+void MainWindow::on_pushButton_HEX_9_clicked() { KIMKeyPress( kKimScancode_9); }
+void MainWindow::on_pushButton_HEX_A_clicked() { KIMKeyPress( kKimScancode_A); }
+void MainWindow::on_pushButton_HEX_B_clicked() { KIMKeyPress( kKimScancode_B); }
+void MainWindow::on_pushButton_HEX_C_clicked() { KIMKeyPress( kKimScancode_C); }
+void MainWindow::on_pushButton_HEX_D_clicked() { KIMKeyPress( kKimScancode_D); }
+void MainWindow::on_pushButton_HEX_E_clicked() { KIMKeyPress( kKimScancode_E); }
+void MainWindow::on_pushButton_HEX_F_clicked() { KIMKeyPress( kKimScancode_F); }

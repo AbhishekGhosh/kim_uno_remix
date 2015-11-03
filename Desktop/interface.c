@@ -6,6 +6,7 @@
 
 #include "interface.h"
 
+/* ************************************************** */
 /* over in cpu.c and memory.c */
 void reset6502();
 void nmi6502();
@@ -13,7 +14,8 @@ void loadProgramsToRam();
 void exec6502( int nCycles );
 
 
-/* serial fakeo */
+/* ************************************************** */
+/* generic serial fakeo */
 void serout( uint8_t ch )
 {
     ch = ch;
@@ -27,95 +29,58 @@ void serouthex( uint8_t ch )
 }
 
 
-/* keyboard interface stuff */
-uint8_t curkey = 0;
+/* ************************************************** */
+/* Keypad support */
 
-extern uint8_t serialEnable;
-extern uint8_t SSTmode;
+/* as the OS dependant part, we need to implement a few functions: */
+uint8_t KIMKeyPressing(); /* returns 0 if nothing pressed, 1 if pressing */
+uint8_t KIMKeyGet();      /* returns a kKimScancode for the currently being pressed key */
+void    KIMKeyUsed();     /* tells us that key has been used */
 
-uint8_t getAkey()   { return(curkey);  }
-void clearkey()     { curkey = 0; }
+static uint8_t pressingKey = kKimScancode_none;
 
-uint8_t getKIMkey() {
-    if (curkey==0)
-      return (0xFF);	//0xFF: illegal keycode
-
-    // numeric hex
-    if ((curkey>='0') & (curkey <='9'))
-      return (curkey-'0');
-    if ((curkey>='A') & (curkey <='F'))
-      return(curkey-'A'+10);
-    if ((curkey>='a') & (curkey <='f'))
-      return(curkey-'a'+10);
-
-    // control presses
-    if (curkey==1) // ctrlA
-      return(0x10); // AD address mode
-    if (curkey==4) // ctrlD
-      return(0x11); // DA data mode
-    if (curkey=='+') // +
-      return(0x12); // step
-    if (curkey==7) // ctrlG
-      return(0x13); // GO
-    if (curkey==16) // ctrlP
-      return(0x14); // PC mode
-    // curkey==ctrlR for hard reset (/RST) (KIM's RS key) is handled in main loop!
-    // curkey==ctrlT for ST key (/NMI) is handled in main loop!
-
-    // additional control press shortcuts
-    if( curkey == 'g' ) return( 0x07 ); /* GO */
-    if( curkey == 'l' ) return( 0x10 ); /* AD - address Location */
-    if( curkey == 'v' ) return( 0x11 ); /* DA - data Value */
-    if( curkey == 'p' ) return( 0x14 ); /* PC */
-
-    return(curkey); // any other key, should not be hit but ignored by KIM
-}
-
-// translate keyboard commands to KIM-I keycodes or emulator actions
-void interpretkeys()
+/* we're notifying ourselves here through this valve that something was pressed */
+void KIMKeyPress( uint8_t ch )
 {
-    // round 1: keys that always have the same meaning
-    switch (curkey) {
-      case 18:  // CtrlR = RS key = hardware reset (RST)
-        reset6502();
-        clearkey();
-        break;
+    /* initialize with an empty scancode */
+    pressingKey = kKimScancode_none;
 
-      case 20: // CtrlT = ST key = throw an NMI to stop execution of user program
-        nmi6502();
-        clearkey();
-        break;
-
-      case '[': // SST off
-        SSTmode = 0;
-        clearkey();
-        break;
-
-      case ']': // SST on
-        SSTmode = 1;
-        clearkey();
-        break;
-
-      case 9: // TAB pressed, toggle between serial port and onboard keyboard/display
-        /*
-        if (useKeyboardLed==0)
-        {
-          useKeyboardLed=1;    Serial.print(F("                    Keyboard/Hex Digits Mode "));
-        } else {
-          useKeyboardLed=0;    Serial.print(F("                        Serial Terminal Mode         "));
+    /* check for a special function */
+    switch( ch ) {
+    case( kKimScancode_STOP ):   pressed_STop(); break;
+    case( kKimScancode_RESET ):  pressed_ReSet(); break;
+    case( kKimScancode_SSTON ):  pressed_SSTOn(); break;
+    case( kKimScancode_SSTOFF ): pressed_SSTOff(); break;
+    default:        
+        /* If the code was in the lower range, store it! */
+        if( ch < kKimScancode_none ) {
+            pressingKey = ch;
         }
-        */
-        reset6502();  clearkey();  break;
-
     }
 }
 
-uint8_t xkeyPressed()    // just see if there's any keypress waiting
+/* return 1 if there was a press, otherwise 0 */
+uint8_t KIMKeyPressing()
 {
-    return (curkey==0?0:1);
+    if( pressingKey == kKimScancode_none) return 0;
+    return 1;
+}
+
+/* get the currently pressed key */
+uint8_t KIMKeyGet()
+{
+    return pressingKey;
+}
+
+/* notifying us that the key has been "used" */
+void KIMKeyUsed()
+{
+    pressingKey = kKimScancode_none;
 }
 
 
+/* ************************************************** */
+/* serial interface */
 
 uint8_t serOutBuf[ kSerBufSize ];
 uint16_t serOutBufPos;
@@ -138,7 +103,7 @@ void KimSerialOut( uint8_t ch )
 // get serial key or 0
 uint8_t KimSerialIn()
 {
-    printf( "KimSerialIn\n" ); fflush( 0 );
+    //printf( "KimSerialIn\n" ); fflush( 0 );
     if( serInBufPos == 0 ) return 0x00;
     return serInBuf[ 0 ];
 }
@@ -149,14 +114,14 @@ void KimSerialInPush( uint8_t ch )
     serInBuf[ serInBufPos ] = ch;
     serInBufPos++;
     serInBuf[ serInBufPos ] = '\0';
-    printf( "Kim input serial buffer is [%d](%s)", serInBufPos, serInBuf );
-    fflush( 0 );
+    //printf( "Kim input serial buffer is [%d](%s)", serInBufPos, serInBuf );
+    //fflush( 0 );
 }
 
 void KimSerialClearIn() // clearkey()
 {
     int j;
-    printf( "KimSerialClearIn\n" ); fflush( 0 );
+    //printf( "KimSerialClearIn\n" ); fflush( 0 );
     if( serInBufPos == 0 ) return;
     for( j=0 ; j < kSerBufSize-1 ; j++ ){
         serInBuf[j] = serInBuf[j+1];
@@ -164,7 +129,7 @@ void KimSerialClearIn() // clearkey()
 }
 
 
-/* display fakeo */
+/* display interface */
 char kimHex[6];        // seLED display
 
 void driveLEDs( void )
