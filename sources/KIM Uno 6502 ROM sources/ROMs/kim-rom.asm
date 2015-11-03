@@ -491,9 +491,12 @@ SAVEB   sty     YREG
 ; to insert his own routines.
 ; Comment: is not initialised anywhere, so any accidental NMI or IRQ 
 ;  can lead to disaster !
+.ba $1c1c
 NMIT    jmp     (NMIV)
+.ba $1c1f
 IRQT    jmp     (IRQV)
 ;
+.ba $1c22
 ; The KIM starts here after a reset
 RESET   ldx     #$FF
 	txs             ; set stack
@@ -813,7 +816,12 @@ MODIFY  ldy     #0      ; get contents of input buffer
 	jmp     RTRN
 ;
 ;
+
 .ba $1e1e
+; Prints contents of FB & FA on TTY
+;  a lost
+;  x preserved
+;  y FF
 ; Subroutine to TTY print POINT = address
 PRTPNT  lda     POINTH
 	jsr     PRTBYT
@@ -832,8 +840,10 @@ PRTST   lda     TOP,x
 
 PRT1    rts
 ;
+
+
 .ba $1e3b
-; TTY Print 1 hex byte as 2 ASCII chars
+; TTY Print 1 hex byte in A as 2 ASCII chars
 PRTBYT  sta     TEMP    ; save A
 	lsr             ; shift A 4 times
 	lsr
@@ -855,8 +865,11 @@ HEXTA1  adc     #$30    ; convert to ASCII-char...
 	jmp     OUTCH   ;  ...and print it
 ;
 ;
+
 .ba $1e5a
-; Get char from TTY in A
+; Read character from TTY into A
+;  x preserved
+;  Y = FF
 GETCH   stx     TMPX
 	ldx     #8      ; count 8 bits
 	lda     #1
@@ -903,9 +916,20 @@ INIT1   ldX     #0
 	sei
 	rts
 ;
-; Output char in A to TTY       $1E9E
+
+
+; OUTSP: print a space character on TTY
+;  X: preserved
+;  Y: FF
+;  A: FF
 .ba $1e9E
 OUTSP   lda     #" "    ; print space
+
+; OUTCH: print ascii character in A on TTY
+;  X: preserved
+;  Y: FF
+;  A: FF
+
 .ba $1eA0
 OUTCH   sta     CHAR
 	stx     TMPX
@@ -964,10 +988,10 @@ DEHALF  lda     CNTH30
 ;
 ;
 .ba $1EFE
-; Determine if key is depressed: NO -> A=0, YES -> A>0
-; A == 0 -> a key is down
-; A != 0 -> no key is down
-; X and Y lost
+; Determine if key is depressed
+;   A == 0 -> a key is down
+;   A != 0 -> no key is down
+;   X and Y lost
 AK      ldy     #3      ; 3 rows
 	ldX     #1      ; select 74145 output 0
 
@@ -987,8 +1011,10 @@ AKA     stx     SBD     ; enable output = select row
 	eor     #$FF    ; if A still is $FF -> A := 0
 	rts
 ;
+
 .ba $1f1f
-; Output to 7-segment-display
+; SCANS: Display F9 FA FB to the 7-segment display
+;  a, x, y are lost
 SCAND   ldy     #0      ; POINTL/POINTH = address on display
 	lda     (POINTL),Y      ; get data from this address
 	sta     INH     ; store in INH = 
@@ -1042,7 +1068,7 @@ INCPT2  rts
 ;
 
 .ba $1F6A
-; Get key from keyboard in A
+; Get key from keyboard into A
 ; A > 15 is illegal or no key
 GETKEY  ldx     #$21    ; row 0 / disable input TTY
 GETKE5  ldy     #1      ; only one row in the time
