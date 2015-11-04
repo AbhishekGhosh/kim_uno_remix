@@ -255,12 +255,12 @@ const byte rowPins[kROWS] = { 10,11,A5,9 };
 
 const char lookup[kCOLS * kROWS] PROGMEM =
 {
-    7,  20,  18,  't',
-    1,   4,  16,  '+',
-  'C', 'D',  'E', 'F',
-  '8', '9',  'A', 'B',
-  '4', '5',  '6', '7',
-  '0', '1',  '2', '3'
+  kKimScancode_GO,   kKimScancode_STOP, kKimScancode_RESET, kKimScancode_SSTTOGGLE,
+  kKimScancode_ADDR, kKimScancode_DATA, kKimScancode_PC,    kKimScancode_PLUS,
+  kKimScancode_C,    kKimScancode_D,    kKimScancode_E,     kKimScancode_F,
+  kKimScancode_8,    kKimScancode_9,    kKimScancode_A,     kKimScancode_B,
+  kKimScancode_4,    kKimScancode_5,    kKimScancode_6,     kKimScancode_7,
+  kKimScancode_0,    kKimScancode_1,    kKimScancode_2,     kKimScancode_3
 };
 
 #endif
@@ -290,7 +290,7 @@ void initKeypad()
   }
 }
 
-
+#ifdef NEVER /* XXX */
 char scanKeypad()
 {
   initKeypad();
@@ -319,6 +319,7 @@ char scanKeypad()
 
   return kNoPress;
 }
+
 
 // wrap all of that with an event thingy
 #define kEventIdle     (0)
@@ -435,6 +436,59 @@ void scanKeys()
       break;
     default:
       break;
+  }
+}
+#endif /* XXXX */
+
+
+
+void KIMKeyPress( uint8_t ch );
+
+void keypadScan()
+{
+  //KIMKeyPress( kKimScancode_PLUS );
+  static uint8_t last_ch = kKimScancode_none;
+  static uint16_t pressTime = 0;
+  uint8_t ch = kKimScancode_none;
+  
+  initKeypad();
+  for( int r=0 ; r<kROWS ; r++ )
+  {
+    digitalWrite( rowPins[r], kLH );
+    for( int c=0 ; c<kCOLS ; c++ )
+    {
+      if( digitalRead( colPins[c] ) == kLH )
+      {
+#ifdef kShiftKeypad
+        if( shiftKey ) {
+          ch = pgm_read_byte_near( lookup_shifted + r + (c * kROWS ) );
+        } else {
+#endif
+          //Serial.write( lookup[c][r] );
+          //Serial.println ("" );
+          ch =  pgm_read_byte_near( lookup + r + (c * kROWS )  );
+#ifdef kShiftKeypad
+        }
+#endif
+      }
+    }
+    digitalWrite( rowPins[r], kHL );
+  }
+
+  // only send out a code when something changes.
+  if( ch != last_ch ) {
+    if( last_ch == kKimScancode_none ) {
+      // press
+      pressTime = millis();
+    } else {
+      // release
+      pressTime = 0;
+      KIMKeyPress( last_ch );
+    }
+    last_ch = ch;
+  } else if( ch != kKimScancode_none ) {
+    // still pressing
+    // can use this block for shifted keys. press and hold for the function 
   }
 }
 

@@ -130,3 +130,44 @@
 /* additional debug config */
 #undef DEBUGUNO
 
+
+/* ************************************************************************** */
+/* Keypad interface */ /* should move to another .h in the future? */
+/* implemented in cpu.c */
+
+/* these are the codes that the keypad interface will use to pass
+ * back through the emulation */
+
+/* these are just handed back */
+#define kKimScancode_0      (0x00)
+#define kKimScancode_1      (0x01)
+#define kKimScancode_2      (0x02)
+#define kKimScancode_3      (0x03)
+#define kKimScancode_4      (0x04)
+#define kKimScancode_5      (0x05)
+#define kKimScancode_6      (0x06)
+#define kKimScancode_7      (0x07)
+#define kKimScancode_8      (0x08)
+#define kKimScancode_9      (0x09)
+#define kKimScancode_A      (0x0A)
+#define kKimScancode_B      (0x0B)
+#define kKimScancode_C      (0x0C)
+#define kKimScancode_D      (0x0D)
+#define kKimScancode_E      (0x0E)
+#define kKimScancode_F      (0x0F)
+
+#define kKimScancode_ADDR   (0x10) /* selects the address entry mode */
+#define kKimScancode_DATA   (0x11) /* selects the data entry mode */
+#define kKimScancode_PLUS   (0x12) /* increments address by 1 */
+#define kKimScancode_GO     (0x13) /* start program execution on the current addr */
+#define kKimScancode_PC     (0x14) /* recalls the address in the Program Counter */
+#define kKimScancode_none   (0x15) /* illegal/no press */
+
+/* these perform special tasks, functions below */
+#define kKimScancode_STOP   (0x80) /* terminates execution, return to KIM */
+#define kKimScancode_RESET  (0x81) /* total system reset, return to KIM */
+#define kKimScancode_SSTON  (0x82) /* Single STep execution is ON */
+#define kKimScancode_SSTOFF (0x83) /* Single STep execution is OFF */
+#define kKimScancode_SSTTOGGLE (0x84) /* Single STep Toggle */
+
+

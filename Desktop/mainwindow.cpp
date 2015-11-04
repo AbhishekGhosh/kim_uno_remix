@@ -14,10 +14,11 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "005"
-#define kVersionDate   "2015-10-26"
+#define kVersionNumber "006"
+#define kVersionDate   "2015-11-02"
 
 /*
+ * v006 - 2015-11-02 - Keypad interface restructured, startup code fixed
  * v005 - 2015-10-26 - Serial terminal almost working
  * v004 - 2015-10-24 - pulled out interface.c to help it be more portable
  * v003 - 2015-10-23 - Complete build with display, keys, etc
@@ -242,6 +243,10 @@ void MainWindow::updateSSTButton()
 
     // for some reason, the above setText breaks the shortcut in the .ui
     ui->pushButton_SST->setShortcut( QKeySequence::fromString( "Shift+T" ) );
+}
+
+extern "C" {
+void KIMKeyPress( uint8_t keycode );
 }
 
 void MainWindow::on_pushButton_SST_clicked()  {

@@ -40,6 +40,7 @@ extern "C" {
   void serouthex(uint8_t val) { if( serialEnable ) Serial.print(val, HEX); }
   void printhex(uint16_t val) { if( serialEnable ) { Serial.print(val, HEX); Serial.println(); } }
 
+  void keypadScan();
 } /* C */
 
 
@@ -113,10 +114,12 @@ void loop () {
     curkey = Serial.read() & 0x7F;
     interpretkeys();
   }
-    
-  scanKeys();  
-  if (xkeyPressed()!=0) //KIM Uno board input?
-    interpretkeys();
+  
+  keypadScan();
+  
+  //scanKeys();
+  //if (xkeyPressed()!=0) //KIM Uno board input?
+  //  interpretkeys();
 
   // doing this here would cause a massive slowdown but keeps display on at all times
   //driveLEDs(); 

@@ -13,18 +13,32 @@
 #ifndef __MEMORY_H__
 #define __MEMORY_H__
 
+/*********************************************************************************/
+/* --- OVERVIEW OF KIM-1 MEMORY MAP ----------------------------------------------
+ *
+ * $0000 - $03FF    1024  RAM[] (AVR)
+ * $0400 - $07FF    1024  EEPROM (AVR)
+ *  or:
+ * $0000 - $0FFF    4096  RAM[] (Desktop)
+ *
+ * $1700 - $173F          6530-003 - IO and timer, available for user
+ * $1740 - $177F          6530-002 - IO and timer, used for KIM, LED, Keyboard
+ * $1780 - $17BF    64    6530-003 - RAM003[] RAM available for user
+ * $17C0 - $17FF    64    6530-002 - RAM002[] RAM available for user ($17E7-$17FF used by KIM)
+ * $1800 - $1BFF    1024  6530-003 - KIM ROM
+ * $1C00 - $1FFF    1024  6530-002 - KIM ROM
+ *
+ * $FFFA - $FFFF          ROM 002 Vectors (copied)
+ *
+ * "Loaded in" ROMs:
+ * $C000 -                MicroChess
+ * $2000 -                WOZ Disassembler
+ *
+ */
 
-
-// --- OVERVIEW OF KIM-1 MEMORY MAP -------------------------------------------------
-extern uint8_t RAM[1024];    // main 1KB RAM         0x0000-0x03FF
-#ifndef AVRX
-extern uint8_t RAM2[1024];   // on PC, ram in        0x0400-0x07FF instead of Arduino EEPROM
-#endif 
-
-// I/O and timer of 6530-003, free for user          0x1700-0x173F, not used in KIM ROM
-// I/O and timer of 6530-002, used by KIM            0x1740-0x177F, used by LED/Keyboard
-extern uint8_t RAM003[64];    // RAM from 6530-003   0x1780-0x17BF, free for user applications
-extern uint8_t RAM002[64];    // RAM from 6530-002   0x17C0-0x17FF, free for user except 0x17E7-0x17FF
+extern uint8_t RAM[];
+extern uint8_t RAM003[];
+extern uint8_t RAM002[];
 
 extern const unsigned char rom002[1024] PROGMEM;  // 0x1c00
 extern const unsigned char rom002Vectors[6] PROGMEM; // 0xfffA

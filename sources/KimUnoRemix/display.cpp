@@ -13,7 +13,7 @@ extern "C" {
 #ifdef kShiftKeypad
 char shiftKey = 0;  // is the keypad shift key in effect?
 #endif
-unsigned char kimHex[6];        // seLED display
+extern unsigned char kimHex[];        // seLED display
 unsigned char textHex[7];
 
 // For all of this, we'll assume that they're wired correctly
@@ -230,7 +230,7 @@ void driveLEDs()
   for( int displayDigit = 0 ; displayDigit < 8 ; displayDigit++ )
   {
     byte pattern = 18; // space
-    if( millis() >= (long)textTimeout ) { // not elegant, but good for now
+    if( true ) { //millis() >= (long)textTimeout ) { // not elegant, but good for now
       // display the internal digits
       if( displayDigit == kDisplayAddrOffset   ) pattern = kimHex[0];
       if( displayDigit == kDisplayAddrOffset+1 ) pattern = kimHex[1];

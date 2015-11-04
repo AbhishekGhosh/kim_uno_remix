@@ -13,34 +13,40 @@
 #endif
 
 
-////////////////////////
-// ROMS
+/* --- OVERVIEW OF KIM-1 MEMORY MAP ----------------------------------------------
+ *
+ * $0000 - $03FF    1024  RAM[] (AVR)
+ * $0400 - $07FF    1024  EEPROM (AVR)
+ *  or:
+ * $0000 - $0FFF    4096  RAM[] (Desktop)
+ *
+ * $1700 - $173F          6530-003 - IO and timer, available for user
+ * $1740 - $177F          6530-002 - IO and timer, used for KIM, LED, Keyboard
+ * $1780 - $17BF    64    6530-003 - RAM003[] RAM available for user
+ * $17C0 - $17FF    64    6530-002 - RAM002[] RAM available for user ($17E7-$17FF used by KIM)
+ * $1800 - $1BFF    1024  6530-003 - KIM ROM - tape and serial code
+ * $1C00 - $1FFF    1024  6530-002 - KIM ROM - Monitor main code
+ *
+ * $FFFA - $FFFF          ROM 002 Vectors (copied)
+ *
+ * "Loaded in" ROMs:
+ * $C000 -                MicroChess
+ * $2000 -                WOZ Disassembler
+ *
+ */
 
-
-// --- OVERVIEW OF KIM-1 MEMORY MAP -------------------------------------------------
-uint8_t RAM[1024];   // main 1KB RAM      0x0000-0x03FF
+/* RAM definitions */
 #ifndef AVRX
-uint8_t RAM2[1024];   // on PC, ram in     0x0400-0x07FF instead of Arduino EEPROM
-#endif                // on Arduino,                these are EEPROM functions
-// empty                          0x0800-0x13FF
-// I/O and timer of 6530-003, free for user  0x1700-0x173F, not used in KIM ROM
-// I/O and timer of 6530-002, used by KIM    0x1740-0x177F, used by LED/Keyboard
-uint8_t RAM003[64];    // RAM from 6530-003  0x1780-0x17BF, free for user applications
-uint8_t RAM002[64];    // RAM from 6530-002  0x17C0-0x17FF, free for user except 0x17E7-0x17FF
-// rom003 is                                 0x1800-0x1BFF
-// rom002 is                                 0x1C00-0x1FFF
-
-const MMAP MemoryWriteSegments[] PROGMEM = {
-  { 0x0000, 1024, kMMAP_RAM, RAM },
-#ifdef AVRX
-  { 0x0400, 1024, kMMAP_EEPROM },
+#define kRAMSize (4096)
 #else
-  { 0x0400, 1024, kMMAP_RAM,  RAM2 },
+#define kRAMSize (1024)
 #endif
-  { 0x1780, 64, kMMAP_RAM, RAM003 },
-  { 0x17C0, 64, kMMAP_RAM, RAM002 },
-  { 0, 0, kMMAP_END }
-};
+
+uint8_t RAM[kRAMSize];
+uint8_t RAM003[64];
+uint8_t RAM002[64];
+
+
 
 // note that above 8K map is not replicated 8 times to fill 64K, 
 // but INSTEAD, emulator mirrors last 6 bytes of ROM 002 to FFFB-FFFF:
@@ -57,10 +63,9 @@ const MMAP MemoryWriteSegments[] PROGMEM = {
 // ROM2: KIM-1 ROM003 (tape and RS-232 code)                              $1800
 // mchess: the updated microchess version from www.benlo.com/microchess
 //                                                 recompiled to start at $C000
-// calc: the 6502 floating point library from www.crbond.com/calc65.htm
-//                                                 recompiled to start at $D000
 // disassembler: the famous Baum & Wozniak disassember
 //    6502.org/documents/publications/6502notes/6502_user_notes_14.pdf at $2000
+//
 // storage arrays that are copied to RAM are also here:
 // relocate (first book of kim)                                        to $0110
 // branch (first book of kim)                                          to $01A5
@@ -531,19 +536,29 @@ const unsigned char disasm[505] PROGMEM = {
   0xC8
 };
 
-/*
- * http://www.ittybittycomputers.com/IttyBitty/TinyBasic/TinyBasic.asm
-const char unsigned
 
 /* ******************************************************************* */
+
+/* Writable segments */
+const MMAP MemoryWriteSegments[] PROGMEM = {
+  { 0x0000, kRAMSize, kMMAP_RAM, RAM },
+#ifdef AVRX
+  { 0x0400, 1024, kMMAP_EEPROM },
+#endif
+  { 0x1780, 64, kMMAP_RAM, RAM003 },
+  { 0x17C0, 64, kMMAP_RAM, RAM002 },
+  { 0, 0, kMMAP_END }
+};
+
+
+/* Readable segments */
 const MMAP MemoryReadSegments[] PROGMEM = {
     /* first let's do the RAM from above */
-    { 0x0000, 1024, kMMAP_RAM, RAM },
-#ifdef AVRX
+    { 0x0000, kRAMSize, kMMAP_RAM, RAM },
+  #ifdef AVRX
     { 0x0400, 1024, kMMAP_EEPROM },
-#else
-    { 0x0400, 1024, kMMAP_RAM, RAM2 },
-#endif
+  #endif
+
     { 0x1780,   64, kMMAP_RAM, RAM003 },
     { 0x17C0,   64, kMMAP_RAM, RAM002 },
 
@@ -555,7 +570,7 @@ const MMAP MemoryReadSegments[] PROGMEM = {
     /* and some utility roms */
     { 0x2000,  504, kMMAP_PROGMEM, disasm },
     { 0xc000, 1393, kMMAP_PROGMEM, mchess },
-    
+
     { 0, 0, kMMAP_END }
 };
 
@@ -735,7 +750,7 @@ const unsigned char timerProgram[] PROGMEM = {
 
 
 /* ******************************************************************* */
-void write6502(uint16_t address, uint8_t value);
+/* COPY-To-Ram bits */
 
 const MMAP MemoryCopySegments[] PROGMEM = {
   { 0x0200,   9, kMMAP_PROGMEM, miniProgramA },
@@ -752,6 +767,9 @@ const MMAP MemoryCopySegments[] PROGMEM = {
 
   { 0, 0, kMMAP_END }
 };
+
+void write6502(uint16_t address, uint8_t value);
+
 
 void loadProgramsToRam() 
 {

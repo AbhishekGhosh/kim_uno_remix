@@ -33,3 +33,9 @@ FORMS    += mainwindow.ui \
 
 OTHER_FILES += \
     Notes.txt
+
+#windows resources
+RC_FILE = Resources/windows.rc
+
+#mac resources
+ICON = Resources/mac.icns
