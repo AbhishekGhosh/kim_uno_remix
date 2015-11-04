@@ -97,6 +97,8 @@ void reset6502();
 #define pressed_SSTOff() (SSTmode = 0)
 
 
+extern uint8_t eepromProtect;
+
 /* weuse this valve to indicate something was pressed */
 void KIMKeyPress( uint8_t ch )
 {
@@ -113,7 +115,12 @@ void KIMKeyPress( uint8_t ch )
       if( SSTmode == 1 ) SSTmode=0;
       else SSTmode = 1;
       break;
-      
+#ifdef AVRX
+    case( kKimScancode_EEPTOGGLE ):
+      if( eepromProtect == 1 ) eepromProtect=0;
+      else eepromProtect = 1;
+      break;
+#endif
     default:
         /* If the code was in the lower range, store it! */
         if( ch < kKimScancode_none ) {

@@ -179,14 +179,14 @@ const byte rowPins[kROWS] = { 9,10,11 };
 
 const char lookup[kCOLS * kROWS] PROGMEM =
 {
-   20,  18, 't',
-  '6', 'D',  16,
-  '5', 'C',   7,
-  '4', 'B', '+',
-  '3', 'A',   4,
-  '2', '9',   1,
-  '1', '8', 'F',
-  '0', '7', 'E'
+  kKimScancode_STOP,  kKimScancode_RESET,  kKimScancode_SSTTOGGLE,
+     kKimScancode_6,      kKimScancode_D,  kKimScancode_PC,
+     kKimScancode_5,      kKimScancode_C,  kKimScancode_GO,
+     kKimScancode_4,      kKimScancode_B,  kKimScancode_PLUS,
+     kKimScancode_3,      kKimScancode_A,  kKimScancode_DATA,
+     kKimScancode_2,      kKimScancode_9,  kKimScancode_ADDR,
+     kKimScancode_1,      kKimScancode_8,  kKimScancode_F,
+     kKimScancode_0,      kKimScancode_7,  kKimScancode_E
 };
 
 #endif
@@ -225,24 +225,24 @@ const byte colPins[kCOLS] = { 2, 3, 4, 5, 6, 7, 8 }; //connect to the column pin
 
 const char lookup[kCOLS * kROWS] PROGMEM =
 {
-  '0', ' ', '1',
-  '3', 'C', '4',
-  'B', 'D', '5',
-  '7', 'E', '6',
-  ' ', '2', '8',
-  '$', ' ', '9',
-  'F', ' ', 'A'
+  kKimScancode_0,            ' ', kKimScancode_1,
+  kKimScancode_3, kKimScancode_C, kKimScancode_4,
+  kKimScancode_B, kKimScancode_D, kKimScancode_5,
+  kKimScancode_7, kKimScancode_E, kKimScancode_6,
+             ' ', kKimScancode_2, kKimScancode_8,
+             '$',            ' ', kKimScancode_9,
+  kKimScancode_F,            ' ', kKimScancode_A
 };
 
 const char lookup_shifted[kCOLS * kROWS] PROGMEM = 
 {
-  's', ' ', 'o', // s = scott, o = oscar
-  ' ',  7 , '>',
-  '#',  20, ' ', // # is the popping version of +
-  '+',  18, ' ',
-  ' ', ' ',  1 ,
-  '$', ' ',  4 ,
-  't', ' ',  16
+                     ' ',                 ' ',                ' ',
+                     ' ',     kKimScancode_GO,  kKimScancode_EEPTOGGLE,
+       kKimScancode_PLUS,   kKimScancode_STOP,                ' ',
+                     ' ',  kKimScancode_RESET,                ' ',
+                     ' ',                 ' ',  kKimScancode_ADDR,
+                     '$',                 ' ',  kKimScancode_DATA,
+  kKimScancode_SSTTOGGLE,                 ' ',    kKimScancode_PC
 };
 #endif
 
@@ -440,18 +440,23 @@ void scanKeys()
 }
 #endif /* XXXX */
 
+extern "C" {
+  void printhex(uint16_t val);
+}
+
 
 
 void KIMKeyPress( uint8_t ch );
 
 void keypadScan()
 {
-  //KIMKeyPress( kKimScancode_PLUS );
-  static uint8_t last_ch = kKimScancode_none;
-  static uint16_t pressTime = 0;
-  uint8_t ch = kKimScancode_none;
+  static uint8_t last_idx = 0xff;
+  static long pressTime = 0;
+  uint8_t idx = -1;
   
   initKeypad();
+
+  // find the pressed-down key
   for( int r=0 ; r<kROWS ; r++ )
   {
     digitalWrite( rowPins[r], kLH );
@@ -459,37 +464,46 @@ void keypadScan()
     {
       if( digitalRead( colPins[c] ) == kLH )
       {
-#ifdef kShiftKeypad
-        if( shiftKey ) {
-          ch = pgm_read_byte_near( lookup_shifted + r + (c * kROWS ) );
-        } else {
-#endif
-          //Serial.write( lookup[c][r] );
-          //Serial.println ("" );
-          ch =  pgm_read_byte_near( lookup + r + (c * kROWS )  );
-#ifdef kShiftKeypad
-        }
-#endif
+        idx = r + (c * kROWS );
       }
     }
     digitalWrite( rowPins[r], kHL );
   }
 
   // only send out a code when something changes.
-  if( ch != last_ch ) {
-    if( last_ch == kKimScancode_none ) {
+  if( idx != last_idx ) {
+    if( last_idx == 0xff ) {
       // press
       pressTime = millis();
+#ifdef kShiftKeypad
+      shiftKey = 0;
+#endif
     } else {
       // release
+#ifdef kShiftKeypad
+      if( (millis()- pressTime) < kShiftDelay ) {
+        KIMKeyPress( pgm_read_byte_near( lookup + last_idx ));
+      } else {
+        KIMKeyPress( pgm_read_byte_near( lookup_shifted + last_idx ));
+      }
+#else
+      KIMKeyPress( pgm_read_byte_near( lookup + last_idx ));
+#endif      
       pressTime = 0;
-      KIMKeyPress( last_ch );
+      idx = 0xff;
+#ifdef kShiftKeypad
+      shiftKey = 0;
+#endif
     }
-    last_ch = ch;
-  } else if( ch != kKimScancode_none ) {
-    // still pressing
-    // can use this block for shifted keys. press and hold for the function 
   }
+  last_idx = idx;
+
+#ifdef kShiftKeypad
+  if(    idx != 0xff 
+      && (millis()-pressTime) > kShiftDelay ) {
+    shiftKey = 1;
+  }
+#endif
 }
 
 

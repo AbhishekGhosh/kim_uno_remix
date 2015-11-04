@@ -24,14 +24,14 @@ const byte ledSegments[8]  = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra 
 
 /* some of the displays may be wired incorrectly... */
 #ifdef kPlatformKIMUno
-const byte ledDigits[8] PROGMEM  =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
+const byte ledDigits[8]  =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
 // notice that the displays are ordred on the KIM UNO board as:
 // led1 led2 led3 led4   led7 led5 led6 (led8)    (led8 is not connected)
 //  D12  D13  A0   A1     A4   A2   A3    (A7)
 #endif
 
 #ifdef kPlatformNovus750
-const byte ledDigits[8] PROGMEM =  { 12, 13, A0, A1,  A2, A3, A4, A7 };
+const byte ledDigits[8] =  { 12, 13, A0, A1,  A2, A3, A4, A7 };
 #endif
 
 #ifdef kPlatform2411

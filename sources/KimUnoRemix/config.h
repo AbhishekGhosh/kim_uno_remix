@@ -52,11 +52,11 @@
 /* Platform */
 
 /* this is for Oscar's Kim Uno platform */
-#undef kPlatformKIMUno
+#define kPlatformKIMUno
 /* this is for the Novus 750 hacked calculator */
 #undef kPlatformNovus750
 /* This is for the 24 key, 11 digit display handheld */
-#define kPlatform2411
+#undef kPlatform2411
 
 /* ************************************************************************** */
 /* Display */
@@ -79,6 +79,7 @@
 #define kDisplayCompress
 #endif
 
+#define kShiftDelay (500) /* how many ms to wait until "shift" is enabled */
 
 #ifdef kPlatformKIMUno
   /* this is for Oscar's reference KIM Uno platform */
@@ -169,5 +170,6 @@
 #define kKimScancode_SSTON  (0x82) /* Single STep execution is ON */
 #define kKimScancode_SSTOFF (0x83) /* Single STep execution is OFF */
 #define kKimScancode_SSTTOGGLE (0x84) /* Single STep Toggle */
+#define kKimScancode_EEPTOGGLE (0x85) /* EEProm RW Toggle */
 
 

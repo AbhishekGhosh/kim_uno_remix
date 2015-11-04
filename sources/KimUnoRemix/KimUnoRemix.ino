@@ -35,7 +35,7 @@ extern "C" {
 extern "C" {
   // ---------- called from cpu.c ----------------------
 
-  uint8_t serialEnable = 0;
+  uint8_t serialEnable = 1;
   void serout(uint8_t val)    { if( serialEnable ) Serial.write(val);  }
   void serouthex(uint8_t val) { if( serialEnable ) Serial.print(val, HEX); }
   void printhex(uint16_t val) { if( serialEnable ) { Serial.print(val, HEX); Serial.println(); } }
