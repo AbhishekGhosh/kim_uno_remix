@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2015-10-22T13:14:13
+# QT Creator build file for KIM Uno for Desktop
 #
 #-------------------------------------------------
 
@@ -15,15 +15,15 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp\
     interface.c  \
-    ../sources/KimUnoRemix/cpu.c \
-    ../sources/KimUnoRemix/memory.c \
+    ../KimUnoRemix/cpu.c \
+    ../KimUnoRemix/memory.c \
     terminalinterface.cpp \
     console.cpp
 
 HEADERS  += mainwindow.h\
     interface.h \
-    ../sources/KimUnoRemix/config.h \
-    ../sources/KimUnoRemix/memory.h \
+    ../KimUnoRemix/config.h \
+    ../KimUnoRemix/memory.h \
     Arduino.h \
     terminalinterface.h \
     console.h
