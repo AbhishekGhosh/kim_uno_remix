@@ -41,6 +41,24 @@ extern "C" {
   void printhex(uint16_t val) { if( serialEnable ) { Serial.print(val, HEX); Serial.println(); } }
 
   void keypadScan();
+
+
+uint8_t KimSerialIn()
+{
+  if( !Serial.available() ) return 0x00;
+  return Serial.read();
+}
+
+void KimSerialClearIn()
+{
+  /* nothing */
+}
+
+void KimSerialOut( uint8_t d )
+{
+  Serial.write( d );
+}
+
 } /* C */
 
 

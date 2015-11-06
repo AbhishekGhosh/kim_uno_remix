@@ -22,20 +22,16 @@
   #include <avr/pgmspace.h>
   extern uint8_t eepromread(uint16_t eepromaddress);
   extern void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue);
-
-  #define KimSerialIn()       /* Nothing */ (0x00)
-  #define KimSerialClearIn()  /* Nothing */
-  #define KimSerialOut( A )   /* Nothing */
 #else
   /* Desktop specific... */
   #include <stdio.h>
   #include <stdint.h>
-  //  #pragma warning(disable : 4996) // MS VC2008 does not like unsigned char -> signed char converts.
-  
-  uint8_t KimSerialIn();
-  void KimSerialClearIn();
-  void KimSerialOut( uint8_t );
+  //  #pragma warning(disable : 4996) // MS VC2008 does not like unsigned char -> signed char converts.  
 #endif
+
+uint8_t KimSerialIn();
+void KimSerialClearIn();
+void KimSerialOut( uint8_t );
 
 
 #ifdef DEBUGUNO
