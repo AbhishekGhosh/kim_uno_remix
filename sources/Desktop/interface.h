@@ -15,7 +15,7 @@
  * to make this more easily portable to other systems in the future
  */
 
-#include "../sources/KimUnoRemix/config.h"
+#include "../KimUnoRemix/config.h"
 
 /* ************************************************************************** */
 /* over in cpu.c and memory.c */

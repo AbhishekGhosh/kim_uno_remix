@@ -1,16 +1,18 @@
-
 /* Config.h
  *
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.14 15/11/02"
+#define kVersionString "v23.17 15/11/05"
 #define kVersionMajor  (23)
 #define kVersionMinorA (1)
-#define kVersionMinorB (4)
+#define kVersionMinorB (7)
 /* 
  * Version history
  *
+ * v23.17 - Shifted key ping-pong repeat bug fixed
+ * v23.16 - Improved shifted key handling (press-hold-trigger) Text display restored
+ * v23.15 - Textual indication of SST and EEProm added back in
  * v23.14 - Keypad code converted to the new method, Runtime bug squashed
  * v23.13 - PROGMEM for Keypad, LED Segments, ROM/RAM tables to minimize use. Text splashes broken
  * v23.12 - Desktop version via QT Creator, and minor changes to the main program
@@ -51,15 +53,18 @@
 /* ************************************************************************** */
 /* Platform */
 
-/* this is for Oscar's Kim Uno platform */
-#define kPlatformKIMUno
+/* this is for Oscar's Kim Uno "Reference" platform */
+#undef kPlatformKIMUno
+
 /* this is for the Novus 750 hacked calculator */
-#undef kPlatformNovus750
+#define kPlatformNovus750
+
 /* This is for the 24 key, 11 digit display handheld */
 #undef kPlatform2411
 
+
 /* ************************************************************************** */
-/* Display */
+/* Generic Platform Template */
 
 #ifdef kPlatformExample
 /* #define this if it's a common anode display (eg KIM Uno board) */
@@ -79,22 +84,19 @@
 #define kDisplayCompress
 #endif
 
-#define kShiftDelay (500) /* how many ms to wait until "shift" is enabled */
-
+/* ************************************************************************** */
 #ifdef kPlatformKIMUno
   /* this is for Oscar's reference KIM Uno platform */
   #define kDisplayIsCommonAnode
   #define kDisplayAddrOffset   (0) /* [0,1,2,3] */
   #define kDisplayDataOffset   (5) /* [5,6] */
-  #define kDisplayShift        (-1) /* no shift indicator */
+  #define kDisplayShift        (4) /* shift indicator goes on [4] */
   #define kDisplayDot          (-1) /* no dot indicator */
 
-  #undef CUseKeypadLibrary
-  #undef kShiftKeypad
   #define CKeyThreeEight  /* original to KIM-UNO hardware */
 #endif
 
-
+/* ************************************************************************** */
 #ifdef kPlatformNovus750
   /* this is for Scott's Novus 750 calculator hack */
   #define kDisplayIsCommonCathode
@@ -103,21 +105,18 @@
   #define kDisplayShift        (0) /* shift indicator goes on half digit */
   #define kDisplayDot          (4) /* dot separates addr from data */
 
-  #define CUseKeypadLibrary /* all of the below require this */
-  #define kShiftKeypad
   #define CKeyNovus /* Novus calculator */
 #endif
 
+/* ************************************************************************** */
 #ifdef kPlatform2411
   /* this is for Scott's 24 key 11 digit calculator hack */
   #define kDisplayIsCommonCathode
   #define kDisplayAddrOffset   (0) /* digit 0 is half digit, shift over by one [1,2,3,4] */
   #define kDisplayDataOffset   (5) /* data directly adjoins it [5,6] */
-  #define kDisplayShift        (-1) /* shift indicator goes on half digit */
+  #define kDisplayShift        (4) /* shift indicator goes on [4] */
   #define kDisplayDot          (-1) /* dot separates addr from data */
 
-  #define CUseKeypadLibrary /* all of the below require this */
-  #undef kShiftKeypad
   #define CKeyFourSix
 #endif
 
@@ -133,8 +132,9 @@
 
 
 /* ************************************************************************** */
-/* Keypad interface */ /* should move to another .h in the future? */
-/* implemented in cpu.c */
+/* Keypad interface */
+
+#define kShiftDelay (400) /* how many ms to wait until shift becomes active */
 
 /* these are the codes that the keypad interface will use to pass
  * back through the emulation */

@@ -10,7 +10,7 @@ extern "C" {
 #include "interface.h"
 }
 #include "ui_mainwindow.h"
-#include "../sources/KimUnoRemix/config.h"
+#include "../KimUnoRemix/config.h"
 
 
 #define kAppName "KIM Uno Remix"

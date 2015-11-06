@@ -31,8 +31,9 @@
  * $FFFA - $FFFF          ROM 002 Vectors (copied)
  *
  * "Loaded in" ROMs:
- * $C000 -                MicroChess
- * $2000 -                WOZ Disassembler
+ * $C000 -                MicroChess (www.benlo.com/microchess)
+ * $D000 -                (FP/Calculator (www.crbond.com/calc65.htm))
+ * $2000 -                Baum & Wozniak disassember (6502.org/documents/publications/6502notes/6502_user_notes_14.pdf)
  *
  */
 

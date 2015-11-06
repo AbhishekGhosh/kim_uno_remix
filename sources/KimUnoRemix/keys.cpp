@@ -8,168 +8,13 @@
 #include "Arduino.h"
 #include "config.h"
 #include "keys.h"
+extern "C" {
 #include "display.h"
 
-extern "C" {
-  
-uint8_t curkey = 0;
-
-extern uint8_t serialEnable;
-extern uint8_t SSTmode;
-extern uint8_t eepromProtect;  // default is to write-protect EEPROM
-
-uint8_t getAkey()   { return(curkey);  }
-void clearkey()     { curkey = 0; }
-
-
-  // getKIMkey() translates ASCII keypresses to codes the KIM ROM expects.
-  // note that, inefficiently, the KIM Uno board's key codes are first translated to ASCII, then routed through
-  // here just like key presses from the ASCII serial port are. That's inefficient but left like this
-  // for hysterical raisins.
-  
-uint8_t getKIMkey() {
-  if (curkey==0)
-    return (0xFF);	//0xFF: illegal keycode 
-
-  // numeric hex
-  if ((curkey>='0') & (curkey <='9'))
-    return (curkey-'0');
-  if ((curkey>='A') & (curkey <='F'))
-    return(curkey-'A'+10);
-  if ((curkey>='a') & (curkey <='f'))
-    return(curkey-'a'+10);
-
-  // control presses
-  if (curkey==1) // ctrlA
-    return(0x10); // AD address mode
-  if (curkey==4) // ctrlD
-    return(0x11); // DA data mode
-  if (curkey=='+') // +
-    return(0x12); // step
-  if (curkey==7) // ctrlG
-    return(0x13); // GO
-  if (curkey==16) // ctrlP
-    return(0x14); // PC mode
-  // curkey==ctrlR for hard reset (/RST) (KIM's RS key) is handled in main loop!
-  // curkey==ctrlT for ST key (/NMI) is handled in main loop!
-
-#ifdef NEVER_SEROUT
-  // additional control press shortcuts
-  if( curkey == 'g' ) return( 0x07 ); /* GO */
-  if( curkey == 'l' ) return( 0x10 ); /* AD - address Location */
-  if( curkey == 'v' ) return( 0x11 ); /* DA - data Value */
-  if( curkey == 'p' ) return( 0x14 ); /* PC */
-#endif
-  
-  return(curkey); // any other key, should not be hit but ignored by KIM
-}
-
-
-// translate keyboard commands to KIM-I keycodes or emulator actions
-void interpretkeys()
-{    
-  // round 1: keys that always have the same meaning
-  switch (curkey) {
-    case 18:  // CtrlR = RS key = hardware reset (RST)
-      reset6502(); clearkey(); Serial.print("RSet\n"); break;
-    
-    case 20: // CtrlT = ST key = throw an NMI to stop execution of user program
-      nmi6502(); clearkey(); Serial.print("STop\n"); break;
-      
-    case '[': // SST off
-      SSTmode = 0; clearkey();
-      Serial.print(F("                                      SST OFF         "));
-      displayText( kDt_SST_OFF, 500 );
-      break;
-
-    case ']': // SST on
-      SSTmode = 1; clearkey();
-      Serial.print(F("                                      SST ON          ")); 
-      displayText( kDt_SST_ON, 500 );
-      break;
-      
-    case 9: // TAB pressed, toggle between serial port and onboard keyboard/display
-      if (useKeyboardLed==0) 
-      {
-        useKeyboardLed=1;
-        // Serial.print(F("                    Keyboard/Hex Digits Mode "));
-      } else {
-        useKeyboardLed=0;
-        // Serial.print(F("                        Serial Terminal Mode         "));
-      }
-      reset6502();  clearkey();  break;
-      
-    case '>': // Toggle write protect on eeprom
-      if (eepromProtect==0) {
-        eepromProtect = 1; 
-        //Serial.print(F("                                      Eeprom R/O     "));
-        displayText( kDt_EE_RO, 500 );
-      } else {
-        eepromProtect = 0;
-        //Serial.print(F("                                      Eeprom R/W     "));
-        displayText( kDt_EE_RW, 500 );
-        //delay(20);
-      }
-      clearkey(); break;
-  }
-}
-
-
-uint8_t parseChar(uint8_t n) //  parse keycode to return its ASCII code
-{
-  uint8_t c = 0;
-    
-  // KIM-I keys
-  switch( n-1) { // kim uno keyscan codes to ascii codes used by emulator
-    case        7	: c =   '0';  break;    // note: these are n=1 numbers!
-    case	6	: c = 	'1';  break;	// 
-    case	5	: c = 	'2';  break;	// 
-    case	4	: c = 	'3';  break;	//
-    case	3	: c = 	'4';  break;	//
-    case	2	: c = 	'5';  break;	//
-    case	1	: c = 	'6';  break;	//
-    case	0	: c = 	20;  break;	// ST
-    
-    case	15	: c = 	'7' ;  break;	//
-    case	14	: c = 	'8';  break;	//
-    case	13	: c = 	'9';  break;	//
-    case	12	: c = 	'A';  break;	//
-    case	11	: c =   'B';  break;	//
-    case	10	: c =   'C';  break;	//
-    case	9	: c =   'D';  break;	//
-    case	8	: c =   18;  break;	// RS
-    
-    case	23	: c =  'E';  break;     //
-    case	22	: c =  'F';  break;     //
-    case	21	: c = 	1;   break;     // AD
-    case	20	: c = 	4;   break;     // DA
-    case	19	: c = 	'+'; break;     // + 
-    case	18	: c = 	7;   break;	// GO
-    case	17	: c =   16;  break;	// PC
-    case	16	: c = (SSTmode==0?']':'[');  break; // 	SST toggle
-    default             : c = n; // pass-through
-  }
-  return c;
-}
-
-uint8_t xkeyPressed()    // just see if there's any keypress waiting
-{
-  return (curkey==0?0:1);
-}
-
-
 /* ******************************* */
-
-/*
-   key definitions we can use:
-       '0'-'9', 'A'-'F' for digits
-        7: GO   20: STEP  18: RESET  't': SST TOGGLE
-        1: AD    4: DA    16: PC     '+': PLUS
-        '$': shift toggle
-        '>': EEPROM WRITE MODE TOGGLE
-        
+/* KIM UNO PLATFORM
+ *  Oscar's original reference device
 */
-
 #ifdef kPlatformKIMUno
 #define kROWS (3)
 #define kCOLS (8)
@@ -189,12 +34,30 @@ const char lookup[kCOLS * kROWS] PROGMEM =
      kKimScancode_0,      kKimScancode_7,  kKimScancode_E
 };
 
+const char lookup_shifted[kCOLS * kROWS] PROGMEM =
+{
+  kKimScancode_STOP,  kKimScancode_EEPTOGGLE,  kKimScancode_SSTTOGGLE,
+     kKimScancode_6,      kKimScancode_D,  kKimScancode_PC,
+     kKimScancode_5,      kKimScancode_C,  kKimScancode_GO,
+     kKimScancode_4,      kKimScancode_B,  kKimScancode_PLUS,
+     kKimScancode_3,      kKimScancode_A,  kKimScancode_DATA,
+     kKimScancode_2,      kKimScancode_9,  kKimScancode_ADDR,
+     kKimScancode_1,      kKimScancode_8,  kKimScancode_F,
+     kKimScancode_0,      kKimScancode_7,  kKimScancode_E
+};
+
 #endif
 
+
+/* ******************************* */
+/* NOVUS 750 PLATFORM 
+ *  device hacked into the Novus 750 calculator
+*/
 #ifdef kPlatformNovus750
 // keypad definition
 #define kROWS (3)
 #define kCOLS (7)
+
 const byte rowPins[kROWS] = { 9, 10, 11 }; //connect to the row pinouts of the keypad
 const byte colPins[kCOLS] = { 2, 3, 4, 5, 6, 7, 8 }; //connect to the column pinouts of the keypad
 
@@ -222,30 +85,36 @@ const byte colPins[kCOLS] = { 2, 3, 4, 5, 6, 7, 8 }; //connect to the column pin
      4   5   6   7      EE
      0   1   2   3      
 */
-
+/* 'x' are unused positions in the array. */
 const char lookup[kCOLS * kROWS] PROGMEM =
 {
-  kKimScancode_0,            ' ', kKimScancode_1,
-  kKimScancode_3, kKimScancode_C, kKimScancode_4,
-  kKimScancode_B, kKimScancode_D, kKimScancode_5,
-  kKimScancode_7, kKimScancode_E, kKimScancode_6,
-             ' ', kKimScancode_2, kKimScancode_8,
-             '$',            ' ', kKimScancode_9,
-  kKimScancode_F,            ' ', kKimScancode_A
+     kKimScancode_0,            'x', kKimScancode_1,
+     kKimScancode_3, kKimScancode_C, kKimScancode_4,
+     kKimScancode_B, kKimScancode_D, kKimScancode_5,
+     kKimScancode_7, kKimScancode_E, kKimScancode_6,
+                'x', kKimScancode_2, kKimScancode_8,
+                
+  kKimScancode_PLUS,            'x', kKimScancode_9,
+     kKimScancode_F,            'x', kKimScancode_A
 };
 
 const char lookup_shifted[kCOLS * kROWS] PROGMEM = 
 {
-                     ' ',                 ' ',                ' ',
-                     ' ',     kKimScancode_GO,  kKimScancode_EEPTOGGLE,
-       kKimScancode_PLUS,   kKimScancode_STOP,                ' ',
-                     ' ',  kKimScancode_RESET,                ' ',
-                     ' ',                 ' ',  kKimScancode_ADDR,
-                     '$',                 ' ',  kKimScancode_DATA,
-  kKimScancode_SSTTOGGLE,                 ' ',    kKimScancode_PC
+       kKimScancode_none,                 'x',       kKimScancode_none,
+       kKimScancode_none,     kKimScancode_GO,  kKimScancode_EEPTOGGLE,
+       kKimScancode_PLUS,   kKimScancode_STOP,       kKimScancode_none,
+       kKimScancode_none,  kKimScancode_RESET,       kKimScancode_none,
+                     'x',   kKimScancode_none,       kKimScancode_ADDR,
+       kKimScancode_PLUS,                 'x',       kKimScancode_DATA,
+  kKimScancode_SSTTOGGLE,                 'x',         kKimScancode_PC
 };
 #endif
 
+
+/* ******************************* */
+/* 2411 PLATFORM 
+ *  device with 24 key keypad and 11 digit display
+ */
 #ifdef kPlatform2411
 #define kROWS (4)
 #define kCOLS (6)
@@ -263,10 +132,28 @@ const char lookup[kCOLS * kROWS] PROGMEM =
   kKimScancode_0,    kKimScancode_1,    kKimScancode_2,     kKimScancode_3
 };
 
+const char lookup_shifted[kCOLS * kROWS] PROGMEM =
+{ /* should unused shifted be ' '? */
+  kKimScancode_GO,   kKimScancode_STOP, kKimScancode_EEPTOGGLE, kKimScancode_SSTTOGGLE,
+  kKimScancode_ADDR, kKimScancode_DATA, kKimScancode_PC,    kKimScancode_PLUS,
+  kKimScancode_C,    kKimScancode_D,    kKimScancode_E,     kKimScancode_F,
+  kKimScancode_8,    kKimScancode_9,    kKimScancode_A,     kKimScancode_B,
+  kKimScancode_4,    kKimScancode_5,    kKimScancode_6,     kKimScancode_7,
+  kKimScancode_0,    kKimScancode_1,    kKimScancode_2,     kKimScancode_3
+};
+
 #endif
 
-#define kNoPress ('Z')
 
+/* ******************************* */
+/* Common handlers */
+
+extern "C" {
+  void serln( char * txt );
+  void serout(uint8_t val);
+  void printhex(uint16_t val);
+  void KIMKeyPress( uint8_t ch );
+}
 
 #ifdef kDisplayIsCommonAnode
 #define kHL  (HIGH)
@@ -290,220 +177,79 @@ void initKeypad()
   }
 }
 
-#ifdef NEVER /* XXX */
-char scanKeypad()
+void filterPress( uint8_t ch )
 {
-  initKeypad();
-  for( int r=0 ; r<kROWS ; r++ )
-  {
-    digitalWrite( rowPins[r], kLH );
-    for( int c=0 ; c<kCOLS ; c++ )
-    {
-      if( digitalRead( colPins[c] ) == kLH )
-      {
-#ifdef kShiftKeypad
-        if( shiftKey ) {
-          return pgm_read_byte_near( lookup_shifted + r + (c * kROWS ) );
-        } else {
-#endif
-          //Serial.write( lookup[c][r] );
-          //Serial.println ("" );
-          return pgm_read_byte_near( lookup + r + (c * kROWS )  );
-#ifdef kShiftKeypad
-        }
-#endif
-      }
-    }
-    digitalWrite( rowPins[r], kHL );
-  }
-
-  return kNoPress;
-}
-
-
-// wrap all of that with an event thingy
-#define kEventIdle     (0)
-#define kEventPressed  (1)
-#define kEventPressing (2)
-#define kEventRelease  (3)
-
-char currentKey = kNoPress;
-char previousKey = kNoPress;
-char keyEvent = kEventIdle;
-
-char scanKeypadEvents()
-{
-  char ret = 0;
-  currentKey = scanKeypad();
-  keyEvent = kEventIdle;
-
-  if( currentKey != kNoPress ) {
-    keyEvent = kEventPressing; // Pressing still
-    ret = currentKey;
-  }
-
-  if( currentKey != previousKey ) {
-    if( currentKey == kNoPress ) {
-      keyEvent = kEventRelease; // key just released
-      ret = previousKey;
-    } else {
-      keyEvent = kEventPressed; // key just pressed
-      ret = currentKey;
-    }
-  }
-  previousKey = currentKey;
-  return ret;
-}
-
-void scanKeys()
-{
-  static long startPressTime = 0;
-  char ke = scanKeypadEvents();
+  /* handle the press */
+  KIMKeyPress( ch );
   
-#ifdef kShiftKeypad
-  static char popShift = 0;
-#endif
-  static int holdTicks = 0;
-  
-  curkey = 0;
-  switch( keyEvent ) {
-    case( kEventPressed ):
-      startPressTime = millis();
-      holdTicks = 0;
-      switch( ke ) {
-#ifdef kShiftKeypad
-        case( '$' ): shiftKey ^= 1; break;
-        /*
-        case( 's' ): displayText( kDt_Scott, 1000 ); break;
-        case( 'o' ): displayText( kDt_Oscar, 1000 ); break;
-        */
-#endif
-        /* the following "pop" the shift key out */
-        case( '#' ):
-          ke = '+';  // and adjust it
-        case( 1 ): // AD
-        case( 4 ): // DA
-        case( 18 ): // RS
-        case( 't' ): // SST toggle
-        case( 16 ):  // PC
-        case( '>' ): // EEPROM TOGGLE
-#ifdef kShiftKeypad
-          popShift= 1;
-#endif
-          /* fall through */
-        default:
-          curkey = ke;
-      }
-      break;
-
-    case( kEventRelease ):
-      // we need to do it this way, otherwise it gets confused and re-scans
-      // the single press, giving a faulty ghost repress
-#ifdef kShiftKeypad
-      if( popShift ) {
-        popShift = 0;
-        shiftKey = 0;
-      }
-#endif
-      startPressTime = 0;
-      break;
-    
-    case( kEventPressing ):
-      if( (millis() - startPressTime) > 1000 ) {
-        if( holdTicks == 0 ) {
-          if( ke == 18 ) {
-            curkey = currentKey = ke ='>';
-          }
-        }
-        holdTicks++;
-      }
-      break;
-      
-    case( kEventIdle ):
-    default:
-      break;
-  }
-  // check for text display
-  switch( curkey ) {
-    case( 't' ):
-      curkey = SSTmode==0?']':'[';
-      if( SSTmode == 0 ) displayText( kDt_SST_ON, 500 );
-      else               displayText( kDt_SST_OFF, 500 );
-      break;
-    case( '>' ):
-      if( eepromProtect == 0 ) displayText( kDt_EE_RO, 500 );
-      else                     displayText( kDt_EE_RW, 500 );
-      break;
-    default:
-      break;
-  }
+  /* and update our display */
+  if( ch == kKimScancode_SSTTOGGLE &&  SSTmode ) displayText( kDt_SST_ON,  400 );
+  if( ch == kKimScancode_SSTTOGGLE && !SSTmode ) displayText( kDt_SST_OFF, 400 );
+  if( ch == kKimScancode_EEPTOGGLE &&  eepromProtect ) displayText( kDt_EE_RO, 400 );
+  if( ch == kKimScancode_EEPTOGGLE && !eepromProtect ) displayText( kDt_EE_RW, 400 );
 }
-#endif /* XXXX */
-
-extern "C" {
-  void printhex(uint16_t val);
-}
-
-
-
-void KIMKeyPress( uint8_t ch );
 
 void keypadScan()
 {
-  static uint8_t last_idx = 0xff;
-  static long pressTime = 0;
-  uint8_t idx = -1;
-  
+  static uint8_t last_scancode = 0xFF; /* never used anywhere */
+  static long timeoutMillis = 0;
+  uint8_t scancode = 0xFF;
+
+  // set up the ports..
   initKeypad();
 
-  // find the pressed-down key
+  // 1. find the pressed-down key (if any)
   for( int r=0 ; r<kROWS ; r++ )
   {
     digitalWrite( rowPins[r], kLH );
+    // we could use direct port writes here, but we may have to intrduce 
+    // delays to be sure that line settle in time. Probably not though..
+    // Anyway, for portability's sake, this is much easier to maintain 
+    // and re-use/port. ;)
+    
     for( int c=0 ; c<kCOLS ; c++ )
     {
       if( digitalRead( colPins[c] ) == kLH )
       {
-        idx = r + (c * kROWS );
+        // we got a HIGH! save aside the index (scancode)
+        scancode = r + (c * kROWS );
       }
     }
     digitalWrite( rowPins[r], kHL );
   }
-
-  // only send out a code when something changes.
-  if( idx != last_idx ) {
-    if( last_idx == 0xff ) {
-      // press
-      pressTime = millis();
-#ifdef kShiftKeypad
+  
+  
+  // 2. at this point, we have a scancode in 'scancode' or 0xFF
+  if( scancode != last_scancode ) {
+    // something changed, now to figure out what:
+    
+    if( scancode != 0xFF ) {
+      // 3. it was a key press!
+      // start our timeout for the shift-press-hold mechanism
+      timeoutMillis = millis() + kShiftDelay;
       shiftKey = 0;
-#endif
+      
     } else {
-      // release
-#ifdef kShiftKeypad
-      if( (millis()- pressTime) < kShiftDelay ) {
-        KIMKeyPress( pgm_read_byte_near( lookup + last_idx ));
-      } else {
-        KIMKeyPress( pgm_read_byte_near( lookup_shifted + last_idx ));
+      // 5. it was a key release!
+      if( shiftKey == 0 ) {
+        // 6. wasn't shifted, we can send it!
+        filterPress( pgm_read_byte_near( lookup + last_scancode ));
       }
-#else
-      KIMKeyPress( pgm_read_byte_near( lookup + last_idx ));
-#endif      
-      pressTime = 0;
-      idx = 0xff;
-#ifdef kShiftKeypad
       shiftKey = 0;
-#endif
+      
+    }
+  } else {
+    // 4. no change, see if it's being held..
+    if( scancode != 0xff && shiftKey == 0) {
+      // key is being held...       
+      if( millis() > timeoutMillis ) {
+        // held for the timeout period
+        shiftKey = 1;
+        filterPress( pgm_read_byte_near( lookup_shifted + scancode ));
+      }
     }
   }
-  last_idx = idx;
-
-#ifdef kShiftKeypad
-  if(    idx != 0xff 
-      && (millis()-pressTime) > kShiftDelay ) {
-    shiftKey = 1;
-  }
-#endif
+  last_scancode = scancode;
 }
 
 

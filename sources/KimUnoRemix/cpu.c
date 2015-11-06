@@ -12,8 +12,10 @@
 #include "Arduino.h"
 #include "config.h"
 #include "memory.h"
+//#define USE_TIMING
 
 #ifdef AVRX
+  /* AVR/Arduino specific... */
   #ifndef NULL
     #define NULL (void *) 0
   #endif
@@ -21,21 +23,20 @@
   extern uint8_t eepromread(uint16_t eepromaddress);
   extern void eepromwrite(uint16_t eepromaddress, uint8_t bytevalue);
 
-  #define KimSerialIn()       /* getAkey()   */ (0x00)
-  #define KimSerialClearIn()  /* clearkey()  */
-  #define KimSerialOut( A )   /* serout( A ) */
+  #define KimSerialIn()       /* Nothing */ (0x00)
+  #define KimSerialClearIn()  /* Nothing */
+  #define KimSerialOut( A )   /* Nothing */
 #else
-
+  /* Desktop specific... */
   #include <stdio.h>
   #include <stdint.h>
   //  #pragma warning(disable : 4996) // MS VC2008 does not like unsigned char -> signed char converts.
+  
   uint8_t KimSerialIn();
   void KimSerialClearIn();
   void KimSerialOut( uint8_t );
 #endif
 
-
-#define WREG_OFFSET 0x0360
 
 #ifdef DEBUGUNO
 //--------------- debug
@@ -43,6 +44,7 @@ extern FILE *fpx;
 uint16_t debugPC;
 // --------------
 #endif
+
 
 uint8_t blitzMode = 1;		// status variable only for microchess 
 // microchess status variable. 1 speeds up chess moves (and dumbs down play)
@@ -52,10 +54,18 @@ extern void printhex(uint16_t val);
 extern void serout(uint8_t value);
 extern void serouthex(uint8_t val);
 
+/* mode variables */
 uint8_t useKeyboardLed=0x01; 	// set to 0 to use Serial port, to 1 to use onboard keyboard/LED display.
 uint8_t iii;  					// counter for various purposes, declared here to avoid in-function delay in 6502 functions.
 uint8_t nmiFlag=0; 				// added by OV to aid single-stepping SST mode on KIM-I
 uint8_t SSTmode = 0; 			// SST switch in KIM-I: 1 = on.
+#ifdef AVRX
+extern uint8_t eepromProtect;
+#endif
+
+/* from down below */
+void reset6502();
+void nmi6502();
 
 
 /*
@@ -79,26 +89,6 @@ extern void driveLEDs();
 /* currently being pressed key */
 static uint8_t pressingKey = kKimScancode_none;
 
-
-
-/* move these somewhere else later */
-/* ST - throw NMI to stop execution */
-void nmi6502();
-#define pressed_STop()   nmi6502()
-
-/* RS - hardware reset */
-void reset6502();
-#define pressed_ReSet()  reset6502()
-
-/* SSTOn - turn on Single STep */
-#define pressed_SSTOn()  (SSTmode = 1)
-
-/* SSTOff - turn off Single STep */
-#define pressed_SSTOff() (SSTmode = 0)
-
-
-extern uint8_t eepromProtect;
-
 /* weuse this valve to indicate something was pressed */
 void KIMKeyPress( uint8_t ch )
 {
@@ -107,18 +97,18 @@ void KIMKeyPress( uint8_t ch )
 
     /* check for a special function */
     switch( ch ) {
-    case( kKimScancode_STOP ):   pressed_STop(); break;
-    case( kKimScancode_RESET ):  pressed_ReSet(); break;
-    case( kKimScancode_SSTON ):  pressed_SSTOn(); break;
-    case( kKimScancode_SSTOFF ): pressed_SSTOff(); break;
+    case( kKimScancode_STOP ):   nmi6502(); break;   /* ST - throw NMI to stop execution */
+    case( kKimScancode_RESET ):  reset6502(); break; /* RS - hardware reset */
+    case( kKimScancode_SSTON ):  SSTmode = 1; break; /* SSTOn - turn on Single STep */
+    case( kKimScancode_SSTOFF ): SSTmode = 0; break; /* SSTOff - turn off Single STep */
     case( kKimScancode_SSTTOGGLE ):
       if( SSTmode == 1 ) SSTmode=0;
       else SSTmode = 1;
       break;
 #ifdef AVRX
     case( kKimScancode_EEPTOGGLE ):
-      if( eepromProtect == 1 ) eepromProtect=0;
-      else eepromProtect = 1;
+      if( eepromProtect == 1 ) eepromProtect = 0;
+      else                     eepromProtect = 1;
       break;
 #endif
     default:
@@ -130,23 +120,16 @@ void KIMKeyPress( uint8_t ch )
 }
 
 /* return 1 if there was a press, otherwise 0 */
-uint8_t KIMKeyPressing()
-{
-    if( pressingKey == kKimScancode_none) return 0;
-    return 1;
-}
+#define KIMKeyPressing() \
+  ( pressingKey != kKimScancode_none)
 
 /* get the currently pressed key */
-uint8_t KIMKeyGet()
-{
-    return pressingKey;
-}
+#define KIMKeyGet() \
+  (pressingKey)
 
 /* notifying us that the key has been "used" */
-void KIMKeyUsed()
-{
+#define KIMKeyUsed() \
     pressingKey = kKimScancode_none;
-}
 
 
 /* ************************************************** */

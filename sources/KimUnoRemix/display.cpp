@@ -7,13 +7,12 @@
 
 #include "Arduino.h"
 #include "config.h"
+#include "display.h"
 #include <avr/pgmspace.h>
 
 extern "C" {
-#ifdef kShiftKeypad
 char shiftKey = 0;  // is the keypad shift key in effect?
-#endif
-extern unsigned char kimHex[];        // seLED display
+
 unsigned char textHex[7];
 
 // For all of this, we'll assume that they're wired correctly
@@ -102,20 +101,12 @@ unsigned long textTimeout;
 //  pass it in one of these values, and the number of ms to display (eg 500)
 //  for text display
 
-#define kDt_blank   (0)
-#define kDt_SST_ON  (1)
-#define kDt_SST_OFF (2)
-#define kDt_EE_RW   (3)
-#define kDt_EE_RO   (4)
-#define kDt_Uno     (5)
-#define kDt_Scott   (6)
-#define kDt_Oscar   (7)
 
 void displayText( int which, long timeMillis )
 {
-  return;
   for( int x = 0 ; x<8 ; x++ ) 
     textHex[x] = 18; // ' ' space
+    
   if( which == kDt_SST_ON ) {
     textHex[1] = 5;  // 5
     textHex[2] = 5;  // 5
@@ -145,21 +136,9 @@ void displayText( int which, long timeMillis )
     textHex[1] = 24; // U
     textHex[2] = 19; // n
     textHex[3] = 20; // o
-    textHex[4] = 18 | kDisplayDP;
+    //textHex[4] = 18 | kDisplayDP;
     textHex[5] = kVersionMinorA;  // 0
     textHex[6] = kVersionMinorB;  //   7
-  } else if( which == kDt_Scott ) {
-    textHex[1] = 5;  // s
-    textHex[2] = 26; // c
-    textHex[3] = 20; // o
-    textHex[4] = 23; // t
-    textHex[5] = 23; // t
-  } else if( which == kDt_Oscar ) {
-    textHex[1] = 20; // o
-    textHex[2] = 5;  // s
-    textHex[3] = 26; // c
-    textHex[4] = 29; // a
-    textHex[5] = 22; // r
   }
   textTimeout = millis() + timeMillis; // when to switch back
 }
@@ -230,7 +209,7 @@ void driveLEDs()
   for( int displayDigit = 0 ; displayDigit < 8 ; displayDigit++ )
   {
     byte pattern = 18; // space
-    if( true ) { //millis() >= (long)textTimeout ) { // not elegant, but good for now
+    if( millis() >= (long)textTimeout ) { // not elegant, but good for now
       // display the internal digits
       if( displayDigit == kDisplayAddrOffset   ) pattern = kimHex[0];
       if( displayDigit == kDisplayAddrOffset+1 ) pattern = kimHex[1];
@@ -241,9 +220,8 @@ void driveLEDs()
       if( displayDigit == kDisplayDataOffset+1 ) pattern = kimHex[5];
 
       pattern = pgm_read_byte_near( segmentLookup + pattern ); // remove decimal point here.
-#ifdef kShiftKeypad
-      if( (displayDigit == kDisplayShift)  &&  shiftKey ) pattern |= 0xff;//B01001001;  // shift indicator
-#endif
+      
+      if( (displayDigit == kDisplayShift)  &&  (shiftKey == 1) ) pattern |= 0x80; //0xff;//B01001001;  // shift indicator
       if( displayDigit == kDisplayDot ) pattern |= 0x80;  // decimal point separator
      } 
     else 

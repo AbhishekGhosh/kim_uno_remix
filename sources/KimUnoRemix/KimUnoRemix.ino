@@ -111,15 +111,12 @@ void loop () {
   if (Serial.available())
   {
     serialEnable = 1;
-    curkey = Serial.read() & 0x7F;
-    interpretkeys();
+    //curkey = Serial.read() & 0x7F;
+    //interpretkeys();
   }
   
   keypadScan();
-  
-  //scanKeys();
-  //if (xkeyPressed()!=0) //KIM Uno board input?
-  //  interpretkeys();
+
 
   // doing this here would cause a massive slowdown but keeps display on at all times
   //driveLEDs(); 

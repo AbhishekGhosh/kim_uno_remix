@@ -33,6 +33,13 @@
  * $C000 -                MicroChess
  * $2000 -                WOZ Disassembler
  *
+ *
+ * note that above 8K map is not replicated 8 times to fill 64K, 
+ * but INSTEAD, emulator mirrors last 6 bytes of ROM 002 to FFFB-FFFF:
+ *               FFFA, FFFB - NMI Vector
+ *               FFFC, FFFD - RST Vector
+ *               FFFE, FFFF - IRQ Vector
+ * Application roms (mchess, calc) are above standard 8K of KIM-1
  */
 
 /* RAM definitions */
@@ -46,18 +53,7 @@ uint8_t RAM[kRAMSize];
 uint8_t RAM003[64];
 uint8_t RAM002[64];
 
-
-
-// note that above 8K map is not replicated 8 times to fill 64K, 
-// but INSTEAD, emulator mirrors last 6 bytes of ROM 002 to FFFB-FFFF:
-//               FFFA, FFFB - NMI Vector
-//               FFFC, FFFD - RST Vector
-//               FFFE, FFFF - IRQ Vector
-// Application roms (mchess, calc) are above standard 8K of KIM-1
-
 /* ******************************************************************* */
-
-
 // --- ROM CODE SECTION ------------------------------------------------------------
 // ROM1: KIM-1 ROM002 (monitor main code)                                 $1C00
 // ROM2: KIM-1 ROM003 (tape and RS-232 code)                              $1800
@@ -70,8 +66,6 @@ uint8_t RAM002[64];
 // relocate (first book of kim)                                        to $0110
 // branch (first book of kim)                                          to $01A5
 // movit (first book of kim)                                           to $1780
-
-
 
 
 // ---------------------------------------------------------------------------------
