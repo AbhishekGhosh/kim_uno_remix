@@ -9,20 +9,23 @@ KIM-1 single board computer on an ATmega 328p AVR micro, and provides
 (for the micro build version) as well as Windows/Mac/Linux (for the
 QT version).
 
-This "remix" takes his original KIM-1 emulation codebase from, and
+This "remix" takes Oscar's original KIM-1 emulation codebase, and
 changes some things around for expandability, reusability, and
 portability.  Some things have been removed to make space for the
 additional functionality, including the calculator and floating
 point library.  Some things have been added such as support for other
 platforms, and ease of expandability.
 
+Best part is, it's a remix. If you don't want any of this, you can
+always just go back to Oscar's code if you'd like. ;)
+
 --------
-"Remixed" differences from Oscar's oroginal version:
+"Remixed" differences from Oscar's version:
 - Broken out into multiple files (eg cpu.c, memory.c, keys.cpp, display.cpp)
 - Easily configured for different platforms (config.h)
 - Easily configurable ROM layouts (see memory.c)
 - Easy-loaded programs to RAM (see memory.c)
-- PC version uses the same core engine and ROM data
+- PC version uses the same core cpu engine and ROM data
 
 New changes implemented:
 - Serial interface (temporarily removed for a code shuffle in progress)
@@ -68,6 +71,11 @@ License:
 
 Oscar and Mike's code do not contain licenses, so don't sell this
 or do anything like that. It would make them grumpy... me too! ;)
+
+Any of my additional effort should be under an MIT license.  If you want
+to re-use my code, for commercial or non-commercial use, please do but
+give me credit.  If you do, contact Oscar and Mike to check for their
+permissions as well.
 
 --------
 Credits:
