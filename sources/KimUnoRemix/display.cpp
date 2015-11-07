@@ -139,6 +139,12 @@ void displayText( int which, long timeMillis )
     //textHex[4] = 18 | kDisplayDP;
     textHex[5] = kVersionMinorA;  // 0
     textHex[6] = kVersionMinorB;  //   7
+  } else if( which == kDt_WrErr ) {
+    textHex[1] = 14; // E
+    textHex[2] = 22; // R
+    textHex[3] = 22; // R
+    textHex[5] = 25; // W
+    textHex[6] = 22; // R
   }
   textTimeout = millis() + timeMillis; // when to switch back
 }

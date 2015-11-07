@@ -88,7 +88,9 @@ extern "C" {
     if (eepromProtect==0) {
       EEPROM.write(eepromaddress, bytevalue);
     } else {
-      Serial.println(F("ERROR: EEPROM STATE IS WRITE-PROTECTED. HIT '>' TO TOGGLE WRITE PROTECT"));
+      //if( serialEnable )
+      //  Serial.println(F("ERROR: EEPROM STATE IS WRITE-PROTECTED. HIT '>' TO TOGGLE WRITE PROTECT"));
+      displayText( kDt_WrErr, 1000 );
     }
   }
 

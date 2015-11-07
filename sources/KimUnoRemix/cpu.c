@@ -357,6 +357,22 @@ uint8_t read6502(uint16_t address) {
         return(KIMKeyPressing()==0?(uint8_t)0:(uint8_t)1);
     }
 
+#ifdef EXPAPI
+    // handlers for the KUR API "Chip"
+    if( address == 0xF000 ) return( kVersionMajor );
+    if( address == 0xF001 ) return( (kVersionMinorA <<4) + kVersionMinorB );
+#ifndef AVRX
+    if( address == 0xF002 ) return( 0x00 );
+#else
+    if( address == 0xF002 ) return( 0x01 );
+    if( address == 0xF00F ) return( 0x01 /* rnd */ | 0x04 /* ms clock */ );
+    if( address == 0xF0F0 ) return( millis() & 0x000F );
+    if( address == 0xF0F1 ) return( (millis() & 0x00F0) >>4  );
+    if( address == 0xF0F2 ) return( (millis() & 0x0F00) >>8  );
+    if( address == 0xF0F3 ) return( (millis() & 0xF000) >>12 );
+#endif
+    if( address == 0xF010 ) return( random() & 0x00FF );
+#endif
     return( tempval );
 }
 
@@ -398,6 +414,10 @@ void write6502(uint16_t address, uint8_t value)
 
     idx++;
   } while( !(flags & kMMAP_END) );
+
+#ifdef EXPAPI
+  if( address == 0xF010 ) randomSeed( value );
+#endif
 }
 
 

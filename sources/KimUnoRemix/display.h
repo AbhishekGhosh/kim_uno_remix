@@ -19,11 +19,12 @@ extern char kimHex[6];  // LED display
 //  for text display
 
 #define kDt_blank   (0)
-#define kDt_SST_ON  (1)
-#define kDt_SST_OFF (2)
-#define kDt_EE_RW   (3)
-#define kDt_EE_RO   (4)
-#define kDt_Uno     (5)
+#define kDt_SST_ON  (1) /* SST is on */
+#define kDt_SST_OFF (2) /* SST is off */
+#define kDt_EE_RW   (3) /* EEProm Read/Write */
+#define kDt_EE_RO   (4) /* EEProm Read Only */
+#define kDt_Uno     (5) /* Uno splash */
+#define kDt_WrErr   (6) /* write error */
 
 void displayText( int which, long timeMillis );
 

@@ -1,6 +1,7 @@
 /* memory.h
  *
- *  encapsulate memory access, ROM and RAM code. (ROM read directly from PROGMEM on AVR)
+ *  encapsulate memory access, ROM and RAM code.
+ * (ROM read directly from PROGMEM on AVR)
  */
 
 #include <Arduino.h>
@@ -13,8 +14,8 @@
 #ifndef __MEMORY_H__
 #define __MEMORY_H__
 
-/*********************************************************************************/
-/* --- OVERVIEW OF KIM-1 MEMORY MAP ----------------------------------------------
+/******************************************************************************/
+/* --- OVERVIEW OF KIM-1 MEMORY MAP --------------------------------------------
  *
  * $0000 - $03FF    1024  RAM[] (AVR)
  * $0400 - $07FF    1024  EEPROM (AVR)
@@ -37,6 +38,81 @@
  *
  */
 
+/* possible video/color buffer
+	based on http://www.6502asm.com
+
+	Their frame buffer sits at $200-$5FF
+	Ours will be at $3000 - $33FF 
+
+	It generates a 32x32 framebuffer, each pixel is one byte
+	starting in the upper right going down to the lower left
+
+	color table: (from the C64)
+	$0 black	$8 orange
+	$1 white	$9 brown
+	$2 red		$A light red
+	$3 cyan		$B dark gray
+	$4 purple	$C gray
+	$5 green	$D light green
+	$6 blue		$E light blue
+	$7 yellow	$F light gray
+
+	(this can be expanded later to be a 32x32 tile buffer, with
+	 a secondary character buffer.  then the upper nibble can define
+	 the character color.)
+*/
+
+/* possible Interface "chip" API
+
+	One other thing that may be useful is a utility API with 
+	various interfaces to the real world.  Let's put this at $F000
+	This is something that could be created in real hardware too
+
+	; interface versioning
+  $F000   (read) Version Major (eg 0x23)
+  $F001   (read) Version Minor (eg 0x17)
+  $F002 (read) system
+    0x00 Desktop Emulation
+    0x01 Arduino AVR
+	$F00F	capabilities
+		0x01 random values
+		0x02 realtime clock
+		0x04 ms clock
+		0x08 7 segment addressing
+		0x10 analog input
+    0x40 color buffer
+    0x80 character buffer
+
+	; random value
+	$F010 	random value (write for seed/reset), read for value
+
+	; realtime clock
+	$F021 	time: 256th second (read for value, write for offset)
+	$F022	time: seconds
+	$F023	time: minutes
+	$F024	time: hours
+	$F025	time: day
+	$F026	time: month
+	$F027	time: year  (2000+ $F007)
+
+	; ms clock
+	$F0F0	ms clock: byte xxxF
+	$F0F1	ms clock: byte xxFx
+	$F0F2	ms clock: byte xFxx
+	$F0F3	ms clock: byte Fxxx
+
+	; direct segment rendering
+	$F030	7 segment display digit 0xxx xx, pattern (r/w)
+	 ....
+	$F035	7 segment display digit xxxx x0, pattern (r/w)
+	$F03F	call here to draw the 7 segment display
+
+	; AVR analog inputs
+	$F040	0..255 - value in A0
+	....
+	$F045	0..255 - value in A5
+ */
+
 extern uint8_t RAM[];
 extern uint8_t RAM003[];
 extern uint8_t RAM002[];
@@ -47,7 +123,7 @@ extern const unsigned char rom003[1024] PROGMEM;  // 0x1800
 extern const unsigned char mchess[1393] PROGMEM;  // 0xC000
 extern const unsigned char disasm[505] PROGMEM;   // 0x2000
 
-/*********************************************************************************/
+/******************************************************************************/
 
 ////////////////////////////////////////////////////////////////////////////////
 typedef struct MMAP {

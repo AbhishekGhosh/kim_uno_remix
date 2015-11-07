@@ -3,13 +3,14 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.17 15/11/05"
+#define kVersionString "v23.18 15/11/07"
 #define kVersionMajor  (23)
 #define kVersionMinorA (1)
-#define kVersionMinorB (7)
+#define kVersionMinorB (8)
 /* 
  * Version history
  *
+ * v23.18 - Write to protected EEProm displays an error
  * v23.17 - Shifted key ping-pong repeat bug fixed
  * v23.16 - Improved shifted key handling (press-hold-trigger) Text display restored
  * v23.15 - Textual indication of SST and EEProm added back in
