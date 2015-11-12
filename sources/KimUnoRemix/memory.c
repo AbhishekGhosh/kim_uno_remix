@@ -18,7 +18,7 @@
  * $0000 - $03FF    1024  RAM[] (AVR)
  * $0400 - $07FF    1024  EEPROM (AVR)
  *  or:
- * $0000 - $0FFF    4096  RAM[] (Desktop)
+ * $0000 - $16FF    5888  RAM[] (Desktop)
  *
  * $1700 - $173F          6530-003 - IO and timer, available for user
  * $1740 - $177F          6530-002 - IO and timer, used for KIM, LED, Keyboard
@@ -44,9 +44,9 @@
 
 /* RAM definitions */
 #ifndef AVRX
-#define kRAMSize (4096)
+#define kRAMSize (5888) /* $0000 - $16FF */
 #else
-#define kRAMSize (1024)
+#define kRAMSize (1024) /* $0000 - $03FF */
 #endif
 
 uint8_t RAM[kRAMSize];
