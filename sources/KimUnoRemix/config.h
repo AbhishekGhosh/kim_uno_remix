@@ -55,13 +55,13 @@
 /* Platform */
 
 /* this is for Oscar's Kim Uno "Reference" platform */
-#define kPlatformKIMUno
+#undef kPlatformKIMUno
 
 /* this is for the Novus 750 hacked calculator */
 #undef kPlatformNovus750
 
 /* This is for the 24 key, 11 digit display handheld */
-#undef kPlatform2411
+#define kPlatform2411
 
 
 /* ************************************************************************** */
