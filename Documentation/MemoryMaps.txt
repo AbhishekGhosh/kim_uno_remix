@@ -1,0 +1,30 @@
+
+This table (adapted from the Briel MicroKIM manual) shows the
+compatibility of the memory maps between the original KIM-1, the Briel
+Computers MicroKim, and the Kim Uno Remix project.
+
+http://www.brielcomputers.com/wordpress/?cat=24
+(Reformatted 11/11/2015 SDL)
+
+                                                                               Kim Uno Remix
+ Location      Size         MicroKIM             KIM-1                 (AVR)             (DESKTOP)
+-----------   ----------   ------------------   ------------------    ---------------   -----------------
+$0000-$03FF   1024 Bytes   RAM                  RAM                   RAM               RAM
+$0400-$07FF   1024 Bytes   RAM                  Opt. Memory Area      EEPROM            RAM
+$0800-$0BFF   1024 Bytes   RAM                  Opt. Memory Area                        RAM
+$0C00-$0FFF   1024 Bytes   RAM                  Opt. Memory Area                        RAM
+
+$1000-$13FF   1024 Bytes   RAM                  Opt. Memory Area                        RAM
+$1400-$16FF   767 Bytes    Opt. Memory          Opt. Memory Area                        RAM
+
+$1700-$173F                Opt. 2nd 6532        6530-002 I/O, Timer   I/O, Timer        I/O, Timer
+$1740-$177F                6532 I/O and Timer   6530-003 I/O, Timer   I/O, Timer        I/O, Timer
+$1780-$17BF   64 Bytes     RAM from 6532        RAM from 6530-003     RAM               RAM
+$17C0-$17FF   64 Bytes     RAM from 6532        RAM from 6530-002     RAM               RAM
+$1800-$1BFF   1024 Bytes   EPROM                ROM in 6530-003       ROM (Tape, Ser)   ROM (Tape, Ser)
+$1C00-$1FFF   1024 Bytes   EPROM                ROM in 6530-002       ROM (Monitor)     ROM (Monitor)
+
+$2000-$FFFF                Unused               Unused
+$2000                                                                        Disassembler ROM
+$C000                                                                         MicroChess ROM
+
