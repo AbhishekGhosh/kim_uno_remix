@@ -3,13 +3,14 @@
  * lets you pick features to use and such
  */
 
-#define kVersionString "v23.18 15/11/07"
+#define kVersionString "v23.19 15/11/11"
 #define kVersionMajor  (23)
 #define kVersionMinorA (1)
-#define kVersionMinorB (8)
+#define kVersionMinorB (9)
 /* 
  * Version history
  *
+ * v23.19 - Added Briel Computers' clock program, more memory for Desktop
  * v23.18 - Write to protected EEProm displays an error
  * v23.17 - Shifted key ping-pong repeat bug fixed
  * v23.16 - Improved shifted key handling (press-hold-trigger) Text display restored
@@ -55,13 +56,13 @@
 /* Platform */
 
 /* this is for Oscar's Kim Uno "Reference" platform */
-#undef kPlatformKIMUno
+#define kPlatformKIMUno
 
 /* this is for the Novus 750 hacked calculator */
 #undef kPlatformNovus750
 
 /* This is for the 24 key, 11 digit display handheld */
-#define kPlatform2411
+#undef kPlatform2411
 
 
 /* ************************************************************************** */
