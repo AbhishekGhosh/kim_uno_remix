@@ -1,4 +1,4 @@
-
+------------------------------------------------------------------------------------------------------------------------------------
 This table (adapted from the Briel MicroKIM manual) shows the
 compatibility of the memory maps between the original KIM-1, the Briel
 Computers MicroKim, and the Kim Uno Remix project.
@@ -25,6 +25,8 @@ $1800-$1BFF   1024 Bytes   EPROM                ROM in 6530-003       ROM (Tape,
 $1C00-$1FFF   1024 Bytes   EPROM                ROM in 6530-002       ROM (Monitor)     ROM (Monitor)
 
 $2000-$FFFF                Unused               Unused
+
 $2000                                                                        Disassembler ROM
+$4000         1024 Bytes                                                                Video Buffer
 $C000                                                                         MicroChess ROM
 

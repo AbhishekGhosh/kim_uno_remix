@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <terminalinterface.h>
+#include <videodisplay.h>
 
 namespace Ui {
 class MainWindow;
@@ -20,6 +21,7 @@ private:
     Ui::MainWindow *ui;
     QTimer * timer;
     TerminalInterface * term;
+    VideoDisplay * video;
 
 private:
     void updateDisplay();
@@ -79,6 +81,7 @@ private slots:
     void on_pushButton_HEX_D_clicked();
     void on_pushButton_HEX_E_clicked();
     void on_pushButton_HEX_F_clicked();
+    void on_action_Video_Display_triggered();
 };
 
 #endif // MAINWINDOW_H

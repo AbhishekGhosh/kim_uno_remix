@@ -14,10 +14,11 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "006"
-#define kVersionDate   "2015-11-02"
+#define kVersionNumber "007"
+#define kVersionDate   "2015-11-14"
 
 /*
+ * v007 - 2015-11-14 - Video Display added at $4000
  * v006 - 2015-11-02 - Keypad interface restructured, startup code fixed
  * v005 - 2015-10-26 - Serial terminal almost working
  * v004 - 2015-10-24 - pulled out interface.c to help it be more portable
@@ -26,6 +27,7 @@ extern "C" {
  * v001 - 2015-10-22 - initial build, gui, nothing more
  */
 
+VideoDisplay * theScreen = NULL;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -50,6 +52,11 @@ MainWindow::MainWindow(QWidget *parent) :
     title << std::endl;
 
     this->term->putData( title.str().c_str() );
+
+    // start up the Video display
+    this->video = new VideoDisplay( parent );
+    theScreen = this->video;
+    // this->video->setHidden(false);
 
     // set up the update timer
     this->timer = new QTimer( this );
@@ -100,6 +107,7 @@ void MainWindow::closeEvent( QCloseEvent *bar )
     if( this->reallyQuit() ) {
         bar->accept();
         this->term->close();
+        this->video->close();
     } else {
         bar->ignore();
     }
@@ -164,6 +172,18 @@ void MainWindow::on_timerTick()
 }
 
 
+extern "C" {
+uint8_t getPixel( uint16_t address )
+{
+    return( theScreen->GetLinear( address ));
+}
+
+void setPixel( uint16_t address, uint8_t value )
+{
+    theScreen->SetLinear( address, value );
+}
+
+}
 
 void MainWindow::initialize_emulation()
 {
@@ -188,6 +208,15 @@ void MainWindow::on_actionSerial_Console_triggered()
         this->term->setVisible( false );
     } else {
         this->term->setVisible( true );
+    }
+}
+
+void MainWindow::on_action_Video_Display_triggered()
+{
+    if( this->video->isVisible() ){
+        this->video->setVisible( false );
+    } else {
+        this->video->setVisible( true );
     }
 }
 
@@ -282,3 +311,4 @@ void MainWindow::on_pushButton_HEX_C_clicked() { KIMKeyPress( kKimScancode_C); }
 void MainWindow::on_pushButton_HEX_D_clicked() { KIMKeyPress( kKimScancode_D); }
 void MainWindow::on_pushButton_HEX_E_clicked() { KIMKeyPress( kKimScancode_E); }
 void MainWindow::on_pushButton_HEX_F_clicked() { KIMKeyPress( kKimScancode_F); }
+

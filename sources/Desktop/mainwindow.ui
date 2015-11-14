@@ -259,22 +259,6 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="3">
-      <widget class="QPushButton" name="pushButton_HEX_F">
-       <property name="minimumSize">
-        <size>
-         <width>64</width>
-         <height>64</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>F</string>
-       </property>
-       <property name="shortcut">
-        <string>F</string>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="1">
       <widget class="QPushButton" name="pushButton_HEX_D">
        <property name="minimumSize">
@@ -435,6 +419,22 @@
        </property>
        <property name="shortcut">
         <string>B</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="3">
+      <widget class="QPushButton" name="pushButton_HEX_F">
+       <property name="minimumSize">
+        <size>
+         <width>64</width>
+         <height>64</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>F</string>
+       </property>
+       <property name="shortcut">
+        <string>F</string>
        </property>
       </widget>
      </item>
@@ -1232,10 +1232,9 @@
    </property>
    <widget class="QMenu" name="menuKIM_UNO_REMIX">
     <property name="title">
-     <string>&amp;File</string>
+     <string>&amp;Emulation</string>
     </property>
     <addaction name="separator"/>
-    <addaction name="actionSerial_Console"/>
     <addaction name="separator"/>
     <addaction name="actionReset"/>
     <addaction name="separator"/>
@@ -1265,7 +1264,15 @@
     <addaction name="separator"/>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuPeripherals">
+    <property name="title">
+     <string>&amp;Peripherals</string>
+    </property>
+    <addaction name="actionSerial_Console"/>
+    <addaction name="action_Video_Display"/>
+   </widget>
    <addaction name="menuKIM_UNO_REMIX"/>
+   <addaction name="menuPeripherals"/>
    <addaction name="menuHelp"/>
   </widget>
   <action name="actionReset">
@@ -1314,6 +1321,11 @@
     <string>Kim Uno &amp;Project</string>
    </property>
   </action>
+  <action name="action_Video_Display">
+   <property name="text">
+    <string>&amp;Video Display</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
@@ -1328,7 +1340,6 @@
   <tabstop>pushButton_HEX_C</tabstop>
   <tabstop>pushButton_HEX_D</tabstop>
   <tabstop>pushButton_HEX_E</tabstop>
-  <tabstop>pushButton_HEX_F</tabstop>
   <tabstop>pushButton_HEX_8</tabstop>
   <tabstop>pushButton_HEX_9</tabstop>
   <tabstop>pushButton_HEX_A</tabstop>
