@@ -1,15 +1,16 @@
 /* Config.h
  *
- * lets you pick features to use and such
+ * lets you pick features to use and such for your target platform
  */
 
-#define kVersionString "v23.19 15/11/11"
+#define kVersionString "v23.20 15/11/18"
 #define kVersionMajor  (23)
-#define kVersionMinorA (1)
-#define kVersionMinorB (9)
+#define kVersionMinorA (2)
+#define kVersionMinorB (0)
 /* 
  * Version history
  *
+ * v23.20 - kDisplayWide, Text strings tweaked for better readability
  * v23.19 - Added Briel Computers' clock program, more memory for Desktop
  * v23.18 - Write to protected EEProm displays an error
  * v23.17 - Shifted key ping-pong repeat bug fixed
@@ -82,8 +83,8 @@
 #define kDisplayShift       (-1)  /* which digit to display the shift indicator (segment f) */
 #define kDisplayDot         (-1)  /* which digit to display the dot */
 
-/* for text display -- if defined, it uses a condensed version of the display strings */
-#define kDisplayCompress
+/* for text display -- if defined, it uses a wider version of the display strings */
+#define kDisplayWide
 #endif
 
 /* ************************************************************************** */
@@ -94,6 +95,7 @@
   #define kDisplayDataOffset   (5) /* [5,6] */
   #define kDisplayShift        (4) /* shift indicator goes on [4] */
   #define kDisplayDot          (-1) /* no dot indicator */
+  #define kDisplayWide
 
   #define CKeyThreeEight  /* original to KIM-UNO hardware */
 #endif
@@ -106,6 +108,7 @@
   #define kDisplayDataOffset   (5) /* data directly adjoins it [5,6] */
   #define kDisplayShift        (0) /* shift indicator goes on half digit */
   #define kDisplayDot          (4) /* dot separates addr from data */
+  #undef kDisplayWide
 
   #define CKeyNovus /* Novus calculator */
 #endif
@@ -118,6 +121,7 @@
   #define kDisplayDataOffset   (5) /* data directly adjoins it [5,6] */
   #define kDisplayShift        (4) /* shift indicator goes on [4] */
   #define kDisplayDot          (-1) /* dot separates addr from data */
+  #define kDisplayWide
 
   #define CKeyFourSix
 #endif
@@ -167,10 +171,10 @@
 #define kKimScancode_none   (0x15) /* illegal/no press */
 
 /* these perform special tasks, functions below */
-#define kKimScancode_STOP   (0x80) /* terminates execution, return to KIM */
-#define kKimScancode_RESET  (0x81) /* total system reset, return to KIM */
-#define kKimScancode_SSTON  (0x82) /* Single STep execution is ON */
-#define kKimScancode_SSTOFF (0x83) /* Single STep execution is OFF */
+#define kKimScancode_STOP      (0x80) /* terminates execution, return to KIM */
+#define kKimScancode_RESET     (0x81) /* total system reset, return to KIM */
+#define kKimScancode_SSTON     (0x82) /* Single STep execution is ON */
+#define kKimScancode_SSTOFF    (0x83) /* Single STep execution is OFF */
 #define kKimScancode_SSTTOGGLE (0x84) /* Single STep Toggle */
 #define kKimScancode_EEPTOGGLE (0x85) /* EEProm RW Toggle */
 

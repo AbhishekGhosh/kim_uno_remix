@@ -37,7 +37,7 @@ const byte ledDigits[8] =  { 12, 13, A0, A1,  A2, A3, A4, A7 };
 const byte ledDigits[8] =  { 12, 13, A0, A1,  A4, A2, A3, A7 };
 #endif
 
-#define kCharMax (31)
+#define kCharMax (32)
 
 const unsigned char segmentLookup[kCharMax] PROGMEM = { 
   /* NOTE: this is copied from the rom at 0x1FE7 */ 
@@ -88,7 +88,8 @@ const unsigned char segmentLookup[kCharMax] PROGMEM = {
     B01010100, // 27 'h'
     B00000010, // 28 'i'
     B01011111, // 29 'a'
-    B10000000  // 30 '.'
+    B10000000, // 30 '.'
+    B00011100  // 31 'u'
 };
 
 
@@ -108,30 +109,59 @@ void displayText( int which, long timeMillis )
     textHex[x] = 18; // ' ' space
     
   if( which == kDt_SST_ON ) {
+#ifdef kDisplayWide
+    textHex[0] = 5;  // 5
+    textHex[1] = 5;  // 5
+    textHex[2] = 23; // t
+#else
     textHex[1] = 5;  // 5
     textHex[2] = 5;  // 5
     textHex[3] = 23; // t
+#endif
     textHex[5] = 20; // o
     textHex[6] = 19; // n
   } else if( which == kDt_SST_OFF ) {
+#ifdef kDisplayWide
+    textHex[0] = 5;  // 5
+    textHex[1] = 5;  // 5
+    textHex[2] = 23; // t
+#else
     textHex[1] = 5;  // 5
     textHex[2] = 5;  // 5
     textHex[3] = 23; // t
+#endif
     textHex[4] = 20; // o
     textHex[5] = 15; // f
     textHex[6] = 15; // f
   } else if( which ==  kDt_EE_RW ) {
+#ifdef kDisplayWide
+    textHex[0] = 14; // E
+    textHex[1] = 14; // E
+    textHex[2] = 21; // P
+    textHex[4] = 22; // R
+    textHex[5] = 31; // u
+    textHex[6] = 31; // u
+#else
     textHex[1] = 14; // E
     textHex[2] = 14; // E
     textHex[3] = 21; // P
     textHex[5] = 22; // R
     textHex[6] = 25; // W
+#endif
   } else if( which ==  kDt_EE_RO ) {
+#ifdef kDisplayWide
+    textHex[0] = 14; // E
+    textHex[1] = 14; // E
+    textHex[2] = 21; // P
+    textHex[4] = 22; // R
+    textHex[5] = 20; // o
+#else
     textHex[1] = 14; // E
     textHex[2] = 14; // E
     textHex[3] = 21; // P
     textHex[5] = 22; // R
     textHex[6] = 20; // o
+#endif
   } else if( which == kDt_Uno ) {
     textHex[1] = 24; // U
     textHex[2] = 19; // n
@@ -140,11 +170,20 @@ void displayText( int which, long timeMillis )
     textHex[5] = kVersionMinorA;  // 0
     textHex[6] = kVersionMinorB;  //   7
   } else if( which == kDt_WrErr ) {
+ #ifdef kDisplayWide
+    textHex[0] = 14; // E
+    textHex[1] = 22; // R
+    textHex[2] = 22; // R
+    textHex[3] = 20; // o
+    textHex[4] = 22; // R
+    textHex[6] = 25; //   w
+ #else
     textHex[1] = 14; // E
     textHex[2] = 22; // R
     textHex[3] = 22; // R
     textHex[5] = 25; // W
     textHex[6] = 22; // R
+ #endif
   }
   textTimeout = millis() + timeMillis; // when to switch back
 }
