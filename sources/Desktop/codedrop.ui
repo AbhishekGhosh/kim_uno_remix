@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>229</height>
+    <width>610</width>
+    <height>195</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>50</x>
-     <y>190</y>
+     <x>260</x>
+     <y>160</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -40,7 +40,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>381</width>
+     <width>591</width>
      <height>61</height>
     </rect>
    </property>
@@ -68,16 +68,34 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>130</y>
-     <width>381</width>
-     <height>51</height>
+     <y>100</y>
+     <width>590</width>
+     <height>53</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_3">
     <item>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QCheckBox" name="AutoPC">
+        <property name="text">
+         <string>Auto ADDR Seek</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="AutoRun">
+        <property name="text">
+         <string>Auto GO</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
      <widget class="QPushButton" name="LoadToRAM">
       <property name="text">
-       <string>Load To RAM</string>
+       <string>Load to RAM</string>
       </property>
      </widget>
     </item>
@@ -87,9 +105,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>80</y>
-     <width>381</width>
-     <height>41</height>
+     <y>70</y>
+     <width>591</width>
+     <height>31</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">

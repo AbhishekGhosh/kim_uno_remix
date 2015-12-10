@@ -14,11 +14,12 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "008"
+#define kVersionNumber "009"
 #define kVersionDate   "2015-12-09"
 
 /*
- * v008 - 2015-12-09 - Code Drop added (reads in ca65 ouptut .lst files)
+ * v009 - 2015-12-10 - Auto Run/PC added, with key injection queue
+ * v008 - 2015-12-09 - Code Drop added (reads in ca65 ouptut .lst files) (w/drag and drop)
  * v007 - 2015-11-14 - Video Display added at $4000
  * v006 - 2015-11-02 - Keypad interface restructured, startup code fixed
  * v005 - 2015-10-26 - Serial terminal almost working
@@ -60,7 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // this->video->setHidden(false);
 
     // start up the Code Drop
-    this->cdrop = new CodeDrop(  );
+    this->cdrop = new CodeDrop( parent );
     //this->cdrop->setHidden(true );
 
     // set up the update timer
@@ -161,9 +162,20 @@ uint8_t read6502(uint16_t address);
 
 void MainWindow::on_timerTick()
 {
+    static int tickCount;
+
+    // do some work
     exec6502(100); //do 100 6502 instructions
 
-    // keypad scanning is happening elsewhere!
+    // another tick on the clock
+    tickCount++;
+
+    // but let's check the CodeDrop injection queue...
+    if( (tickCount & 0x01 ) && (this->cdrop->keysToInject.size() > 0) )
+    {
+        int keycode = this->cdrop->keysToInject.dequeue();
+        KIMKeyPress( keycode );
+    }
 
     // handle serial
     // take the bytes from the code shove them to our terminal

@@ -12,37 +12,9 @@ extern "C" {
 #include "interface.h"
 }
 
-void CodeDrop::SaveSettings()
-{
-    QSettings settings( "UmlautLlama.com", "KimUnoRemix" );
-    settings.beginGroup( "CodeDrop" );
-    settings.setValue( "Version", "1" );
-    settings.setValue( "LastFile", this->lastFile );
-    settings.endGroup();
-}
 
-void CodeDrop::LoadSettings()
-{
-    QSettings settings( "UmlautLlama.com", "KimUnoRemix" );
-    settings.beginGroup( "CodeDrop" );
-
-    // 1. check to see if we've already got version info saved
-    int vers = settings.value( "Version", 0 ).toInt();
-    if( vers != 1 ) {
-        // nope. set some defaults
-        settings.setValue( "Version", "1" );
-        this->lastFile = "file.lst";
-        // and save them
-        this->SaveSettings();
-    }
-    // now load the settings
-    this->lastFile = settings.value( "LastFile" ).toString();
-    settings.endGroup();
-
-    // and populate the UI
-    this->ui->SelectedFilepath->setText( this->lastFile );
-}
-
+///////////////////////////////////////////////////////////////////////////////
+// Class stuff
 CodeDrop::CodeDrop(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::CodeDrop)
@@ -62,9 +34,63 @@ CodeDrop::CodeDrop(QWidget *parent) :
 
     // now load some stuff from the settings file if it's there
     //QSettings settings( this->settingsFile, QSettings::NativeFormat );
-
 }
 
+CodeDrop::~CodeDrop()
+{
+    delete ui;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Settings handlers (load, save )
+void CodeDrop::SaveSettings()
+{
+    QSettings settings( "UmlautLlama.com", "KimUnoRemix" );
+    settings.beginGroup( "CodeDrop" );
+    settings.setValue( "Version", "2" );
+    settings.setValue( "AutoReset", this->ui->AutoPC->isChecked() );
+    settings.setValue( "AutoRun", this->ui->AutoRun->isChecked() );
+    settings.setValue( "LastFile", this->lastFile );
+    settings.endGroup();
+}
+
+void CodeDrop::LoadSettings()
+{
+    bool autoPC = false;
+    bool autoRun = false;
+
+    QSettings settings( "UmlautLlama.com", "KimUnoRemix" );
+    settings.beginGroup( "CodeDrop" );
+
+    // 1. check to see if we've already got version info saved
+    int vers = settings.value( "Version", 0 ).toInt();
+    if( vers != 2 ) {
+        // nope. set some defaults
+        settings.setValue( "Version", "2" );
+        this->lastFile = "file.lst";
+        this->ui->AutoPC->setChecked( false );
+        this->ui->AutoRun->setChecked( false );
+
+        // and save them
+        this->SaveSettings();
+    }
+    // now load the settings
+    this->lastFile = settings.value( "LastFile" ).toString();
+    autoPC = settings.value( "AutoPC" ).toBool();
+    autoRun = settings.value( "AutoRun" ).toBool();
+    settings.endGroup();
+
+    // and populate the UI
+    this->ui->SelectedFilepath->setText( this->lastFile );
+    this->ui->AutoPC->setChecked( autoPC );
+    this->ui->AutoRun->setChecked( autoRun );
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Drag and drop support
+//
 void CodeDrop::dragEnterEvent(QDragEnterEvent *event)
 {
     if (event->mimeData()->hasFormat("text/uri-list"))
@@ -86,12 +112,22 @@ void CodeDrop::dropEvent(QDropEvent *event)
     this->SaveSettings();
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// when these are clicked, just save it
 
-CodeDrop::~CodeDrop()
+void CodeDrop::on_AutoPC_clicked()
 {
-    delete ui;
+    this->SaveSettings();
 }
 
+void CodeDrop::on_AutoRun_clicked()
+{
+    this->SaveSettings();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Browse for a new file (request file from user)
+//
 void CodeDrop::on_BrowseFiles_clicked()
 {
     QFileDialog qfd(this);
@@ -115,6 +151,9 @@ void CodeDrop::on_BrowseFiles_clicked()
     }
 }
 
+
+// Helpers for parsing the file
+// is ch a hex character [0-9a-fA-F]
 bool byteIsHex( char ch )
 {
     if (   (ch >= '0' && ch <= '9')
@@ -126,8 +165,9 @@ bool byteIsHex( char ch )
     return false;
 }
 
+// get the address from a line (first 6 bytes need to be hex in ascii)
 // this was only tested with cc65's output .lst files!
-int getLineAddress( const char * line )
+int CodeDrop::GetLineAddress( const char * line )
 {
     char buf[8];
 
@@ -151,7 +191,10 @@ int getLineAddress( const char * line )
     return strtol( buf, NULL, 16 );
 }
 
-int getDataByte( const char * line, int which )
+
+// get the requested data byte. 0..3
+// this was only tested with cc65's output .lst files!
+int CodeDrop::GetDataByte( const char * line, int which )
 {
     int idx = 11 + (which *3);
 
@@ -168,11 +211,16 @@ int getDataByte( const char * line, int which )
     return strtol( buf, NULL, 16 );
 }
 
-void CodeDrop::on_LoadToRAM_clicked()
+// load in a CA65/CC65 "list" file.  This ONLY is confirmed to work
+// with the current software.  No idea if it works with other stuff
+// perhaps it can be adapted to others later.
+int CodeDrop::ParseCC65LstFile( QString filepath )
 {
-    int nbytes = 0;
-    // this is where we'd parse in the file.
-    QFile inputFile( this->lastFile );
+    this->loadedBytes = 0;
+    this->loadedAddr = -1;
+
+    // open up a CC65 ASM List file
+    QFile inputFile( filepath );
     if (inputFile.open(QIODevice::ReadOnly))
     {
        QTextStream in(&inputFile);
@@ -180,21 +228,64 @@ void CodeDrop::on_LoadToRAM_clicked()
        {
           QString line = in.readLine();
           const char * d = line.toLatin1().data();
-          int addr = getLineAddress( d );
+          int addr = this->GetLineAddress( d );
 
           if( addr >= 0 ) {
-              int b0, b1, b2, b3;
-              b0 = getDataByte( d, 0 );
-              b1 = getDataByte( d, 1 );
-              b2 = getDataByte( d, 2 );
-              b3 = getDataByte( d, 3 );
+              // set the bookmark
+              if( this->loadedAddr <0 ) {
+                  this->loadedAddr = addr;
+              }
 
-              if( b0 >= 0 ) { write6502( addr++, b0 ); nbytes++; }
-              if( b1 >= 0 ) { write6502( addr++, b1 ); nbytes++; }
-              if( b2 >= 0 ) { write6502( addr++, b2 ); nbytes++; }
-              if( b3 >= 0 ) { write6502( addr++, b3 ); nbytes++; }
+              int b0, b1, b2, b3;
+              b0 = this->GetDataByte( d, 0 );
+              b1 = this->GetDataByte( d, 1 );
+              b2 = this->GetDataByte( d, 2 );
+              b3 = this->GetDataByte( d, 3 );
+
+              if( b0 >= 0 ) { write6502( addr++, b0 ); this->loadedBytes++; }
+              if( b1 >= 0 ) { write6502( addr++, b1 ); this->loadedBytes++; }
+              if( b2 >= 0 ) { write6502( addr++, b2 ); this->loadedBytes++; }
+              if( b3 >= 0 ) { write6502( addr++, b3 ); this->loadedBytes++; }
           }
        }
        inputFile.close();
     }
+    return this->loadedBytes;
+}
+
+// ui button was clicked, let's parse in the selected file...
+void CodeDrop::on_LoadToRAM_clicked()
+{
+    this->loadedBytes = this->ParseCC65LstFile( this->lastFile );
+    QString infotext;
+
+    infotext.sprintf( "%d bytes loaded at $%04x.", this->loadedBytes, this->loadedAddr );
+
+    if( this->loadedBytes <0 ) {
+        infotext = "Error: Unable to load specified file.";
+    } else if( this->loadedBytes == 0 ) {
+        infotext = "Error: No data found in specified file.";
+    } else {
+        // now trigger autopc and autorun if applicable...
+        if( this->ui->AutoPC->isChecked() || this->ui->AutoRun->isChecked() )
+        {
+            infotext.append( " PC Seek." );
+
+            // seek the PC
+            this->keysToInject.enqueue( kKimScancode_STOP );
+            this->keysToInject.enqueue( kKimScancode_ADDR );
+            this->keysToInject.enqueue( (this->loadedAddr >> 12) & 0x0F );
+            this->keysToInject.enqueue( (this->loadedAddr >> 8) & 0x0F );
+            this->keysToInject.enqueue( (this->loadedAddr >> 4) & 0x0F );
+            this->keysToInject.enqueue( (this->loadedAddr >> 0) & 0x0F );
+
+            if( this->ui->AutoRun->isChecked() )
+            {
+                infotext.append( " Run." );
+                this->keysToInject.enqueue( kKimScancode_GO );
+            }
+        }
+    }
+
+    this->ui->StatusText->setText( infotext );
 }

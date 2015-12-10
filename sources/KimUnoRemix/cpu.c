@@ -1113,8 +1113,7 @@ void nmi6502() {
     push16(pc);
     push8(cpustatus);
     cpustatus |= FLAG_INTERRUPT;
-pc = (uint16_t)read6502(0xFFFA) | ((uint16_t)read6502(0xFFFB) << 8);
-//pc = 0x1C1C;
+    pc = (uint16_t)read6502(0xFFFA) | ((uint16_t)read6502(0xFFFB) << 8);
 }
 
 void irq6502() {
@@ -1122,7 +1121,6 @@ void irq6502() {
     push8(cpustatus);
     cpustatus |= FLAG_INTERRUPT;
     pc = (uint16_t)read6502(0xFFFE) | ((uint16_t)read6502(0xFFFF) << 8);
-//	pc = 0x1C1F;
 }
 
 #ifdef USE_TIMING
