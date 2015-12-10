@@ -15,6 +15,10 @@ public:
     explicit CodeDrop(QWidget *parent = 0);
     ~CodeDrop();
 
+protected:
+    void dragEnterEvent(QDragEnterEvent *event);
+    void dropEvent(QDropEvent *event);
+
 private slots:
     void on_BrowseFiles_clicked();
     void on_LoadToRAM_clicked();

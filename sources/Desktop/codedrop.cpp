@@ -5,6 +5,8 @@
 #include <QtCore/QDebug>
 #include <QFileDialog>
 #include <QSettings>
+#include <QDragEnterEvent>
+#include <QMimeData>
 
 extern "C" {
 #include "interface.h"
@@ -46,6 +48,11 @@ CodeDrop::CodeDrop(QWidget *parent) :
     ui(new Ui::CodeDrop)
 {
     ui->setupUi(this);
+
+    ui->SelectedFilepath->setAcceptDrops( true );
+    ui->BrowseFiles->setAcceptDrops( true );
+    this->setAcceptDrops( true );
+
     this->LoadSettings();
 
     // set up the settings file
@@ -57,6 +64,28 @@ CodeDrop::CodeDrop(QWidget *parent) :
     //QSettings settings( this->settingsFile, QSettings::NativeFormat );
 
 }
+
+void CodeDrop::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasFormat("text/uri-list"))
+        event->acceptProposedAction();
+}
+
+void CodeDrop::dropEvent(QDropEvent *event)
+{
+    QList<QUrl> urls = event->mimeData()->urls();
+    if (urls.isEmpty())
+        return;
+
+    QString fileName = urls.first().toLocalFile();
+    if (fileName.isEmpty())
+        return;
+
+    this->ui->SelectedFilepath->setText( fileName );
+    this->lastFile = fileName;
+    this->SaveSettings();
+}
+
 
 CodeDrop::~CodeDrop()
 {
