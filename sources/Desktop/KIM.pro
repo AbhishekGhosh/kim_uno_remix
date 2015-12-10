@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     ../KimUnoRemix/memory.c \
     terminalinterface.cpp \
     console.cpp \
-    videodisplay.cpp
+    videodisplay.cpp \
+    codedrop.cpp
 
 HEADERS  += mainwindow.h\
     interface.h \
@@ -28,11 +29,13 @@ HEADERS  += mainwindow.h\
     Arduino.h \
     terminalinterface.h \
     console.h \
-    videodisplay.h
+    videodisplay.h \
+    codedrop.h
 
 FORMS    += mainwindow.ui \
     terminalinterface.ui \
-    videodisplay.ui
+    videodisplay.ui \
+    codedrop.ui
 
 OTHER_FILES += \
     Notes.txt

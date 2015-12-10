@@ -23,6 +23,7 @@ void reset6502();
 void nmi6502();
 void loadProgramsToRam();
 void exec6502( int nCycles );
+void write6502(uint16_t address, uint8_t value);
 extern uint8_t serialEnable;
 extern uint8_t SSTmode;
 

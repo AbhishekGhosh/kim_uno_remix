@@ -14,10 +14,11 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "007"
-#define kVersionDate   "2015-11-14"
+#define kVersionNumber "008"
+#define kVersionDate   "2015-12-09"
 
 /*
+ * v008 - 2015-12-09 - Code Drop added (reads in ca65 ouptut .lst files)
  * v007 - 2015-11-14 - Video Display added at $4000
  * v006 - 2015-11-02 - Keypad interface restructured, startup code fixed
  * v005 - 2015-10-26 - Serial terminal almost working
@@ -57,6 +58,10 @@ MainWindow::MainWindow(QWidget *parent) :
     this->video = new VideoDisplay( parent );
     theScreen = this->video;
     // this->video->setHidden(false);
+
+    // start up the Code Drop
+    this->cdrop = new CodeDrop(  );
+    //this->cdrop->setHidden(true );
 
     // set up the update timer
     this->timer = new QTimer( this );
@@ -257,6 +262,14 @@ void MainWindow::on_actionKim_UNO_Project_triggered()
     (void) QDesktopServices::openUrl( url );
 }
 
+void MainWindow::on_actionCode_Drop_triggered()
+{
+    if( this->cdrop->isVisible() ){
+        this->cdrop->setVisible( false );
+    } else {
+        this->cdrop->setVisible( true );
+    }}
+
 
 ///////////////////////////////////////////////////////////////////
 // keypad
@@ -311,4 +324,3 @@ void MainWindow::on_pushButton_HEX_C_clicked() { KIMKeyPress( kKimScancode_C); }
 void MainWindow::on_pushButton_HEX_D_clicked() { KIMKeyPress( kKimScancode_D); }
 void MainWindow::on_pushButton_HEX_E_clicked() { KIMKeyPress( kKimScancode_E); }
 void MainWindow::on_pushButton_HEX_F_clicked() { KIMKeyPress( kKimScancode_F); }
-

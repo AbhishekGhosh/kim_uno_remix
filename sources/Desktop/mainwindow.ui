@@ -47,7 +47,7 @@
       <x>10</x>
       <y>100</y>
       <width>281</width>
-      <height>420</height>
+      <height>421</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -1227,7 +1227,7 @@
      <x>0</x>
      <y>0</y>
      <width>300</width>
-     <height>20</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuKIM_UNO_REMIX">
@@ -1235,6 +1235,7 @@
      <string>&amp;Emulation</string>
     </property>
     <addaction name="separator"/>
+    <addaction name="actionCode_Drop"/>
     <addaction name="separator"/>
     <addaction name="actionReset"/>
     <addaction name="separator"/>
@@ -1324,6 +1325,14 @@
   <action name="action_Video_Display">
    <property name="text">
     <string>&amp;Video Display</string>
+   </property>
+  </action>
+  <action name="actionCode_Drop">
+   <property name="text">
+    <string>Code Drop</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
  </widget>

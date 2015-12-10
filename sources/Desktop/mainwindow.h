@@ -3,7 +3,8 @@
 
 #include <QMainWindow>
 #include <terminalinterface.h>
-#include <videodisplay.h>
+#include "videodisplay.h"
+#include "codedrop.h"
 
 namespace Ui {
 class MainWindow;
@@ -22,6 +23,7 @@ private:
     QTimer * timer;
     TerminalInterface * term;
     VideoDisplay * video;
+    CodeDrop * cdrop;
 
 private:
     void updateDisplay();
@@ -49,6 +51,8 @@ private slots:
     void on_actionKim_Uno_Remix_Github_triggered();
     void on_actionKim_UNO_Project_triggered();
 
+    void on_action_Video_Display_triggered();
+    void on_actionCode_Drop_triggered();
 
 private:
     void updateSSTButton( void );
@@ -81,7 +85,6 @@ private slots:
     void on_pushButton_HEX_D_clicked();
     void on_pushButton_HEX_E_clicked();
     void on_pushButton_HEX_F_clicked();
-    void on_action_Video_Display_triggered();
 };
 
 #endif // MAINWINDOW_H
