@@ -18,6 +18,7 @@ extern "C" {
 #define kVersionDate   "2015-12-11"
 
 /*
+ * v012 - xxxx-xx-xx - Signal handler only on Mac and linux
  * v011 - 2015-12-11 - Memory Browser added with timer updating
  * v010 - 2015-12-10 - SIGUSR1/SIGUSR2 handlers for CodeDrop reload (killall -SIGUSR1 KIM)
  * v009 - 2015-12-10 - Auto Run/PC added, with key injection queue
