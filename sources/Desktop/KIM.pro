@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     terminalinterface.cpp \
     console.cpp \
     videodisplay.cpp \
-    codedrop.cpp
+    codedrop.cpp \
+    memorybrowser.cpp
 
 HEADERS  += mainwindow.h\
     interface.h \
@@ -30,12 +31,14 @@ HEADERS  += mainwindow.h\
     terminalinterface.h \
     console.h \
     videodisplay.h \
-    codedrop.h
+    codedrop.h \
+    memorybrowser.h
 
 FORMS    += mainwindow.ui \
     terminalinterface.ui \
     videodisplay.ui \
-    codedrop.ui
+    codedrop.ui \
+    memorybrowser.ui
 
 OTHER_FILES += \
     Notes.txt

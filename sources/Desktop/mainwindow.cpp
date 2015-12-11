@@ -14,10 +14,11 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "010"
-#define kVersionDate   "2015-12-09"
+#define kVersionNumber "011"
+#define kVersionDate   "2015-12-11"
 
 /*
+ * v011 - 2015-12-11 - Memory Browser added with timer updating
  * v010 - 2015-12-10 - SIGUSR1/SIGUSR2 handlers for CodeDrop reload (killall -SIGUSR1 KIM)
  * v009 - 2015-12-10 - Auto Run/PC added, with key injection queue
  * v008 - 2015-12-09 - Code Drop added (reads in ca65 ouptut .lst files) (w/drag and drop)
@@ -66,6 +67,9 @@ MainWindow::MainWindow(QWidget *parent) :
     messageFlags = kMessage_None;
     this->cdrop = new CodeDrop( parent );
     //this->cdrop->setHidden(true );
+
+    // start up the Memory Browser
+    this->membrowse = new MemoryBrowser( parent );
 
     // set up the update timer
     this->timer = new QTimer( this );
@@ -294,7 +298,18 @@ void MainWindow::on_actionCode_Drop_triggered()
         this->cdrop->setVisible( false );
     } else {
         this->cdrop->setVisible( true );
-    }}
+    }
+}
+
+void MainWindow::on_actionMemory_triggered()
+{
+    if( this->membrowse->isVisible() ){
+        this->membrowse->setVisible( false );
+    } else {
+        this->membrowse->refreshDisplay();
+        this->membrowse->setVisible( true );
+    }
+}
 
 
 ///////////////////////////////////////////////////////////////////

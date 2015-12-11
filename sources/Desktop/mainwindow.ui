@@ -1236,6 +1236,7 @@
     </property>
     <addaction name="separator"/>
     <addaction name="actionCode_Drop"/>
+    <addaction name="actionMemory"/>
     <addaction name="separator"/>
     <addaction name="actionReset"/>
     <addaction name="separator"/>
@@ -1333,6 +1334,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="actionMemory">
+   <property name="text">
+    <string>Memory</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
    </property>
   </action>
  </widget>

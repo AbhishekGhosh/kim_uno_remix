@@ -5,6 +5,7 @@
 #include <terminalinterface.h>
 #include "videodisplay.h"
 #include "codedrop.h"
+#include "memorybrowser.h"
 
 #define kMessage_None    (0)
 #define kMessage_Reload  (1)
@@ -28,6 +29,7 @@ private:
     TerminalInterface * term;
     VideoDisplay * video;
     CodeDrop * cdrop;
+    MemoryBrowser * membrowse;
 
 private:
     void updateDisplay();
@@ -89,6 +91,7 @@ private slots:
     void on_pushButton_HEX_D_clicked();
     void on_pushButton_HEX_E_clicked();
     void on_pushButton_HEX_F_clicked();
+    void on_actionMemory_triggered();
 };
 
 #endif // MAINWINDOW_H

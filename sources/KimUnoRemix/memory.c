@@ -10,6 +10,7 @@
 #ifndef DESKTOP_KIM
 #include <avr/pgmspace.h>
 #else
+#include <string.h>
 #endif
 
 
@@ -52,6 +53,7 @@
 uint8_t RAM[kRAMSize];
 uint8_t RAM003[64];
 uint8_t RAM002[64];
+
 
 /* ******************************************************************* */
 // --- ROM CODE SECTION ------------------------------------------------------------
@@ -545,7 +547,7 @@ const MMAP MemoryWriteSegments[] PROGMEM = {
 #endif
   { 0x1780, 64, kMMAP_RAM, RAM003 },
   { 0x17C0, 64, kMMAP_RAM, RAM002 },
-  { 0, 0, kMMAP_END }
+  { 0, 0, kMMAP_END, 0 }
 };
 
 
@@ -569,7 +571,7 @@ const MMAP MemoryReadSegments[] PROGMEM = {
     { 0x2000,  504, kMMAP_PROGMEM, disasm },
     { 0xc000, 1393, kMMAP_PROGMEM, mchess },
 
-    { 0, 0, kMMAP_END }
+    { 0, 0, kMMAP_END, 0 }
 };
 
 
@@ -784,7 +786,7 @@ const MMAP MemoryCopySegments[] PROGMEM = {
 
   { 0x17FA,   6, kMMAP_PROGMEM, setupData },
 
-  { 0, 0, kMMAP_END }
+  { 0, 0, kMMAP_END, 0 }
 };
 
 void write6502(uint16_t address, uint8_t value);
@@ -808,4 +810,27 @@ void loadProgramsToRam()
     idx++;
   } while( !(flags & kMMAP_END) );
 }
+
+#ifdef DESKTOP_KIM
+
+
+#define kMemSize (1024*64)
+char flattenedRam[kMemSize];
+
+char * flattenRam()
+{
+    memset( flattenedRam, 0, kMemSize );
+
+    int idx = 0;
+    while( (MemoryReadSegments[idx].flags & kMMAP_END) == 0 )
+    {
+        memcpy( &flattenedRam[MemoryReadSegments[idx].addr],
+                MemoryReadSegments[idx].data,
+                MemoryReadSegments[idx].len);
+        idx++;
+    }
+    return( flattenedRam );
+}
+
+#endif
 
