@@ -253,9 +253,10 @@ int CodeDrop::ParseCC65LstFile( QString filepath )
     return this->loadedBytes;
 }
 
-// ui button was clicked, let's parse in the selected file...
-void CodeDrop::on_LoadToRAM_clicked()
+
+void CodeDrop::ReloadFromFile()
 {
+
     this->loadedBytes = this->ParseCC65LstFile( this->lastFile );
     QString infotext;
 
@@ -269,7 +270,7 @@ void CodeDrop::on_LoadToRAM_clicked()
         // now trigger autopc and autorun if applicable...
         if( this->ui->AutoPC->isChecked() || this->ui->AutoRun->isChecked() )
         {
-            infotext.append( " PC Seek." );
+            infotext.append( " ADDR Seek." );
 
             // seek the PC
             this->keysToInject.enqueue( kKimScancode_STOP );
@@ -281,11 +282,17 @@ void CodeDrop::on_LoadToRAM_clicked()
 
             if( this->ui->AutoRun->isChecked() )
             {
-                infotext.append( " Run." );
+                infotext.append( " GO." );
                 this->keysToInject.enqueue( kKimScancode_GO );
             }
         }
     }
 
     this->ui->StatusText->setText( infotext );
+}
+
+// ui button was clicked, let's parse in the selected file...
+void CodeDrop::on_LoadToRAM_clicked()
+{
+    this->ReloadFromFile();
 }

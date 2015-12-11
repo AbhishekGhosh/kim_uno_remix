@@ -14,10 +14,11 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "009"
+#define kVersionNumber "010"
 #define kVersionDate   "2015-12-09"
 
 /*
+ * v010 - 2015-12-10 - SIGUSR1/SIGUSR2 handlers for CodeDrop reload (killall -SIGUSR1 KIM)
  * v009 - 2015-12-10 - Auto Run/PC added, with key injection queue
  * v008 - 2015-12-09 - Code Drop added (reads in ca65 ouptut .lst files) (w/drag and drop)
  * v007 - 2015-11-14 - Video Display added at $4000
@@ -30,6 +31,7 @@ extern "C" {
  */
 
 VideoDisplay * theScreen = NULL;
+int messageFlags;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -61,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // this->video->setHidden(false);
 
     // start up the Code Drop
+    messageFlags = kMessage_None;
     this->cdrop = new CodeDrop( parent );
     //this->cdrop->setHidden(true );
 
@@ -169,6 +172,17 @@ void MainWindow::on_timerTick()
 
     // another tick on the clock
     tickCount++;
+
+    // check for reload for CodeDrop
+    if( messageFlags == kMessage_Reload )
+    {
+        if( this->cdrop && this->cdrop->isVisible() )
+        {
+            qDebug() << "Sending reload.";
+            this->cdrop->ReloadFromFile();
+        }
+    }
+
 
     // but let's check the CodeDrop injection queue...
     if( (tickCount & 0x01 ) && (this->cdrop->keysToInject.size() > 0) )

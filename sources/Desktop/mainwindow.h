@@ -6,6 +6,10 @@
 #include "videodisplay.h"
 #include "codedrop.h"
 
+#define kMessage_None    (0)
+#define kMessage_Reload  (1)
+extern int messageFlags;
+
 namespace Ui {
 class MainWindow;
 }

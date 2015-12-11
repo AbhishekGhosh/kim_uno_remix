@@ -36,6 +36,8 @@ private:
     int GetLineAddress( const char * line );
     int GetDataByte( const char * line, int which );
     int ParseCC65LstFile( QString path );
+public:
+    void ReloadFromFile();
 
 private:
     Ui::CodeDrop *ui;
