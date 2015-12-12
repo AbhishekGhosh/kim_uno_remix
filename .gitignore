@@ -3,4 +3,5 @@
 *.pro.user.*
 sources/kimpc/KimUnoRemix.cpp
 *.swp
+.DS_Store
 build-*
