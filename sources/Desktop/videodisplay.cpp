@@ -1,58 +1,75 @@
+#include <QtGui>
+#include <stdlib.h>
 #include "videodisplay.h"
 #include "ui_videodisplay.h"
+
 
 VideoDisplay::VideoDisplay(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::VideoDisplay)
-    , scene( NULL )
-    , pixmap( NULL )
-    , image( kVidWidth, kVidHeight, QImage::Format_Indexed8 )
+    , mem( NULL )
+    , gfx( NULL )
+    , palette( NULL )
+    , width( kVidWidth )
+    , height( kVidHeight )
 
 {
     ui->setupUi(this);
+
+    // allocate the new graphics buffer (l-r t-b, indexes)
+    this->mem = new unsigned char[ kVidWidth * kVidHeight ];
+
+    // allocate the new graphics buffer (l-r t-b, RGB)
+    this->gfx = new unsigned char[ kVidWidth * kVidHeight * 3 ];
 
     // C64 color buffer starts at $D800, screen is 40x25 (rectangular)
     // ours             starts at $4000, screen is 32x32 (square)
 
     // C64 Palette
     // ref: https://www.c64-wiki.com/index.php/Color
-    this->image.setColor( 0x00, qRgb(   0,   0,   0 )); // Black
-    this->image.setColor( 0x01, qRgb( 255, 255, 255 )); // White
-    this->image.setColor( 0x02, qRgb( 136,   0,   0 )); // Red
-    this->image.setColor( 0x03, qRgb( 170, 255, 238 )); // Cyan
-    this->image.setColor( 0x04, qRgb( 204,  68, 204 )); // Violet
-    this->image.setColor( 0x05, qRgb(   0, 204,  85 )); // Green
-    this->image.setColor( 0x06, qRgb(   0,   0, 170 )); // Blue
-    this->image.setColor( 0x07, qRgb( 238, 238, 119 )); // Yellow
-    this->image.setColor( 0x08, qRgb( 221, 136,  85 )); // Orange
-    this->image.setColor( 0x09, qRgb( 102,  68,   0 )); // Brown
-    this->image.setColor( 0x0A, qRgb( 225, 119, 119 )); // Lt Red
-    this->image.setColor( 0x0B, qRgb(  51,  51,  51 )); // Dk Gray
-    this->image.setColor( 0x0C, qRgb( 119, 119, 119 )); // Gray
-    this->image.setColor( 0x0D, qRgb( 170, 255, 102 )); // Lt Green
-    this->image.setColor( 0x0E, qRgb(   0, 136, 255 )); // Lt Blue
-    this->image.setColor( 0x0F, qRgb( 187, 187, 187 )); // Lt Gray
-
-    // since our display is 320x320, scale our 32x32 up 10x
-    this->ui->graphicsView->scale( 10, 10 );
-
-    // create a scene
-    this->scene = new QGraphicsScene(this);
+    this->palette = new PALENT[ kNPalEntries ];
+    this->SetPaletteColor( 0x00,    0,   0,   0 ); // black
+    this->SetPaletteColor( 0x01,  255, 255, 255 ); // white
+    this->SetPaletteColor( 0x02,  136,   0,   0 ); // red
+    this->SetPaletteColor( 0x03,  170, 255, 238 ); // cyan
+    this->SetPaletteColor( 0x04,  204,  68, 204 ); // violet
+    this->SetPaletteColor( 0x05,    0, 204,  85 ); // green
+    this->SetPaletteColor( 0x06,    0,   0, 170 ); // blue
+    this->SetPaletteColor( 0x07,  238, 238, 119 ); // yellow
+    this->SetPaletteColor( 0x08,  221, 136,  85 ); // orange
+    this->SetPaletteColor( 0x09,  102,  68,   0 ); // brown
+    this->SetPaletteColor( 0x0A,  225, 119, 119 ); // lt red
+    this->SetPaletteColor( 0x0B,   51,  51,  51 ); // dk gray
+    this->SetPaletteColor( 0x0C,  119, 119, 119 ); // gray
+    this->SetPaletteColor( 0x0D,  170, 255, 102 ); // lt green
+    this->SetPaletteColor( 0x0E,    0, 136, 255 ); // lt blue
+    this->SetPaletteColor( 0x0F,  187, 187, 187 ); // lt gray
 
     // update it
     this->UpdateScreen();
 
     // Start with a pattern
-    this->DisplayPattern( kDisplayPatternStart );
+    this->DisplayPattern( kDisplayPatternDiagonals );
 }
 
 VideoDisplay::~VideoDisplay()
 {
     delete ui;
-    delete scene;
+    delete( this->palette );
+    delete( this->gfx );
+    delete( this->mem );
 }
 
 /////////////////////////////////////////////////////////////
+
+
+void VideoDisplay::SetPaletteColor( int idx, unsigned char _r, unsigned char _g, unsigned char _b )
+{
+    this->palette[idx].r = _r;
+    this->palette[idx].g = _g;
+    this->palette[idx].b = _b;
+}
+
 
 void VideoDisplay::DisplayPattern( int which )
 {
@@ -67,9 +84,9 @@ void VideoDisplay::DisplayPattern( int which )
         break;
 
     case( kDisplayPatternDiagonals ):
-        for( int y=0 ; y < this->image.height() ; y++ )
+        for( int y=0 ; y < this->height ; y++ )
         {
-            for( int x=0 ; x < this->image.width() ; x++ )
+            for( int x=0 ; x < this->width ; x++ )
             {
                 this->Set( x, y, x+y );
             }
@@ -83,57 +100,72 @@ void VideoDisplay::DisplayPattern( int which )
     this->UpdateScreen();
 }
 
+
+// fill the display with a color
+void VideoDisplay::Fill( int color )
+{
+    memset( this->mem, color, this->width * this->height );
+    this->UpdateScreen();
+}
+
 // display any updates to the image out to the screen
 void VideoDisplay::UpdateScreen()
 {
-    // update the pixmap to the screen
-    this->scene->addPixmap( QPixmap::fromImage( this->image ) );
-    this->ui->graphicsView->setScene( this->scene );
-}
-
-// set the pixel at x,y with the specified color
-void VideoDisplay::Set( int x, int y, int color )
-{
-    if( x < 0 || x > kVidWidth ) return;
-    if( y < 0 || y > kVidHeight ) return;
-
-    if( this->image.pixelIndex( x,y ) != color )
+    // 1. convert the indexed buffer to the RGB buffer
+    for( int i=0 ; i < (this->width * this->height) ; i++ )
     {
-        this->image.setPixel( x, y, color & 0x0F );
+        this->gfx[ (i*3)+0 ] = this->palette[ this->mem[ i ] & 0x0F ].r; // r
+        this->gfx[ (i*3)+1 ] = this->palette[ this->mem[ i ] & 0x0F ].g; // g
+        this->gfx[ (i*3)+2 ] = this->palette[ this->mem[ i ] & 0x0F ].b; // b
     }
+
+    // 2. create a QImage from the RGB buffer
+    QImage *i = new QImage( this->gfx, this->width, this->height, QImage::Format_RGB888 );
+
+    // 3. shove the image into the label
+
+    QSize sz( this->ui->GraphicsLabel->size().width(), this->ui->GraphicsLabel->size().height() );
+    this->ui->GraphicsLabel->setPixmap( QPixmap::fromImage(*i).scaled( sz,
+                                                                       Qt::IgnoreAspectRatio,
+                                                                       Qt::FastTransformation ) );
+
 }
 
 // get the pixel at x,y
 int VideoDisplay::Get( int x, int y )
 {
-    if( x < 0 || x > kVidWidth ) return 0;
-    if( y < 0 || y > kVidHeight ) return 0;
+    if( x < 0 || x > this->width ) return 0;
+    if( y < 0 || y > this->height ) return 0;
 
-    return( this->image.pixelIndex( x, y ) );
+    return( this->mem[ (y * this->width) + x ] );
 }
 
-// set the pixel at (buffer + address)
-void VideoDisplay::SetLinear( int address, unsigned char value )
+// set the pixel at x,y with the specified color
+void VideoDisplay::Set( int x, int y, int color, bool delayUpdate )
 {
+    if( x < 0 || x > this->width ) return;
+    if( y < 0 || y > this->height ) return;
+
+    this->mem[ (y * this->width) + x ] = color;
+
+    if( !delayUpdate ) this->UpdateScreen();
+}
+
+
+// set the pixel at (buffer + address)
+void VideoDisplay::SetLinear( int address, unsigned char value, bool delayUpdate )
+{
+    this->mem[ address ] = value;
+
     int y = address / kVidWidth;
     int x = address - (y * kVidWidth);
 
     this->Set( x, y, value );
-    this->UpdateScreen();
+    if( !delayUpdate ) this->UpdateScreen();
 }
 
 // get the pixel at (buffer + address)
 unsigned char VideoDisplay::GetLinear( int address )
 {
-    int y = address / kVidWidth;
-    int x = address - (y * kVidWidth);
-
-    return this->Get( x, y );
-}
-
-// fill the display with a color
-void VideoDisplay::Fill( int color )
-{
-    this->image.fill( color );
-    this->UpdateScreen();
+    return( this->mem[address] );
 }

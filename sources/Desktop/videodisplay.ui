@@ -37,7 +37,7 @@
   <property name="windowTitle">
    <string>Video Display</string>
   </property>
-  <widget class="QGraphicsView" name="graphicsView">
+  <widget class="QLabel" name="GraphicsLabel">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -46,17 +46,8 @@
      <height>320</height>
     </rect>
    </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="verticalScrollBarPolicy">
-    <enum>Qt::ScrollBarAlwaysOff</enum>
-   </property>
-   <property name="horizontalScrollBarPolicy">
-    <enum>Qt::ScrollBarAlwaysOff</enum>
+   <property name="text">
+    <string/>
    </property>
   </widget>
  </widget>

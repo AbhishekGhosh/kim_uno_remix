@@ -5,6 +5,18 @@
 #include <QGraphicsScene>
 #include <QImage>
 
+// number of palette entries
+#define kNPalEntries (16)
+
+// square
+#define kVidWidth  (32)
+#define kVidHeight (32)
+
+// C=64
+//#define kVidWidth  (40)
+//#define kVidHeight (25)
+
+
 namespace Ui {
 class VideoDisplay;
 }
@@ -22,23 +34,27 @@ private:
     Ui::VideoDisplay *ui;
 
 private:
-    QGraphicsScene *scene;
-    QPixmap * pixmap;
-    QImage image;
+    unsigned char * mem; // raw memory (read/write indexes)
+    unsigned char * gfx; // graphics memory (RGB)
+
+    typedef struct PALENT {
+        unsigned char r;
+        unsigned char g;
+        unsigned char b;
+    } PALENT;
+
+    PALENT * palette;
+    void SetPaletteColor( int idx, unsigned char _r, unsigned char _g, unsigned char _b );
 
 public:
 
-// square
-#define kVidWidth  (32)
-#define kVidHeight (32)
-// C=64
-//#define kVidWidth  (40)
-//#define kVidHeight (25)
+    int width;
+    int height;
 
-    void Set( int x, int y, int color );
+    void Set( int x, int y, int color, bool delayUpdate = false);
     int Get( int x, int y );
 
-    void SetLinear( int address, unsigned char value );
+    void SetLinear( int address, unsigned char value, bool delayUpdate = false );
     unsigned char GetLinear( int address );
 
 public:
@@ -49,6 +65,8 @@ public:
 
     void DisplayPattern( int which );
     void Fill( int color );
+
+public:
     void UpdateScreen();
 };
 
