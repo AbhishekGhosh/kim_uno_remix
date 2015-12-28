@@ -14,6 +14,13 @@ MemoryBrowser::MemoryBrowser(QWidget *parent) :
 {
     ui->setupUi(this);
     this->refreshDisplay();
+
+    // scroll to top
+    //QScrollBar *vScrollBar = this->ui->hexCodeDisplay->verticalScrollBar();
+    //vScrollBar->triggerAction(QScrollBar::SliderToMinimum);
+    this->ui->hexCodeDisplay->moveCursor (QTextCursor::Start) ;
+    this->ui->hexCodeDisplay->ensureCursorVisible() ;
+
     this->ui->autoUpdates->setChecked( false );
     this->timer = NULL;
 }
@@ -46,6 +53,9 @@ MemoryBrowser::~MemoryBrowser()
 void MemoryBrowser::refreshDisplay()
 {
     char buf[80];
+    char bufhex[80];
+    char bufasc[80];
+    char bufx[80];
 
     QString str("");
 
@@ -53,13 +63,28 @@ void MemoryBrowser::refreshDisplay()
 
     for( int addr = 0 ; addr <= 0xFFF0 ; addr += 16 )
     {
-        sprintf( buf, "%04x  %02x %02x %02x %02x %02x %02x %02x %02x   %02x %02x %02x %02x %02x %02x %02x %02x   "
-                      "\n", addr,
-                 data[addr+0]&0x0ff,  data[addr+1]&0x0ff,  data[addr+2]&0x0ff,  data[addr+3]&0x0ff,
-                 data[addr+4]&0x0ff,  data[addr+5]&0x0ff,  data[addr+6]&0x0ff,  data[addr+7]&0x0ff,
-                 data[addr+8]&0x0ff,  data[addr+9]&0x0ff,  data[addr+10]&0x0ff, data[addr+11]&0x0ff,
-                 data[addr+12]&0x0ff, data[addr+13]&0x0ff, data[addr+14]&0x0ff, data[addr+15]&0x0ff
-                 );
+        bufhex[0] = '\0';
+        bufasc[0] = '\0';
+
+        for( int offset=0 ; offset<16 ; offset++ ) {
+            unsigned char ch = data[addr+offset];
+            sprintf( bufx, " %02x", ch );
+            strcat( bufhex, bufx );
+
+            if( ch >= ' ' && ch <= '?' ) {
+                sprintf( bufx, "%c", ch );
+            } else {
+                sprintf( bufx, "." );
+            }
+            strcat( bufasc, bufx );
+
+            if( offset == 7 ){
+                strcat( bufhex, " " );
+                strcat( bufasc, " " );
+            }
+        }
+
+        sprintf( buf, "%04x  %s  %s\n", addr, bufhex, bufasc );
         str.append( buf );
     }
 

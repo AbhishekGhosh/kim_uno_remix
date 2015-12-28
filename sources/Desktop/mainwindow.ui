@@ -1302,6 +1302,9 @@
    <property name="text">
     <string>Serial Console</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
   </action>
   <action name="actionFloodgap_Books">
    <property name="text">
@@ -1326,6 +1329,9 @@
   <action name="action_Video_Display">
    <property name="text">
     <string>&amp;Video Display</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
    </property>
   </action>
   <action name="actionCode_Drop">

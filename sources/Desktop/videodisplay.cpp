@@ -49,7 +49,7 @@ VideoDisplay::VideoDisplay(QWidget *parent)
     this->UpdateScreen();
 
     // Start with a pattern
-    this->DisplayPattern( kDisplayPatternDiagonals );
+    this->DisplayPattern( kDisplayPatternStart );
 }
 
 VideoDisplay::~VideoDisplay()

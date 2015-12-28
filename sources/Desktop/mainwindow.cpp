@@ -186,6 +186,7 @@ void MainWindow::on_timerTick()
             qDebug() << "Sending reload.";
             this->cdrop->ReloadFromFile();
         }
+        messageFlags = kMessage_None; // important to clear it
     }
 
 
