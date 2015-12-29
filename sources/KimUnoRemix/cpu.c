@@ -28,9 +28,6 @@
   #include <stdint.h>
   //  #pragma warning(disable : 4996) // MS VC2008 does not like unsigned char -> signed char converts.
 
-    uint8_t getPixel( uint16_t address );
-    void setPixel( uint16_t address, uint8_t value );
-
 #endif
 
 uint8_t KimSerialIn();
@@ -360,15 +357,6 @@ uint8_t read6502(uint16_t address) {
         return(KIMKeyPressing()==0?(uint8_t)0:(uint8_t)1);
     }
 
-
-#ifndef AVRX
-  // framebuffer
-  if( address >= 0x4000 && address <= 0x4FFF )
-  {
-      return( getPixel( address-0x4000 ));
-  }
-#endif
-
 #ifdef EXPAPI
     // handlers for the KUR API "Chip"
     if( address == 0xF000 ) return( kVersionMajor );
@@ -430,15 +418,6 @@ void write6502(uint16_t address, uint8_t value)
 #ifdef EXPAPI
   if( address == 0xF010 ) randomSeed( value );
 #endif
-
-#ifndef AVRX
-  // framebuffer
-  if( address >= 0x4000 && address <= 0x4FFF )
-  {
-      setPixel( address-0x4000, value );
-  }
-#endif
-
 }
 
 

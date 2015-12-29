@@ -126,6 +126,18 @@
   #define CKeyFourSix
 #endif
 
+/* ************************************************************************** */
+/* Video */ /* make sure this coincides with videodisplay.h */
+
+/* square */
+#define kVidWidth  (32)
+#define kVidHeight (32)
+
+/* C=64 *
+#define kVidWidth  (40)
+#define kVidHeight (25)
+*/
+
 
 /* ************************************************************************** */
 /* Serial */

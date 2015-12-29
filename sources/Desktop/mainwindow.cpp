@@ -206,6 +206,8 @@ void MainWindow::on_timerTick()
 
     // and update the display
     this->updateDisplay();
+
+    this->video->UpdateScreen();
 }
 
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>340</width>
-    <height>340</height>
+    <width>320</width>
+    <height>320</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,14 +18,14 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>340</width>
-    <height>340</height>
+    <width>320</width>
+    <height>320</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>340</width>
-    <height>340</height>
+    <width>320</width>
+    <height>320</height>
    </size>
   </property>
   <property name="baseSize">
@@ -40,8 +40,8 @@
   <widget class="QLabel" name="GraphicsLabel">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>10</y>
+     <x>0</x>
+     <y>0</y>
      <width>320</width>
      <height>320</height>
     </rect>

@@ -5,17 +5,28 @@
 #include <QGraphicsScene>
 #include <QImage>
 
-// number of palette entries
-#define kNPalEntries (16)
+extern "C" {
 
-// square
+/* ************************************************************************** */
+/* Video */
+
+/* square */
 #define kVidWidth  (32)
 #define kVidHeight (32)
 
-// C=64
-//#define kVidWidth  (40)
-//#define kVidHeight (25)
+/* C=64
+#define kVidWidth  (40)
+#define kVidHeight (25)
+*/
 
+}
+
+// number of palette entries
+#define kNPalEntries (16 * 2)
+
+extern "C" {
+    extern uint8_t videoMemory[];
+}
 
 namespace Ui {
 class VideoDisplay;
@@ -34,9 +45,9 @@ private:
     Ui::VideoDisplay *ui;
 
 private:
-    unsigned char * mem; // raw memory (read/write indexes)
     unsigned char * gfx; // graphics memory (RGB)
 
+private:
     typedef struct PALENT {
         unsigned char r;
         unsigned char g;
@@ -47,7 +58,11 @@ private:
     void SetPaletteColor( int idx, unsigned char _r, unsigned char _g, unsigned char _b );
 
 public:
+    int paletteChooser;
+#define kPaletteC64   (0)
+#define kPaletteAmiga (1)
 
+public:
     int width;
     int height;
 
@@ -62,6 +77,7 @@ public:
 #define kDisplayPatternBlank     (0)
 #define kDisplayPatternStart     (1)
 #define kDisplayPatternDiagonals (2)
+#define kDisplayPatternRandom    (3)
 
     void DisplayPattern( int which );
     void Fill( int color );

@@ -54,6 +54,10 @@ uint8_t RAM[kRAMSize];
 uint8_t RAM003[64];
 uint8_t RAM002[64];
 
+#ifndef AVRX
+uint8_t videoMemory[kVidWidth * kVidHeight];
+#endif
+
 
 /* ******************************************************************* */
 // --- ROM CODE SECTION ------------------------------------------------------------
@@ -539,6 +543,7 @@ const unsigned char disasm[505] PROGMEM = {
 
 /* ******************************************************************* */
 
+
 /* Writable segments */
 const MMAP MemoryWriteSegments[] PROGMEM = {
   { 0x0000, kRAMSize, kMMAP_RAM, RAM },
@@ -547,6 +552,9 @@ const MMAP MemoryWriteSegments[] PROGMEM = {
 #endif
   { 0x1780, 64, kMMAP_RAM, RAM003 },
   { 0x17C0, 64, kMMAP_RAM, RAM002 },
+#ifndef AVRX
+  { 0x4000, kVidWidth * kVidHeight, kMMAP_RAM, videoMemory },
+#endif
   { 0, 0, kMMAP_END, 0 }
 };
 
@@ -570,6 +578,11 @@ const MMAP MemoryReadSegments[] PROGMEM = {
     /* and some utility roms */
     { 0x2000,  504, kMMAP_PROGMEM, disasm },
     { 0xc000, 1393, kMMAP_PROGMEM, mchess },
+
+    #ifndef AVRX
+      { 0x4000, kVidWidth * kVidHeight, kMMAP_RAM, videoMemory },
+    #endif
+
 
     { 0, 0, kMMAP_END, 0 }
 };

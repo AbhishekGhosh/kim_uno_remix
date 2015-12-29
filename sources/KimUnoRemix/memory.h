@@ -116,6 +116,9 @@
 extern uint8_t RAM[];
 extern uint8_t RAM003[];
 extern uint8_t RAM002[];
+#ifndef AVRX
+extern uint8_t videoMemory[];
+#endif
 
 extern const unsigned char rom002[1024] PROGMEM;  // 0x1c00
 extern const unsigned char rom002Vectors[6] PROGMEM; // 0xfffA
