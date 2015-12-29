@@ -8,7 +8,7 @@ VideoDisplay::VideoDisplay(QWidget *parent)
     , ui(new Ui::VideoDisplay)
     , gfx( NULL )
     , palette( NULL )
-    , paletteChooser( kPaletteC64 )
+    , paletteChooser( kPaletteAmiga )
     , width( kVidWidth )
     , height( kVidHeight )
 
@@ -42,12 +42,31 @@ VideoDisplay::VideoDisplay(QWidget *parent)
     this->SetPaletteColor( 0x0E,    0, 136, 255 ); // lt blue
     this->SetPaletteColor( 0x0F,  187, 187, 187 ); // lt gray
 
+    // Amiga Palette
+    // My 16 color version of the Deluxe Paint palette - NTSC safe ;)
+    this->SetPaletteColor( 0x10,    0,   0,   0 ); // black
+    this->SetPaletteColor( 0x11,   80,  80,  80 ); // dk gray
+    this->SetPaletteColor( 0x12,  176, 176, 176 ); // lt gray
+    this->SetPaletteColor( 0x13,  240, 240, 240 ); // white
+    this->SetPaletteColor( 0x14,  208,  60,  40 ); // red
+    this->SetPaletteColor( 0x15,  149,  40,  26 ); // dk red
+    this->SetPaletteColor( 0x16,  152,  86,  43 ); // brown
+    this->SetPaletteColor( 0x17,  200, 131,  38 ); // orange
+    this->SetPaletteColor( 0x18,  240, 219,  48 ); // yellow
+    this->SetPaletteColor( 0x19,  158, 228,  28 ); // green
+    this->SetPaletteColor( 0x1A,   56, 120,   5 ); // dk green
+    this->SetPaletteColor( 0x1B,   87, 186,  96 ); // blue green
+    this->SetPaletteColor( 0x1C,   87, 202, 205 ); // cyan
+    this->SetPaletteColor( 0x1D,    0,  67, 236 ); // blue
+    this->SetPaletteColor( 0x1E,  174,  80, 222 ); // violet
+    this->SetPaletteColor( 0x1F,  183,  62, 130 ); // red violet
+
 
     // update it
     this->UpdateScreen();
 
     // Start with a pattern
-    this->DisplayPattern( kDisplayPatternStart );//Random );
+    this->DisplayPattern( kDisplayPatternRandom );
 }
 
 VideoDisplay::~VideoDisplay()
@@ -121,9 +140,10 @@ void VideoDisplay::UpdateScreen()
     // 1. convert the indexed buffer to the RGB buffer
     for( int i=0 ; i < (this->width * this->height) ; i++ )
     {
-        this->gfx[ (i*3)+0 ] = this->palette[ poffs + (videoMemory[ i ] & 0x0F) ].r; // r
-        this->gfx[ (i*3)+1 ] = this->palette[ poffs + (videoMemory[ i ] & 0x0F) ].g; // g
-        this->gfx[ (i*3)+2 ] = this->palette[ poffs + (videoMemory[ i ] & 0x0F) ].b; // b
+        int paletteIndex = (videoMemory[i] & 0x0F) + poffs;
+        this->gfx[ (i*3)+0 ] = this->palette[ paletteIndex ].r; // r
+        this->gfx[ (i*3)+1 ] = this->palette[ paletteIndex ].g; // g
+        this->gfx[ (i*3)+2 ] = this->palette[ paletteIndex ].b; // b
     }
 
     // 2. create a QImage from the RGB buffer
