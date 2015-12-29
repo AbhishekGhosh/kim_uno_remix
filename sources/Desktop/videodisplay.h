@@ -28,6 +28,13 @@ extern "C" {
     extern uint8_t videoMemory[];
 }
 
+typedef struct PALENT {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+} PALENT;
+
+
 namespace Ui {
 class VideoDisplay;
 }
@@ -46,16 +53,6 @@ private:
 
 private:
     unsigned char * gfx; // graphics memory (RGB)
-
-private:
-    typedef struct PALENT {
-        unsigned char r;
-        unsigned char g;
-        unsigned char b;
-    } PALENT;
-
-    PALENT * palette;
-    void SetPaletteColor( int idx, unsigned char _r, unsigned char _g, unsigned char _b );
 
 public:
     int paletteChooser;
