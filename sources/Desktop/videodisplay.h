@@ -53,6 +53,7 @@ private:
 
 private:
     unsigned char * gfx; // graphics memory (RGB)
+    QImage * imageGfx;   // QImage wrapper
 
 public:
     int paletteChooser;

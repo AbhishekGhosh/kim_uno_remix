@@ -57,6 +57,9 @@ VideoDisplay::VideoDisplay(QWidget *parent)
     // allocate our internal graphics buffer (l-r t-b, RGB)
     this->gfx = new unsigned char[ this->width * this->height * 3 ];
 
+    // create the QImage wrapper
+    this->imageGfx = new QImage( this->gfx, this->width, this->height, QImage::Format_RGB888 );
+
     // Start with a pattern on the screen
     this->DisplayPattern( kDisplayPatternRandom );
 }
@@ -129,16 +132,11 @@ void VideoDisplay::UpdateScreen()
         this->gfx[ (i*3)+2 ] = colorPalette[ paletteIndex ].b; // b
     }
 
-    // 2. create a QImage from the RGB buffer
-    QImage *i = new QImage( this->gfx, this->width, this->height, QImage::Format_RGB888 );
-
-    // 3. shove the image into the label
-
+    // 3. Blit the QImage into the label
     QSize sz( this->ui->GraphicsLabel->size().width(), this->ui->GraphicsLabel->size().height() );
-    this->ui->GraphicsLabel->setPixmap( QPixmap::fromImage(*i).scaled( sz,
+    this->ui->GraphicsLabel->setPixmap( QPixmap::fromImage( *this->imageGfx ).scaled( sz,
                                                                        Qt::IgnoreAspectRatio,
                                                                        Qt::FastTransformation ) );
-
 }
 
 // get the pixel at x,y
