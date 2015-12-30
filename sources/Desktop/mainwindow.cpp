@@ -14,11 +14,13 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "011"
-#define kVersionDate   "2015-12-11"
+#define kVersionNumber "014"
+#define kVersionDate   "2015-12-29"
 
 /*
- * v012 - xxxx-xx-xx - Signal handler only on Mac and linux
+ * v014 - 2015-12-29 - Better file error handling
+ * v013 - 2015-12-28 - Amiga palette, video is vastly sped up.
+ * v012 - 2015-12-12 - Signal handler only on Mac and linux
  * v011 - 2015-12-11 - Memory Browser added with timer updating
  * v010 - 2015-12-10 - SIGUSR1/SIGUSR2 handlers for CodeDrop reload (killall -SIGUSR1 KIM)
  * v009 - 2015-12-10 - Auto Run/PC added, with key injection queue

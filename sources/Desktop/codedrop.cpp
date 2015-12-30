@@ -4,6 +4,7 @@
 
 #include <QtCore/QDebug>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QSettings>
 #include <QDragEnterEvent>
 #include <QMimeData>
@@ -256,7 +257,20 @@ int CodeDrop::ParseCC65LstFile( QString filepath )
 
 void CodeDrop::ReloadFromFile()
 {
+    // make sure the file exists...
+    QFileInfo checkFile( this->lastFile );
+    if( !checkFile.exists() ) {
+        this->ui->StatusText->setText( "Error: No file exists at the specified path." );
+        return;
+    }
 
+    // and it's a file
+    if( !checkFile.isFile() ) {
+        this->ui->StatusText->setText( "Error: The specified path is not a file." );
+        return;
+    }
+
+    // now let's parse it in and see what we get...
     this->loadedBytes = this->ParseCC65LstFile( this->lastFile );
     QString infotext;
 
