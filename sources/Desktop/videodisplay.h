@@ -75,7 +75,8 @@ public:
 #define kDisplayPatternBlank     (0)
 #define kDisplayPatternStart     (1)
 #define kDisplayPatternDiagonals (2)
-#define kDisplayPatternRandom    (3)
+#define kDisplayPatternStripes   (3)
+#define kDisplayPatternRandom    (4)
 
     void DisplayPattern( int which );
     void Fill( int color );

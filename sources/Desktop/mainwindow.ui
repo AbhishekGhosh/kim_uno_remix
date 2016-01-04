@@ -1234,9 +1234,21 @@
     <property name="title">
      <string>&amp;Emulation</string>
     </property>
+    <widget class="QMenu" name="menuSpeed">
+     <property name="title">
+      <string>Speed</string>
+     </property>
+     <addaction name="speed_25"/>
+     <addaction name="speed_47"/>
+     <addaction name="speed_50"/>
+     <addaction name="speed_100"/>
+     <addaction name="speed_200"/>
+     <addaction name="speed_500"/>
+    </widget>
     <addaction name="separator"/>
     <addaction name="actionCode_Drop"/>
     <addaction name="actionMemory"/>
+    <addaction name="menuSpeed"/>
     <addaction name="separator"/>
     <addaction name="actionReset"/>
     <addaction name="separator"/>
@@ -1259,6 +1271,7 @@
      </property>
      <addaction name="actionFloodgap_Books"/>
      <addaction name="action6502_Resources"/>
+     <addaction name="action6502_Opcodes"/>
     </widget>
     <addaction name="separator"/>
     <addaction name="menuKIM_1_Resources"/>
@@ -1348,6 +1361,41 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+M</string>
+   </property>
+  </action>
+  <action name="action6502_Opcodes">
+   <property name="text">
+    <string>6502 Opcodes</string>
+   </property>
+  </action>
+  <action name="speed_25">
+   <property name="text">
+    <string>25</string>
+   </property>
+  </action>
+  <action name="speed_50">
+   <property name="text">
+    <string>50</string>
+   </property>
+  </action>
+  <action name="speed_100">
+   <property name="text">
+    <string>100</string>
+   </property>
+  </action>
+  <action name="speed_200">
+   <property name="text">
+    <string>250</string>
+   </property>
+  </action>
+  <action name="speed_500">
+   <property name="text">
+    <string>500</string>
+   </property>
+  </action>
+  <action name="speed_47">
+   <property name="text">
+    <string>Legacy (47)</string>
    </property>
   </action>
  </widget>

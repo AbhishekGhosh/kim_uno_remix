@@ -61,7 +61,7 @@ VideoDisplay::VideoDisplay(QWidget *parent)
     this->imageGfx = new QImage( this->gfx, this->width, this->height, QImage::Format_RGB888 );
 
     // Start with a pattern on the screen
-    this->DisplayPattern( kDisplayPatternRandom );
+    this->DisplayPattern( kDisplayPatternStripes );
 }
 
 VideoDisplay::~VideoDisplay()
@@ -91,6 +91,16 @@ void VideoDisplay::DisplayPattern( int which )
             for( int x=0 ; x < this->width ; x++ )
             {
                 this->Set( x, y, x+y );
+            }
+        }
+        break;
+
+    case( kDisplayPatternStripes ):
+        for( int y=0 ; y < this->height ; y++ )
+        {
+            for( int x=0 ; x < this->width ; x++ )
+            {
+                this->Set( x, y, x );
             }
         }
         break;

@@ -14,11 +14,12 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "014"
-#define kVersionDate   "2015-12-29"
+#define kVersionNumber "015"
+#define kVersionDate   "2016-01-04"
 
 /*
- * v014 - 2015-12-29 - Better file error handling
+ * v015 - 2016-01-04 - Added speed setting to the menus
+ * v014 - 2015-12-29 - Better file error handling, 6052 opcode lookup
  * v013 - 2015-12-28 - Amiga palette, video is vastly sped up.
  * v012 - 2015-12-12 - Signal handler only on Mac and linux
  * v011 - 2015-12-11 - Memory Browser added with timer updating
@@ -43,6 +44,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     // initialize the UI
     ui->setupUi(this);
+
+    // set the starting speed
+    this->clocksPerTick = 47;
 
     // adjust the titlebar
     std::ostringstream title;
@@ -175,7 +179,7 @@ void MainWindow::on_timerTick()
     static int tickCount;
 
     // do some work
-    exec6502(100); //do 100 6502 instructions
+    exec6502( this->clocksPerTick ); //do 6502 instructions
 
     // another tick on the clock
     tickCount++;
@@ -193,7 +197,9 @@ void MainWindow::on_timerTick()
 
 
     // but let's check the CodeDrop injection queue...
-    if( (tickCount & 0x01 ) && (this->cdrop->keysToInject.size() > 0) )
+    // we need about 100 ticks to process a key injected, so we need to deal with this.
+    // & with 0x03 compensates for this, and works well enough everywhere.
+    if( ((tickCount & 0x03) == 0x03 ) && (this->cdrop->keysToInject.size() > 0) )
     {
         int keycode = this->cdrop->keysToInject.dequeue();
         KIMKeyPress( keycode );
@@ -286,6 +292,12 @@ void MainWindow::on_action6502_Resources_triggered()
     (void) QDesktopServices::openUrl( url );
 }
 
+
+void MainWindow::on_action6502_Opcodes_triggered()
+{
+    QUrl url( "http://www.6502.org/tutorials/6502opcodes.html" );
+    (void) QDesktopServices::openUrl( url );
+}
 void MainWindow::on_actionKim_Uno_Remix_Github_triggered()
 {
     QUrl url( "https://github.com/bleullama/kim_uno_remix" );
@@ -371,3 +383,11 @@ void MainWindow::on_pushButton_HEX_C_clicked() { KIMKeyPress( kKimScancode_C); }
 void MainWindow::on_pushButton_HEX_D_clicked() { KIMKeyPress( kKimScancode_D); }
 void MainWindow::on_pushButton_HEX_E_clicked() { KIMKeyPress( kKimScancode_E); }
 void MainWindow::on_pushButton_HEX_F_clicked() { KIMKeyPress( kKimScancode_F); }
+
+// speed adjustments...
+void MainWindow::on_speed_25_triggered()  { this->clocksPerTick = 25; }
+void MainWindow::on_speed_47_triggered()  { this->clocksPerTick = 47; }
+void MainWindow::on_speed_50_triggered()  { this->clocksPerTick = 50; }
+void MainWindow::on_speed_100_triggered() { this->clocksPerTick = 100; }
+void MainWindow::on_speed_200_triggered() { this->clocksPerTick = 200; }
+void MainWindow::on_speed_500_triggered() { this->clocksPerTick = 500; }

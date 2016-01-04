@@ -30,6 +30,7 @@ private:
     VideoDisplay * video;
     CodeDrop * cdrop;
     MemoryBrowser * membrowse;
+    int clocksPerTick;
 
 private:
     void updateDisplay();
@@ -92,6 +93,13 @@ private slots:
     void on_pushButton_HEX_E_clicked();
     void on_pushButton_HEX_F_clicked();
     void on_actionMemory_triggered();
+    void on_action6502_Opcodes_triggered();
+    void on_speed_25_triggered();
+    void on_speed_50_triggered();
+    void on_speed_100_triggered();
+    void on_speed_200_triggered();
+    void on_speed_500_triggered();
+    void on_speed_47_triggered();
 };
 
 #endif // MAINWINDOW_H
