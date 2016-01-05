@@ -49,6 +49,9 @@ New changes implemented:
 - Keypad
  - customizable keypad support
  - 'press-and-hold shift' option for keypads smaller than 24 keys
+- Utility data 
+ - Reads from zero page $FE give a random number ($00..$FF)
+ - Writes to $FE will set the random seed ($00..$FF)
 - Misc
  - Calculator Mode removed
  - Floating Point ROM removed

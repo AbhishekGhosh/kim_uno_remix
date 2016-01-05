@@ -41,8 +41,6 @@ void KimSerialOut( uint8_t ch ); /* KIM outputs bytes via this */
 uint8_t KimSerialIn();    // get serial key or 0
 
 
-
-
 /* ****************************************************************************************** */
 /* keypad interface */
 void KIMKeyPress( uint8_t keycode );
@@ -69,5 +67,10 @@ void KimSerialOut( uint8_t ch );
 uint8_t KimSerialIn();
 void KimSerialInPush( uint8_t ch );
 void KimSerialClearIn();
+
+
+/* Random */
+uint8_t KimRandom();
+void KimRandomSeed( uint8_t s );
 
 #endif /* INTERFACE_H */

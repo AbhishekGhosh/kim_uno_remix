@@ -548,7 +548,7 @@ const unsigned char disasm[505] PROGMEM = {
 const MMAP MemoryWriteSegments[] PROGMEM = {
   { 0x0000, kRAMSize, kMMAP_RAM, RAM },
 #ifdef AVRX
-  { 0x0400, 1024, kMMAP_EEPROM },
+  { 0x0400, 1024, kMMAP_EEPROM, NULL },
 #endif
   { 0x1780, 64, kMMAP_RAM, RAM003 },
   { 0x17C0, 64, kMMAP_RAM, RAM002 },
@@ -564,7 +564,7 @@ const MMAP MemoryReadSegments[] PROGMEM = {
     /* first let's do the RAM from above */
     { 0x0000, kRAMSize, kMMAP_RAM, RAM },
   #ifdef AVRX
-    { 0x0400, 1024, kMMAP_EEPROM },
+    { 0x0400, 1024, kMMAP_EEPROM, NULL },
   #endif
 
     { 0x1780,   64, kMMAP_RAM, RAM003 },

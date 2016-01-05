@@ -22,7 +22,7 @@ extern "C" {
 const byte colPins[kCOLS] = { A5, 2,3,4,5,6,7,8 }; // note col A5 is the extra one linked to DP
 const byte rowPins[kROWS] = { 9,10,11 };
 
-const char lookup[kCOLS * kROWS] PROGMEM =
+const unsigned char lookup[kCOLS * kROWS] PROGMEM =
 {
   kKimScancode_STOP,  kKimScancode_RESET,  kKimScancode_SSTTOGGLE,
      kKimScancode_6,      kKimScancode_D,  kKimScancode_PC,
@@ -34,7 +34,7 @@ const char lookup[kCOLS * kROWS] PROGMEM =
      kKimScancode_0,      kKimScancode_7,  kKimScancode_E
 };
 
-const char lookup_shifted[kCOLS * kROWS] PROGMEM =
+const unsigned char lookup_shifted[kCOLS * kROWS] PROGMEM =
 {
   kKimScancode_STOP,  kKimScancode_EEPTOGGLE,  kKimScancode_SSTTOGGLE,
      kKimScancode_6,      kKimScancode_D,  kKimScancode_PC,
@@ -192,7 +192,7 @@ void filterPress( uint8_t ch )
 void keypadScan()
 {
   static uint8_t last_scancode = 0xFF; /* never used anywhere */
-  static long timeoutMillis = 0;
+  static unsigned long timeoutMillis = 0;
   uint8_t scancode = 0xFF;
 
   // set up the ports..

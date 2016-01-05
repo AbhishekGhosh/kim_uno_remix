@@ -14,10 +14,11 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "015"
-#define kVersionDate   "2016-01-04"
+#define kVersionNumber "016"
+#define kVersionDate   "2016-01-05"
 
 /*
+ * v016 - 2016-01-05 - $FE for random (write for seed, read for new value)
  * v015 - 2016-01-04 - Added speed setting to the menus (starts at 100 always)
  * v014 - 2015-12-29 - Better file error handling, 6052 opcode lookup
  * v013 - 2015-12-28 - Amiga palette, video is vastly sped up.
@@ -35,6 +36,27 @@ extern "C" {
  * v001 - 2015-10-22 - initial build, gui, nothing more
  */
 
+extern "C" {
+
+
+/* ************************************************** */
+/* Random functions $FE */
+
+
+/* random support for 0xFE zero page */
+uint8_t KimRandom()
+{
+    return qrand() % 255;
+}
+
+void KimRandomSeed( uint8_t s )
+{
+    qsrand( s );
+}
+
+
+}
+
 VideoDisplay * theScreen = NULL;
 int messageFlags;
 
@@ -47,6 +69,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // set the starting speed
     this->SetEmulationSpeed( 100 );
+
+    // start the randomer
+    qsrand( time( NULL ));
 
     // adjust the titlebar
     std::ostringstream title;

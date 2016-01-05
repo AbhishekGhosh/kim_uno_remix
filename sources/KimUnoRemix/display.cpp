@@ -254,7 +254,7 @@ void driveLEDs()
   for( int displayDigit = 0 ; displayDigit < 8 ; displayDigit++ )
   {
     byte pattern = 18; // space
-    if( millis() >= (long)textTimeout ) { // not elegant, but good for now
+    if( millis() >= (unsigned long)textTimeout ) { // not elegant, but good for now
       // display the internal digits
       if( displayDigit == kDisplayAddrOffset   ) pattern = kimHex[0];
       if( displayDigit == kDisplayAddrOffset+1 ) pattern = kimHex[1];

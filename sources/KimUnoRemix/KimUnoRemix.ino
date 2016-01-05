@@ -33,31 +33,38 @@ extern "C" {
 /* Serial functions */
 
 extern "C" {
-  // ---------- called from cpu.c ----------------------
+  /* Various functions called from CPU.c */
 
+  /* Serial Output */
   uint8_t serialEnable = 1;
   void serout(uint8_t val)    { if( serialEnable ) Serial.write(val);  }
   void serouthex(uint8_t val) { if( serialEnable ) Serial.print(val, HEX); }
   void printhex(uint16_t val) { if( serialEnable ) { Serial.print(val, HEX); Serial.println(); } }
 
+  /* Keypad */
   void keypadScan();
-
-
-uint8_t KimSerialIn()
-{
-  if( !Serial.available() ) return 0x00;
-  return Serial.read();
-}
-
-void KimSerialClearIn()
-{
-  /* nothing */
-}
-
-void KimSerialOut( uint8_t d )
-{
-  Serial.write( d );
-}
+  
+  /* Serial In */
+  uint8_t KimSerialIn()
+  {
+    if( !Serial.available() ) return 0x00;
+    return Serial.read();
+  }
+  
+  void KimSerialClearIn()
+  {
+    /* nothing */
+  }
+  
+  void KimSerialOut( uint8_t d )
+  {
+    Serial.write( d );
+  }
+  
+  
+  /* Random for $FE */
+  uint8_t KimRandom() { return (random() & 0x0FF); }
+  void KimRandomSeed( uint8_t s ) { randomSeed( s ); }
 
 } /* C */
 

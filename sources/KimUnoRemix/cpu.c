@@ -30,9 +30,15 @@
 
 #endif
 
+/* prototypes for externally implenented stuff */
 uint8_t KimSerialIn();
 void KimSerialClearIn();
 void KimSerialOut( uint8_t );
+
+
+uint8_t KimRandom();
+void KimRandomSeed( uint8_t s );
+
 
 
 #ifdef DEBUGUNO
@@ -181,6 +187,10 @@ uint8_t opcode, oldcpustatus, useaccum;
 
 
 /* ************************************************* */
+void write6502(uint16_t address, uint8_t value);
+
+
+/* ************************************************* */
 uint8_t read6502(uint16_t address) {
   uint8_t tempval = 0;
 
@@ -201,6 +211,12 @@ uint8_t read6502(uint16_t address) {
     len = pgm_read_word_near( &MemoryReadSegments[idx].len );
     flags = pgm_read_byte_near( &MemoryReadSegments[idx].flags );
     data = (uint8_t *)pgm_read_word_near( &MemoryReadSegments[idx].data );
+
+    // 6502.org type zero-page additions
+    if( address == 0x00EE ) {
+        // stuff FE with a random number
+        write6502( 0x00EE, KimRandom() );
+    }
 
     if( address >= addr && address < (addr + len) ) {
       /* this is the right block */
@@ -229,7 +245,6 @@ uint8_t read6502(uint16_t address) {
 	if (address == 0x1747) return (0xFF); // CLKRDI  =$1747,READ TIME OUT BIT,count is always complete...
 	if (address == 0x1740) return (useKeyboardLed);	// returns 1 for Keyboard/LED or 0 for Serial terminal
 
-  
     ////////////////////////////////////////
     // OUTCH -serial output byte
     if (address == 0x1EA0) // intercept OUTCH (send char to serial)
@@ -371,11 +386,10 @@ uint8_t read6502(uint16_t address) {
     if( address == 0xF0F2 ) return( (millis() & 0x0F00) >>8  );
     if( address == 0xF0F3 ) return( (millis() & 0xF000) >>12 );
 #endif
-    if( address == 0xF010 ) return( random() & 0x00FF );
+    if( address == 0xF010 ) return( KimRandom() );
 #endif
     return( tempval );
 }
-
 
 void write6502(uint16_t address, uint8_t value) 
 {
@@ -414,6 +428,13 @@ void write6502(uint16_t address, uint8_t value)
 
     idx++;
   } while( !(flags & kMMAP_END) );
+
+  // 6502.org type zero-page additions
+  if( address == 0x00ED ) {
+      // trigger it into the seed as well
+      KimRandomSeed( value );
+  }
+
 
 #ifdef EXPAPI
   if( address == 0xF010 ) randomSeed( value );

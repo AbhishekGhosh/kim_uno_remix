@@ -5,6 +5,8 @@
  */
 
 #include "interface.h"
+#include <stdlib.h>
+
 
 /* ************************************************** */
 /* generic serial fakeo (we implement these) */

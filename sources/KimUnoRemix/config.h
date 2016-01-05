@@ -3,13 +3,14 @@
  * lets you pick features to use and such for your target platform
  */
 
-#define kVersionString "v23.20 15/11/18"
+#define kVersionString "v23.21 16/01/05"
 #define kVersionMajor  (23)
 #define kVersionMinorA (2)
-#define kVersionMinorB (0)
+#define kVersionMinorB (1)
 /* 
  * Version history
  *
+ * v23.21 - Updates for Arduino 1.6.6, Random at $FE
  * v23.20 - kDisplayWide, Text strings tweaked for better readability
  * v23.19 - Added Briel Computers' clock program, more memory for Desktop
  * v23.18 - Write to protected EEProm displays an error
