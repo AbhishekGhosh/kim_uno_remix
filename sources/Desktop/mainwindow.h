@@ -34,12 +34,13 @@ private:
 
 private:
     void updateDisplay();
+    void SetEmulationSpeed( int value );
 
 private:
     bool reallyQuit();
     void closeEvent( QCloseEvent *bar );
 
-private:
+private:    
     void initialize_emulation();
 
 private slots:

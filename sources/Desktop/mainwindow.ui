@@ -1369,33 +1369,54 @@
    </property>
   </action>
   <action name="speed_25">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>25</string>
    </property>
   </action>
   <action name="speed_50">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>50</string>
    </property>
   </action>
   <action name="speed_100">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>100</string>
    </property>
   </action>
   <action name="speed_200">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>250</string>
    </property>
   </action>
   <action name="speed_500">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>500</string>
    </property>
   </action>
   <action name="speed_47">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Legacy (47)</string>
+    <string>47 - Legacy</string>
    </property>
   </action>
  </widget>

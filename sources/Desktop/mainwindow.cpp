@@ -18,7 +18,7 @@ extern "C" {
 #define kVersionDate   "2016-01-04"
 
 /*
- * v015 - 2016-01-04 - Added speed setting to the menus
+ * v015 - 2016-01-04 - Added speed setting to the menus (starts at 100 always)
  * v014 - 2015-12-29 - Better file error handling, 6052 opcode lookup
  * v013 - 2015-12-28 - Amiga palette, video is vastly sped up.
  * v012 - 2015-12-12 - Signal handler only on Mac and linux
@@ -46,7 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     // set the starting speed
-    this->clocksPerTick = 47;
+    this->SetEmulationSpeed( 100 );
 
     // adjust the titlebar
     std::ostringstream title;
@@ -356,6 +356,7 @@ void MainWindow::on_pushButton_SST_clicked()  {
     this->updateSSTButton();
 }
 
+////////////////////////////////////////////
 // control keys
 void MainWindow::on_pushButton_GO_clicked()   { KIMKeyPress( kKimScancode_GO ); }
 void MainWindow::on_pushButton_ST_clicked()   { KIMKeyPress( kKimScancode_STOP ); }
@@ -365,7 +366,7 @@ void MainWindow::on_pushButton_DA_clicked()   { KIMKeyPress( kKimScancode_DATA )
 void MainWindow::on_pushButton_PC_clicked()   { KIMKeyPress( kKimScancode_PC ); }
 void MainWindow::on_pushButton_PLUS_clicked() { KIMKeyPress( kKimScancode_PLUS); }
 
-
+////////////////////////////////////////////
 // keypad digits
 void MainWindow::on_pushButton_HEX_0_clicked() { KIMKeyPress( kKimScancode_0); }
 void MainWindow::on_pushButton_HEX_1_clicked() { KIMKeyPress( kKimScancode_1); }
@@ -384,10 +385,23 @@ void MainWindow::on_pushButton_HEX_D_clicked() { KIMKeyPress( kKimScancode_D); }
 void MainWindow::on_pushButton_HEX_E_clicked() { KIMKeyPress( kKimScancode_E); }
 void MainWindow::on_pushButton_HEX_F_clicked() { KIMKeyPress( kKimScancode_F); }
 
+////////////////////////////////////////////
 // speed adjustments...
-void MainWindow::on_speed_25_triggered()  { this->clocksPerTick = 25; }
-void MainWindow::on_speed_47_triggered()  { this->clocksPerTick = 47; }
-void MainWindow::on_speed_50_triggered()  { this->clocksPerTick = 50; }
-void MainWindow::on_speed_100_triggered() { this->clocksPerTick = 100; }
-void MainWindow::on_speed_200_triggered() { this->clocksPerTick = 200; }
-void MainWindow::on_speed_500_triggered() { this->clocksPerTick = 500; }
+void MainWindow::SetEmulationSpeed( int value )
+{
+    this->clocksPerTick = value;
+
+    this->ui->speed_25->setChecked( (value == 25)?true:false );
+    this->ui->speed_47->setChecked( (value == 47)?true:false );
+    this->ui->speed_50->setChecked( (value == 50)?true:false );
+    this->ui->speed_100->setChecked( (value == 100)?true:false );
+    this->ui->speed_200->setChecked( (value == 200)?true:false );
+    this->ui->speed_500->setChecked( (value == 500)?true:false );
+}
+
+void MainWindow::on_speed_25_triggered()  { this->SetEmulationSpeed( 25 ); }
+void MainWindow::on_speed_47_triggered()  { this->SetEmulationSpeed( 47 ); }
+void MainWindow::on_speed_50_triggered()  { this->SetEmulationSpeed( 50 ); }
+void MainWindow::on_speed_100_triggered() { this->SetEmulationSpeed( 100 ); }
+void MainWindow::on_speed_200_triggered() { this->SetEmulationSpeed( 200 ); }
+void MainWindow::on_speed_500_triggered() { this->SetEmulationSpeed( 500 ); }
