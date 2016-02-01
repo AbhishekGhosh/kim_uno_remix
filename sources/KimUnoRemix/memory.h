@@ -35,6 +35,7 @@
  * $C000 -                MicroChess (www.benlo.com/microchess)
  * $D000 -                (FP/Calculator (www.crbond.com/calc65.htm))
  * $2000 -                Baum & Wozniak disassember (6502.org/documents/publications/6502notes/6502_user_notes_14.pdf)
+ * $3000 -                LlamaCalc
  *
  */
 

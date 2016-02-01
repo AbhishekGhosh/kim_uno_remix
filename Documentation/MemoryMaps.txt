@@ -24,9 +24,10 @@ $17C0-$17FF   64 Bytes     RAM from 6532        RAM from 6530-002     RAM       
 $1800-$1BFF   1024 Bytes   EPROM                ROM in 6530-003       ROM (Tape, Ser)   ROM (Tape, Ser)
 $1C00-$1FFF   1024 Bytes   EPROM                ROM in 6530-002       ROM (Monitor)     ROM (Monitor)
 
-$2000-$FFFF                Unused               Unused
+$2000-$FFFF                Unused               Unused                Unused, but exceptions below.
 
 $2000                                                                        Disassembler ROM
+$3000         574 Bytes                                                       LlamaCalc v08
 $4000         1024 Bytes                                                                Video Buffer
 $C000                                                                         MicroChess ROM
 
