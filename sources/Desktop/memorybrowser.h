@@ -30,6 +30,8 @@ private slots:
 
     void on_autoUpdates_clicked();
 
+    void on_go0000_clicked();
+
 public:
     void refreshDisplay();
 

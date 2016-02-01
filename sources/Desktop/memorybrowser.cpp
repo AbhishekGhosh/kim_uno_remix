@@ -15,11 +15,12 @@ MemoryBrowser::MemoryBrowser(QWidget *parent) :
     ui->setupUi(this);
     this->refreshDisplay();
 
-    // scroll to top
+    // scroll to top -- this doesn't work in here for some reason
     //QScrollBar *vScrollBar = this->ui->hexCodeDisplay->verticalScrollBar();
     //vScrollBar->triggerAction(QScrollBar::SliderToMinimum);
-    this->ui->hexCodeDisplay->moveCursor (QTextCursor::Start) ;
-    this->ui->hexCodeDisplay->ensureCursorVisible() ;
+    this->ui->hexCodeDisplay->verticalScrollBar()->setValue( 0 );
+    this->ui->hexCodeDisplay->moveCursor (QTextCursor::Start);
+    this->ui->hexCodeDisplay->ensureCursorVisible();
 
     this->ui->autoUpdates->setChecked( false );
     this->timer = NULL;
@@ -42,6 +43,11 @@ void MemoryBrowser::startOurUpdates()
     this->timer = new QTimer( this );
     connect( this->timer, SIGNAL(timeout()), this, SLOT( on_timerTick() ));
     timer->start( 200 );
+
+    this->ui->hexCodeDisplay->verticalScrollBar()->setValue( 100 );
+    this->ui->hexCodeDisplay->moveCursor(QTextCursor::Start);
+    this->ui->hexCodeDisplay->ensureCursorVisible();
+
 }
 
 MemoryBrowser::~MemoryBrowser()
@@ -56,7 +62,6 @@ void MemoryBrowser::refreshDisplay()
     char bufhex[80];
     char bufasc[80];
     char bufx[80];
-
     QString str("");
 
     char * data = flattenRam();
@@ -126,4 +131,11 @@ void MemoryBrowser::on_autoUpdates_clicked()
     } else {
         this->stopOurUpdates();
     }
+}
+
+void MemoryBrowser::on_go0000_clicked()
+{
+    this->ui->hexCodeDisplay->verticalScrollBar()->setValue( 0 );
+    this->ui->hexCodeDisplay->moveCursor (QTextCursor::Start);
+    this->ui->hexCodeDisplay->ensureCursorVisible();
 }

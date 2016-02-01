@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QQueue>
+#include "memorybrowser.h"
 
 namespace Ui {
 class CodeDrop;
@@ -13,7 +14,7 @@ class CodeDrop : public QDialog
     Q_OBJECT
 
 public:
-    explicit CodeDrop(QWidget *parent = 0);
+    explicit CodeDrop(QWidget *parent = 0, MemoryBrowser * mb = 0);
     ~CodeDrop();
 
 protected:
@@ -31,6 +32,7 @@ public:
     QQueue<int> keysToInject;
 
 private:
+    MemoryBrowser * mb;
     int loadedBytes;
     int loadedAddr;
     int GetLineAddress( const char * line );

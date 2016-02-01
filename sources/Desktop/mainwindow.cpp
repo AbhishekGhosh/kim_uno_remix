@@ -14,10 +14,14 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "016"
-#define kVersionDate   "2016-01-05"
+#define kVersionNumber "019"
+#define kVersionDate   "2016-01-31"
+#define kVersionText   "Magnetic"
 
 /*
+ * v019 - 2016-01-31 - Magnetic - LlamaCalc v8 added (RC2016/1 entry)
+ * v018 - 2016-01-11 - Bowie - Speed 0 and 1000 added
+ * v017 - 2016-01-08 - Button for $0000 Memory seek, updated key shortcuts to shifted versions
  * v016 - 2016-01-05 - $FE for random (write for seed, read for new value)
  * v015 - 2016-01-04 - Added speed setting to the menus (starts at 100 always)
  * v014 - 2015-12-29 - Better file error handling, 6052 opcode lookup
@@ -39,26 +43,27 @@ extern "C" {
 extern "C" {
 
 
-/* ************************************************** */
-/* Random functions $FE */
+    /* ************************************************** */
+    /* Random functions $FE */
 
 
-/* random support for 0xFE zero page */
-uint8_t KimRandom()
-{
-    return qrand() % 255;
-}
+    /* random support for 0xFE zero page */
+    uint8_t KimRandom()
+    {
+        return qrand() % 255;
+    }
 
-void KimRandomSeed( uint8_t s )
-{
-    qsrand( s );
-}
+    void KimRandomSeed( uint8_t s )
+    {
+        qsrand( s );
+    }
 
 
 }
 
 VideoDisplay * theScreen = NULL;
 int messageFlags;
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -67,6 +72,8 @@ MainWindow::MainWindow(QWidget *parent) :
     // initialize the UI
     ui->setupUi(this);
 
+    this->setAcceptDrops( true );
+
     // set the starting speed
     this->SetEmulationSpeed( 100 );
 
@@ -74,15 +81,12 @@ MainWindow::MainWindow(QWidget *parent) :
     qsrand( time( NULL ));
 
     // adjust the titlebar
-    std::ostringstream title;
-    title << kAppName;
-    title << " v" << kVersionNumber;
-    this->setWindowTitle( title.str().c_str() );
+    this->SetTitleBar();
 
     // start up the integrated terminal
     this->term = new TerminalInterface( parent );
     // and shove out some text to it because why not
-    title.str( "" );
+    std::ostringstream title;
     title << kAppName << std::endl;
     title << " v" << kVersionNumber << std::endl;
     title << "  " << kVersionDate << std::endl;
@@ -95,13 +99,13 @@ MainWindow::MainWindow(QWidget *parent) :
     theScreen = this->video;
     // this->video->setHidden(false);
 
-    // start up the Code Drop
-    messageFlags = kMessage_None;
-    this->cdrop = new CodeDrop( parent );
-    //this->cdrop->setHidden(true );
-
     // start up the Memory Browser
     this->membrowse = new MemoryBrowser( parent );
+
+    // start up the Code Drop
+    messageFlags = kMessage_None;
+    this->cdrop = new CodeDrop( parent, this->membrowse );
+    //this->cdrop->setHidden(true );
 
     // set up the update timer
     this->timer = new QTimer( this );
@@ -180,6 +184,22 @@ void MainWindow::on_actionAbout_triggered()
 }
 
 
+
+void MainWindow::SetTitleBar( )
+{
+    std::ostringstream title;
+    title << kAppName;
+
+    if( this->clocksPerTick == 0 ) {
+        title << " [Paused]";
+    } else {
+        title << " v" << kVersionNumber;
+        title << " (" << kVersionText << ")";
+    }
+
+    this->setWindowTitle( title.str().c_str() );
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // display & timer
 
@@ -201,34 +221,39 @@ uint8_t read6502(uint16_t address);
 
 void MainWindow::on_timerTick()
 {
-    static int tickCount;
+    static int tickCount = 0;
 
     // do some work
-    exec6502( this->clocksPerTick ); //do 6502 instructions
+    if( this->clocksPerTick > 0 ) {
+        // if we're paused, there's a lot we don't do
 
-    // another tick on the clock
-    tickCount++;
+        exec6502( this->clocksPerTick ); //do 6502 instructions
 
-    // check for reload for CodeDrop
-    if( messageFlags == kMessage_Reload )
-    {
-        if( this->cdrop && this->cdrop->isVisible() )
+        // another tick on the clock
+        tickCount++;
+
+        // check for reload for CodeDrop
+        if( messageFlags == kMessage_Reload )
         {
-            qDebug() << "Sending reload.";
-            this->cdrop->ReloadFromFile();
+            if( this->cdrop && this->cdrop->isVisible() )
+            {
+                this->cdrop->ReloadFromFile();
+            }
+            messageFlags = kMessage_None; // important to clear it
         }
-        messageFlags = kMessage_None; // important to clear it
-    }
 
 
-    // but let's check the CodeDrop injection queue...
-    // we need about 100 ticks to process a key injected, so we need to deal with this.
-    // & with 0x03 compensates for this, and works well enough everywhere.
-    if( ((tickCount & 0x03) == 0x03 ) && (this->cdrop->keysToInject.size() > 0) )
-    {
-        int keycode = this->cdrop->keysToInject.dequeue();
-        KIMKeyPress( keycode );
+        // but let's check the CodeDrop injection queue...
+        // we need about 100 ticks to process a key injected, so we need to deal with this.
+        // & with 0x03 compensates for this, and works well enough everywhere.
+        if( ((tickCount & 0x03) == 0x03 ) && (this->cdrop->keysToInject.size() > 0) )
+        {
+            int keycode = this->cdrop->keysToInject.dequeue();
+            KIMKeyPress( keycode );
+        }
     }
+
+    // these things (updating ourself, not the emulation core) we always do
 
     // handle serial
     // take the bytes from the code shove them to our terminal
@@ -416,17 +441,22 @@ void MainWindow::SetEmulationSpeed( int value )
 {
     this->clocksPerTick = value;
 
+    this->ui->speed_0->setChecked( (value == 0)?true:false );
     this->ui->speed_25->setChecked( (value == 25)?true:false );
     this->ui->speed_47->setChecked( (value == 47)?true:false );
     this->ui->speed_50->setChecked( (value == 50)?true:false );
     this->ui->speed_100->setChecked( (value == 100)?true:false );
     this->ui->speed_200->setChecked( (value == 200)?true:false );
     this->ui->speed_500->setChecked( (value == 500)?true:false );
+    this->ui->speed_1000->setChecked( (value == 1000)?true:false );
+    this->SetTitleBar();
 }
 
-void MainWindow::on_speed_25_triggered()  { this->SetEmulationSpeed( 25 ); }
-void MainWindow::on_speed_47_triggered()  { this->SetEmulationSpeed( 47 ); }
-void MainWindow::on_speed_50_triggered()  { this->SetEmulationSpeed( 50 ); }
-void MainWindow::on_speed_100_triggered() { this->SetEmulationSpeed( 100 ); }
-void MainWindow::on_speed_200_triggered() { this->SetEmulationSpeed( 200 ); }
-void MainWindow::on_speed_500_triggered() { this->SetEmulationSpeed( 500 ); }
+void MainWindow::on_speed_0_triggered()    { this->SetEmulationSpeed( 0 ); }
+void MainWindow::on_speed_25_triggered()   { this->SetEmulationSpeed( 25 ); }
+void MainWindow::on_speed_47_triggered()   { this->SetEmulationSpeed( 47 ); }
+void MainWindow::on_speed_50_triggered()   { this->SetEmulationSpeed( 50 ); }
+void MainWindow::on_speed_100_triggered()  { this->SetEmulationSpeed( 100 ); }
+void MainWindow::on_speed_200_triggered()  { this->SetEmulationSpeed( 200 ); }
+void MainWindow::on_speed_500_triggered()  { this->SetEmulationSpeed( 500 ); }
+void MainWindow::on_speed_1000_triggered() { this->SetEmulationSpeed( 1000 ); }

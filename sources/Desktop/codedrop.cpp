@@ -16,9 +16,10 @@ extern "C" {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Class stuff
-CodeDrop::CodeDrop(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::CodeDrop)
+CodeDrop::CodeDrop(QWidget *parent, MemoryBrowser *_mb )
+    : QDialog(parent)
+    , mb( _mb )
+    , ui(new Ui::CodeDrop)
 {
     ui->setupUi(this);
 
@@ -111,6 +112,9 @@ void CodeDrop::dropEvent(QDropEvent *event)
     this->ui->SelectedFilepath->setText( fileName );
     this->lastFile = fileName;
     this->SaveSettings();
+
+    // and force the reload!
+    this->ReloadFromFile();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -233,7 +237,7 @@ int CodeDrop::ParseCC65LstFile( QString filepath )
 
           if( addr >= 0 ) {
               // set the bookmark
-              if( this->loadedAddr <0 ) {
+              if( this->loadedAddr < 0 ) {
                   this->loadedAddr = addr;
               }
 
@@ -303,6 +307,8 @@ void CodeDrop::ReloadFromFile()
     }
 
     this->ui->StatusText->setText( infotext );
+
+    if( this->mb ) this->mb->refreshDisplay();
 }
 
 // ui button was clicked, let's parse in the selected file...

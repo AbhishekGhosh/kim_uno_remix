@@ -33,6 +33,7 @@ private:
     int clocksPerTick;
 
 private:
+    void SetTitleBar();
     void updateDisplay();
     void SetEmulationSpeed( int value );
 
@@ -101,6 +102,8 @@ private slots:
     void on_speed_200_triggered();
     void on_speed_500_triggered();
     void on_speed_47_triggered();
+    void on_speed_0_triggered();
+    void on_speed_1000_triggered();
 };
 
 #endif // MAINWINDOW_H

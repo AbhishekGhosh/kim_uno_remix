@@ -19,10 +19,10 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>641</width>
-     <height>441</height>
+     <x>0</x>
+     <y>0</y>
+     <width>660</width>
+     <height>451</height>
     </rect>
    </property>
    <property name="font">
@@ -64,9 +64,12 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QPushButton" name="updateButton">
+     <widget class="QPushButton" name="go0000">
       <property name="text">
-       <string>Update Now</string>
+       <string>$0000</string>
+      </property>
+      <property name="autoDefault">
+       <bool>false</bool>
       </property>
      </widget>
     </item>
@@ -82,6 +85,16 @@
        </size>
       </property>
      </spacer>
+    </item>
+    <item>
+     <widget class="QPushButton" name="updateButton">
+      <property name="text">
+       <string>Update Now</string>
+      </property>
+      <property name="default">
+       <bool>true</bool>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QCheckBox" name="autoUpdates">

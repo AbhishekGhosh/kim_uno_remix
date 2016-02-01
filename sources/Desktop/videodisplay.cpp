@@ -8,7 +8,7 @@ const PALENT colorPalette [] =
     // C=64 Palette
     {   0,   0,   0 },  // 0x00: black
     { 255, 255, 255 },  // 0x01: white
-    { 136,   0,   0 },  // 0x02: red
+    { 255,   0,   0 },  // 0x02: red /* was 136 */
     { 170, 255, 238 },  // 0x03: cyan
     { 204,  68, 204 },  // 0x04: violet
     {   0, 204,  85 },  // 0x05: green

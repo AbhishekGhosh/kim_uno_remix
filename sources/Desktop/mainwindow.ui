@@ -1238,12 +1238,14 @@
      <property name="title">
       <string>Speed</string>
      </property>
+     <addaction name="speed_0"/>
      <addaction name="speed_25"/>
      <addaction name="speed_47"/>
      <addaction name="speed_50"/>
      <addaction name="speed_100"/>
      <addaction name="speed_200"/>
      <addaction name="speed_500"/>
+     <addaction name="speed_1000"/>
     </widget>
     <addaction name="separator"/>
     <addaction name="actionCode_Drop"/>
@@ -1316,7 +1318,7 @@
     <string>Serial Console</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+S</string>
+    <string>Ctrl+Shift+S</string>
    </property>
   </action>
   <action name="actionFloodgap_Books">
@@ -1344,7 +1346,7 @@
     <string>&amp;Video Display</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+V</string>
+    <string>Ctrl+Shift+V</string>
    </property>
   </action>
   <action name="actionCode_Drop">
@@ -1352,7 +1354,7 @@
     <string>Code Drop</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+D</string>
+    <string>Ctrl+Shift+C</string>
    </property>
   </action>
   <action name="actionMemory">
@@ -1360,7 +1362,7 @@
     <string>Memory</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+M</string>
+    <string>Ctrl+Shift+M</string>
    </property>
   </action>
   <action name="action6502_Opcodes">
@@ -1417,6 +1419,16 @@
    </property>
    <property name="text">
     <string>47 - Legacy</string>
+   </property>
+  </action>
+  <action name="speed_0">
+   <property name="text">
+    <string>0 - Paused</string>
+   </property>
+  </action>
+  <action name="speed_1000">
+   <property name="text">
+    <string>1000 - Hyperspeed</string>
    </property>
   </action>
  </widget>
