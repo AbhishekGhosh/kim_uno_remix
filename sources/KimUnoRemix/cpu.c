@@ -205,8 +205,15 @@ uint8_t read6502(uint16_t address) {
   if( address >=0xFFFA ) {
     return( pgm_read_byte_near( &rom002Vectors[ address - 0xFFFA] ));
   }
+
+#ifndef AVRX
+    /* stuff it from our full-RAM buffer */
+    extern uint8_t FULLRAM[];
+    tempval = FULLRAM[ (address & 0x0FFFF) ];
+#endif
   
   do {
+    /* get the address info */
     addr = pgm_read_word_near( &MemoryReadSegments[idx].addr );
     len = pgm_read_word_near( &MemoryReadSegments[idx].len );
     flags = pgm_read_byte_near( &MemoryReadSegments[idx].flags );
@@ -218,6 +225,7 @@ uint8_t read6502(uint16_t address) {
         write6502( 0x00EE, KimRandom() );
     }
 
+    /* read out the byte, if it's in the range */
     if( address >= addr && address < (addr + len) ) {
       /* this is the right block */
       if( flags & kMMAP_PROGMEM ) {
@@ -388,6 +396,7 @@ uint8_t read6502(uint16_t address) {
 #endif
     if( address == 0xF010 ) return( KimRandom() );
 #endif
+
     return( tempval );
 }
 
@@ -398,6 +407,12 @@ void write6502(uint16_t address, uint8_t value)
   uint16_t len = 0;
   uint8_t * data = NULL;
   uint8_t flags = 0;
+
+#ifndef AVRX
+    /* just stash it in our full-RAM buffer */
+    extern uint8_t FULLRAM[];
+    FULLRAM[ (address & 0x0FFFF) ] = value;
+#endif
 
   /* patch first */
   if (address == 0xCFF1) {
@@ -439,6 +454,7 @@ void write6502(uint16_t address, uint8_t value)
 #ifdef EXPAPI
   if( address == 0xF010 ) randomSeed( value );
 #endif
+
 }
 
 

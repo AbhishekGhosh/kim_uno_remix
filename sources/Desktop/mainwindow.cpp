@@ -14,11 +14,12 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "020"
-#define kVersionDate   "2016-02-04"
-#define kVersionText   "Silver Rainbow"
+#define kVersionNumber "021"
+#define kVersionDate   "2016-02-05"
+#define kVersionText   "Freedom"
 
 /*
+ * v021 - 2016-02-05 - Freedom - Full-memory space RAM for desktop
  * v020 - 2016-02-04 - Silver Rainbow - Scroll for memory positioning buttons, bigger window
  * v019 - 2016-01-31 - Magnetic - LlamaCalc v8 added (RC2016/1 entry)
  * v018 - 2016-01-11 - Bowie - Speed 0 and 1000 added
@@ -243,7 +244,6 @@ void MainWindow::on_timerTick()
             messageFlags = kMessage_None; // important to clear it
         }
 
-
         // but let's check the CodeDrop injection queue...
         // we need about 100 ticks to process a key injected, so we need to deal with this.
         // & with 0x03 compensates for this, and works well enough everywhere.
@@ -321,7 +321,19 @@ void MainWindow::on_action_Video_Display_triggered()
 
 void MainWindow::on_actionReset_triggered()
 {
-    reset6502();
+    this->initialize_emulation();
+
+    for( int x=0 ; x<1024 * 64 ; x++ )
+        write6502( x, 0 );
+    loadProgramsToRam();
+
+    this->cdrop->keysToInject.enqueue( kKimScancode_STOP );
+    this->cdrop->keysToInject.enqueue( kKimScancode_ADDR );
+    this->cdrop->keysToInject.enqueue( 0 );
+    this->cdrop->keysToInject.enqueue( 0 );
+    this->cdrop->keysToInject.enqueue( 0 );
+    this->cdrop->keysToInject.enqueue( 0 );
+
 }
 
 void MainWindow::on_actionQuit_triggered()

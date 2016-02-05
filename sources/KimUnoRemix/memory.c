@@ -57,6 +57,7 @@ uint8_t RAM002[64];
 
 #ifndef AVRX
 uint8_t videoMemory[kVidWidth * kVidHeight];
+uint8_t FULLRAM[ 64 * 1024 ];
 #endif
 
 
@@ -620,6 +621,7 @@ const MMAP MemoryWriteSegments[] PROGMEM = {
   { 0x17C0, 64, kMMAP_RAM, RAM002 },
 #ifndef AVRX
   { 0x4000, kVidWidth * kVidHeight, kMMAP_RAM, videoMemory },
+  //{ 0x0000, 0xFFFF, kMMAP_RAM, FULLRAM },
 #endif
   { 0, 0, kMMAP_END, 0 }
 };
@@ -648,8 +650,8 @@ const MMAP MemoryReadSegments[] PROGMEM = {
 
     #ifndef AVRX
       { 0x4000, kVidWidth * kVidHeight, kMMAP_RAM, videoMemory },
+      //{ 0x0000, 0xFFFF, kMMAP_RAM, FULLRAM },
     #endif
-
 
     { 0, 0, kMMAP_END, 0 }
 };
@@ -882,16 +884,23 @@ void loadProgramsToRam()
   uint16_t addr, writeaddr, len;
   uint8_t flags = 0;
   uint8_t * data;
+
   do {
+    /* Set up the input data from the structure */
     writeaddr = addr = pgm_read_word_near( &MemoryCopySegments[idx].addr );
     len = pgm_read_word_near( &MemoryCopySegments[idx].len );
     flags = pgm_read_byte_near( &MemoryCopySegments[idx].flags );
     data = (uint8_t *)pgm_read_word_near( &MemoryCopySegments[idx].data );
+
+    /* and write it out to the memory space */
     while( len > 0 ) {
       write6502( writeaddr++, pgm_read_byte_near( data++ ));
       len--;
     }
+
+    /* go on to the next thing to load */
     idx++;
+
   } while( !(flags & kMMAP_END) );
 }
 

@@ -19,6 +19,7 @@ MemoryBrowser::MemoryBrowser(QWidget *parent) :
 
     // start at the top
     this->ui->hexCodeDisplay->verticalScrollBar()->setSliderPosition( 0 );
+    this->ui->hexCodeDisplay->ensureCursorVisible();
 
     this->ui->autoUpdates->setChecked( false );
     this->timer = NULL;
@@ -41,11 +42,6 @@ void MemoryBrowser::startOurUpdates()
     this->timer = new QTimer( this );
     connect( this->timer, SIGNAL(timeout()), this, SLOT( on_timerTick() ));
     timer->start( 200 );
-
-    this->ui->hexCodeDisplay->verticalScrollBar()->setValue( 100 );
-    this->ui->hexCodeDisplay->moveCursor(QTextCursor::Start);
-    this->ui->hexCodeDisplay->ensureCursorVisible();
-
 }
 
 MemoryBrowser::~MemoryBrowser()
