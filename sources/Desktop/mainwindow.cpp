@@ -14,11 +14,12 @@ extern "C" {
 
 
 #define kAppName "KIM Uno Remix"
-#define kVersionNumber "019"
-#define kVersionDate   "2016-01-31"
-#define kVersionText   "Magnetic"
+#define kVersionNumber "020"
+#define kVersionDate   "2016-02-04"
+#define kVersionText   "Silver Rainbow"
 
 /*
+ * v020 - 2016-02-04 - Silver Rainbow - Scroll for memory positioning buttons, bigger window
  * v019 - 2016-01-31 - Magnetic - LlamaCalc v8 added (RC2016/1 entry)
  * v018 - 2016-01-11 - Bowie - Speed 0 and 1000 added
  * v017 - 2016-01-08 - Button for $0000 Memory seek, updated key shortcuts to shifted versions

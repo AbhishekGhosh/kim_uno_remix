@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>660</width>
-    <height>495</height>
+    <height>661</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,7 +22,7 @@
      <x>0</x>
      <y>0</y>
      <width>660</width>
-     <height>451</height>
+     <height>621</height>
     </rect>
    </property>
    <property name="font">
@@ -56,9 +56,9 @@
   <widget class="QWidget" name="horizontalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>9</x>
-     <y>459</y>
-     <width>641</width>
+     <x>0</x>
+     <y>630</y>
+     <width>661</width>
      <height>32</height>
     </rect>
    </property>
@@ -67,6 +67,36 @@
      <widget class="QPushButton" name="go0000">
       <property name="text">
        <string>$0000</string>
+      </property>
+      <property name="autoDefault">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="go0200">
+      <property name="text">
+       <string>$0200</string>
+      </property>
+      <property name="autoDefault">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="go4000">
+      <property name="text">
+       <string>$4000</string>
+      </property>
+      <property name="autoDefault">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="go8000">
+      <property name="text">
+       <string>$8000</string>
       </property>
       <property name="autoDefault">
        <bool>false</bool>
@@ -105,6 +135,9 @@
     </item>
    </layout>
   </widget>
+  <zorder>hexCodeDisplay</zorder>
+  <zorder>horizontalLayoutWidget</zorder>
+  <zorder>updateButton</zorder>
  </widget>
  <resources/>
  <connections/>

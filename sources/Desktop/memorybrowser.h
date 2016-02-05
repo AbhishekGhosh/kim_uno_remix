@@ -24,6 +24,7 @@ private:
     QTimer * timer;
     void stopOurUpdates();
     void startOurUpdates();
+    void seekDisplay( long address );
 
 private slots:
     void on_timerTick();
@@ -31,6 +32,9 @@ private slots:
     void on_autoUpdates_clicked();
 
     void on_go0000_clicked();
+    void on_go0200_clicked();
+    void on_go4000_clicked();
+    void on_go8000_clicked();
 
 public:
     void refreshDisplay();
